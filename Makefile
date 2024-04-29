@@ -64,6 +64,7 @@
 #++	Oct 17,	2022	<MLS> Added _ENABLE_FILTERWHEEL_USIS_
 #++	Mar  5,	2023	<MLS> Re-organizing object lists
 #++	Dec  2,	2023	<MLS> Added piswitch3
+#++	Apr 22,	2024	<MLS> Added _INCLUDE_MULTI_LANGUAGE_SUPPORT_
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -95,6 +96,8 @@ OPENCV_LINK			+=	-L$(OPENCV_LIB)
 PHASEONE_INC		=	/usr/local/include/phaseone/include/
 PHASEONE_LIB		=	/usr/local/lib/
 
+PLAYERONE_LIB		=	/usr/local/lib/
+
 SRC_DIR				=	./src/
 SRC_IMGPROC			=	./src_imageproc/
 SRC_IMU				=	./src_imu/
@@ -103,6 +106,7 @@ SRC_MOONRISE		=	./src_MoonRise/
 SRC_SERVO			=	./src_servo/
 SRC_PDS				=	./src_pds/
 SRC_SKYIMAGE		=	./src_skyimage/
+SRC_SPECTROGRAPH	=	./src_spectrograph/
 
 MLS_LIB_DIR			=	./src_mlsLib/
 OBJECT_DIR			=	./Objectfiles/
@@ -144,6 +148,12 @@ TOUP_INCLUDE_DIR	=	$(TOUP_DIR)/inc
 TOUP_LIB_DIR		=	$(TOUP_DIR)/linux/x64
 
 ############################################
+OGMA_DIR			=	./OGMAcamSDK
+OGMA_INCLUDE_DIR	=	$(OGMA_DIR)/inc
+OGMA_LIB_DIR		=	$(OGMA_DIR)/linux/arm64
+
+
+############################################
 FLIR_INCLUDE_DIR	=	/usr/include/spinnaker
 
 
@@ -159,10 +169,12 @@ QHY_INCLUDE_DIR		=	./QHY/include
 #	QSI support
 QSI_INCLUDE_DIR		=	./qsiapi-7.6.0
 
-DEFINEFLAGS		+=	-D_INCLUDE_HTTP_HEADER_
-DEFINEFLAGS		+=	-D_INCLUDE_ALPACA_EXTENSIONS_
 DEFINEFLAGS		+=	-D_ALPACA_PI_
+DEFINEFLAGS		+=	-D_INCLUDE_ALPACA_EXTENSIONS_
+DEFINEFLAGS		+=	-D_INCLUDE_HTTP_HEADER_
 DEFINEFLAGS		+=	-D_USE_CAMERA_READ_THREAD_
+DEFINEFLAGS		+=	-D_INCLUDE_MULTI_LANGUAGE_SUPPORT_
+
 CFLAGS			=	-Wall -Wno-multichar -Wno-unknown-pragmas -Wstrict-prototypes
 CFLAGS			+=	-Wextra
 #CFLAGS			+=	-Werror
@@ -199,6 +211,9 @@ INCLUDES		=	-I/usr/include					\
 					-I/usr/local/include			\
 					-I$(SRC_DIR)					\
 					-I$(SRC_SKYIMAGE)				\
+					-I$(SRC_IMGPROC)				\
+					-I$(SRC_PDS)					\
+					-I$(SRC_SPECTROGRAPH)			\
 					-I$(ASI_INCLUDE_DIR)			\
 					-I$(ATIK_INCLUDE_DIR)			\
 					-I$(ATIK_INCLUDE_DIR2)			\
@@ -206,8 +221,6 @@ INCLUDES		=	-I/usr/include					\
 					-I$(FLIR_INCLUDE_DIR)			\
 					-I$(MLS_LIB_DIR)				\
 					-I$(QHY_INCLUDE_DIR)			\
-					-I$(SRC_IMGPROC)				\
-					-I$(SRC_PDS)					\
 					-I$(TOUP_INCLUDE_DIR)			\
 					-I$(SONY_INCLUDE_DIR)			\
 
@@ -320,20 +333,20 @@ CAMERA_DRIVER_OBJECTS=										\
 				$(OBJECT_DIR)cameradriver_FLIR.o			\
 				$(OBJECT_DIR)cameradriver_jpeg.o			\
 				$(OBJECT_DIR)cameradriver_livewindow.o		\
+				$(OBJECT_DIR)cameradriver_OGMA.o			\
 				$(OBJECT_DIR)cameradriver_opencv.o			\
 				$(OBJECT_DIR)cameradriver_overlay.o			\
 				$(OBJECT_DIR)cameradriver_png.o				\
 				$(OBJECT_DIR)cameradriver_QHY.o				\
 				$(OBJECT_DIR)cameradriver_QSI.o				\
 				$(OBJECT_DIR)cameradriver_readthread.o		\
+				$(OBJECT_DIR)cameradriver_PlayerOne.o		\
 				$(OBJECT_DIR)cameradriver_SONY.o			\
 				$(OBJECT_DIR)cameradriver_save.o			\
 				$(OBJECT_DIR)cameradriver_sim.o				\
 				$(OBJECT_DIR)cameradriver_TOUP.o			\
 				$(OBJECT_DIR)NASA_moonphase.o				\
 				$(OBJECT_DIR)multicam.o						\
-				$(OBJECT_DIR)ParseNMEA.o					\
-				$(OBJECT_DIR)NMEA_helper.o					\
 
 
 ######################################################################################
@@ -362,6 +375,7 @@ SHUTTER_DRIVER_OBJECTS=										\
 FITLERWHEEL_DRIVER_OBJECTS=									\
 				$(OBJECT_DIR)filterwheeldriver.o			\
 				$(OBJECT_DIR)filterwheeldriver_ATIK.o		\
+				$(OBJECT_DIR)filterwheeldriver_Play1.o		\
 				$(OBJECT_DIR)filterwheeldriver_QHY.o		\
 				$(OBJECT_DIR)filterwheeldriver_ZWO.o		\
 				$(OBJECT_DIR)filterwheeldriver_sim.o		\
@@ -397,6 +411,7 @@ SWITCH_DRIVER_OBJECTS=										\
 TELESCOPE_DRIVER_OBJECTS=									\
 				$(OBJECT_DIR)telescopedriver.o				\
 				$(OBJECT_DIR)telescopedriver_comm.o			\
+				$(OBJECT_DIR)telescopedriver_ExpSci.o		\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)telescopedriver_Rigel.o		\
 				$(OBJECT_DIR)telescopedriver_servo.o		\
@@ -463,6 +478,10 @@ IMU_OBJECTS=												\
 # GPS objects
 GPS_OBJECTS=												\
 				$(OBJECT_DIR)gps_data.o						\
+				$(OBJECT_DIR)ParseNMEA.o					\
+				$(OBJECT_DIR)NMEA_helper.o					\
+				$(OBJECT_DIR)GPS_graph.o					\
+				$(OBJECT_DIR)web_graphics_opencv.o			\
 
 #				$(OBJECT_DIR)serialport.o					\
 
@@ -615,6 +634,13 @@ gpscam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_GPS_GRAPHS_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_ALTITUDE_TRACKING_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_LAT_LON_TRACKING_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_POSITION_ERROR_TRACKING_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_PDOP_TRACKING_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_TRAILS_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_ALMANAC_
 gpscam		:										\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(DRIVER_OBJECTS)				\
@@ -866,28 +892,30 @@ moonlite		:
 ######################################################################################
 #pragma mark make allcam
 #	this is primarily for development, all cameras are enabled
-allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
+allcam		:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 #allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_SONY_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_TOUP_
+allcam		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+#allcam		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 allcam		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 #allcam		:		INCLUDES		+=	-I$(SONY_INCLUDE_DIR)
 allcam		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+allcam		:		TOUP_LIB_DIR	=	$(TOUP_DIR)/linux/arm64
 allcam		:									\
 					$(DRIVER_OBJECTS)			\
 					$(CAMERA_DRIVER_OBJECTS)	\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 
 
 		$(LINK)  								\
@@ -895,6 +923,7 @@ allcam		:									\
 					$(CAMERA_DRIVER_OBJECTS)	\
 					$(LIVE_WINDOW_OBJECTS)		\
 					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					-L$(ATIK_LIB_DIR)/			\
 					-L$(TOUP_LIB_DIR)/			\
@@ -914,7 +943,7 @@ allcam		:									\
 
 ######################################################################################
 #pragma mark make tele  C++ linux-x86
-tele		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+tele	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 #tele	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
@@ -960,7 +989,41 @@ tele	:										\
 					-o alpacapi-telescope
 
 
-#					-ludev						\
+######################################################################################
+#pragma mark make pmc8 explore scientific
+pmc8	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+pmc8	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_EXP_SCI_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GPS_GRAPHS_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ALTITUDE_TRACKING_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_LAT_LON_TRACKING_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_POSITION_ERROR_TRACKING_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_PDOP_TRACKING_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_TRAILS_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_ALMANAC_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_SENTANCE_TRACKING_
+pmc8	:										\
+					$(DRIVER_OBJECTS)			\
+					$(GPS_OBJECTS)				\
+					$(TELESCOPE_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)			\
+					$(SERIAL_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(IMU_OBJECTS)				\
+
+		$(LINK)  								\
+					$(DRIVER_OBJECTS)			\
+					$(GPS_OBJECTS)				\
+					$(TELESCOPE_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)			\
+					$(SERIAL_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-lpthread					\
+					-o alpacapi-expsci
 
 ######################################################################################
 #pragma mark make imutest
@@ -1494,18 +1557,23 @@ phaseone	:		DEFINEFLAGS		+=	-D_ENABLE_PHASEONE_
 phaseone	:		INCLUDES		+=	-I$(PHASEONE_INC)
 phaseone	:									\
 					$(CAMERA_DRIVER_OBJECTS)	\
-					$(HELPER_OBJECTS)			\
-					$(TEST_OBJECTS)				\
+					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
-					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 					$(IMU_OBJECTS)				\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(TEST_OBJECTS)				\
+
 
 		$(LINK)  								\
 					$(CAMERA_DRIVER_OBJECTS)	\
-					$(HELPER_OBJECTS)			\
-					$(TEST_OBJECTS)				\
-					$(SOCKET_OBJECTS)			\
 					$(DRIVER_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+					$(IMU_OBJECTS)				\
+					$(SOCKET_OBJECTS)			\
+					$(LIVE_WINDOW_OBJECTS)		\
+					$(TEST_OBJECTS)				\
 					$(OPENCV_LINK)				\
 					-L$(PHASEONE_LIB)			\
 					-lCameraSdkCpp				\
@@ -2800,6 +2868,103 @@ atik	:										\
 					-lcfitsio					\
 					-o atik
 
+######################################################################################
+#pragma mark PlayerOne filterwheel
+#	make playerone
+playerone	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
+playerone	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+playerone	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_FilterWheel_SDK_Linux_V1.2.0/include
+playerone	:										\
+					$(DRIVER_OBJECTS)				\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(CPP_OBJECTS)					\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					-L$(PLAYERONE_LIB)				\
+					-lPlayerOnePW					\
+					-ludev							\
+					-lusb-1.0						\
+					-lpthread						\
+					-o alpacapi
+
+
+
+######################################################################################
+#pragma mark PlayerOne with ZWO camera
+#	make poz
+poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+poz	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
+poz	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
+poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+poz	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_FilterWheel_SDK_Linux_V1.2.0/include
+poz	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
+poz	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+poz	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+poz	:												\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(CPP_OBJECTS)					\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(OPENCV_LINK)					\
+					$(ASI_CAMERA_OBJECTS)			\
+					-L$(PLAYERONE_LIB)				\
+					-lPlayerOnePW					\
+					-lPlayerOneCamera				\
+					-ludev							\
+					-lusb-1.0						\
+					-lpthread						\
+					-lcfitsio						\
+					-o alpacapi
+
+
+######################################################################################
+#pragma mark ogma
+#	make ogma
+ogma	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+ogma	:		DEFINEFLAGS		+=	-D_ENABLE_OGMA_
+ogma	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+ogma	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+ogma	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+ogma	:		INCLUDES		+=	-I$(OGMA_INCLUDE_DIR)
+ogma	:											\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(CPP_OBJECTS)					\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(OPENCV_LINK)					\
+					-L$(OGMA_LIB_DIR)				\
+					-logmacam						\
+					-lpthread						\
+					-lcfitsio						\
+					-o alpacapi
 
 ######################################################################################
 #pragama mark make client client
@@ -3253,7 +3418,6 @@ SPECTROGRAPH_OBJECTS=										\
 				$(OBJECT_DIR)windowtab_spectro.o			\
 
 
-SRC_SPECTROGRAPH=./src_spectrograph/
 
 
 ######################################################################################
@@ -3398,6 +3562,7 @@ skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_ROTATOR_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SPECTROGRAPH_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
+skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SPECTROGRAPH_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 skycv4			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
@@ -3411,11 +3576,13 @@ skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 skycv4			:										\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
+						$(SPECTROGRAPH_OBJECTS)			\
 						$(HELPER_OBJECTS)				\
 
 				$(LINK)  								\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
+						$(SPECTROGRAPH_OBJECTS)			\
 						$(HELPER_OBJECTS)				\
 						$(OPENCV_LINK)					\
 						-lpthread						\
@@ -3451,7 +3618,6 @@ sss			:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 #sss			:	DEFINEFLAGS		+=	-D_ENABLE_ASTEROIDS_
 sss			:	DEFINEFLAGS		+=	-D_SQL_$(SQL_VERSION)
 sss			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
-sss			:	INCLUDES		+=	-I$(SRC_SPECTROGRAPH)
 sss			:										\
 					$(CONTROLLER_OBJECTS)			\
 					$(SKYTRAVEL_OBJECTS)			\
@@ -3482,7 +3648,6 @@ spectro		:	DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_USIS_
 spectro		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 spectro		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_USIS_
 spectro		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-spectro		:	INCLUDES		+=	-I$(SRC_SPECTROGRAPH)
 spectro		:										\
 					$(DRIVER_OBJECTS)				\
 					$(FITLERWHEEL_DRIVER_OBJECTS)	\
@@ -3509,45 +3674,38 @@ spectro		:										\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)spectrodriver.o :		$(SRC_SPECTROGRAPH)spectrodriver.cpp	\
-									$(SRC_SPECTROGRAPH)spectrodriver.h		\
-									Makefile
+									$(SRC_SPECTROGRAPH)spectrodriver.h
 	$(COMPILEPLUS) $(INCLUDES)		$(SRC_SPECTROGRAPH)spectrodriver.cpp -o$(OBJECT_DIR)spectrodriver.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)spectrodrvr_usis.o :	$(SRC_SPECTROGRAPH)spectrodrvr_usis.cpp	\
 									$(SRC_SPECTROGRAPH)spectrodrvr_usis.h	\
-									$(SRC_SPECTROGRAPH)spectrodriver.h		\
-									Makefile
+									$(SRC_SPECTROGRAPH)spectrodriver.h
 	$(COMPILEPLUS) $(INCLUDES)		$(SRC_SPECTROGRAPH)spectrodrvr_usis.cpp -o$(OBJECT_DIR)spectrodrvr_usis.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_spectrograph.o :	$(SRC_SPECTROGRAPH)controller_spectrograph.cpp		\
-											$(SRC_SPECTROGRAPH)controller_spectrograph.h		\
-											Makefile
+											$(SRC_SPECTROGRAPH)controller_spectrograph.h
 	$(COMPILEPLUS) $(INCLUDES)				$(SRC_SPECTROGRAPH)controller_spectrograph.cpp -o$(OBJECT_DIR)controller_spectrograph.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)filterwheeldriver_usis.o :		$(SRC_SPECTROGRAPH)filterwheeldriver_usis.cpp		\
-											$(SRC_SPECTROGRAPH)filterwheeldriver_usis.h			\
-											Makefile
+											$(SRC_SPECTROGRAPH)filterwheeldriver_usis.h
 	$(COMPILEPLUS) $(INCLUDES)				$(SRC_SPECTROGRAPH)filterwheeldriver_usis.cpp -o$(OBJECT_DIR)filterwheeldriver_usis.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)focuserdriver_USIS.o :			$(SRC_SPECTROGRAPH)focuserdriver_USIS.cpp		\
-											$(SRC_SPECTROGRAPH)focuserdriver_USIS.h			\
-											Makefile
+											$(SRC_SPECTROGRAPH)focuserdriver_USIS.h
 	$(COMPILEPLUS) $(INCLUDES)				$(SRC_SPECTROGRAPH)focuserdriver_USIS.cpp -o$(OBJECT_DIR)focuserdriver_USIS.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_spectro.o :			$(SRC_SPECTROGRAPH)windowtab_spectro.cpp	\
-											$(SRC_SPECTROGRAPH)windowtab_spectro.h		\
-											Makefile
+											$(SRC_SPECTROGRAPH)windowtab_spectro.h
 	$(COMPILEPLUS) $(INCLUDES)				$(SRC_SPECTROGRAPH)windowtab_spectro.cpp -o$(OBJECT_DIR)windowtab_spectro.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)usis_communications.o :		$(SRC_SPECTROGRAPH)usis_communications.cpp	\
-											$(SRC_SPECTROGRAPH)usis_communications.h	\
-											Makefile
+											$(SRC_SPECTROGRAPH)usis_communications.h
 	$(COMPILEPLUS) $(INCLUDES)				$(SRC_SPECTROGRAPH)usis_communications.cpp -o$(OBJECT_DIR)usis_communications.o
 
 ######################################################################################
@@ -3654,15 +3812,13 @@ net		:			$(NETTEST_OBJECTS)
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)controller_nettest.o :		$(SRC_NETTEST)controller_nettest.cpp		\
-										$(SRC_NETTEST)controller_nettest.h			\
-										Makefile
+										$(SRC_NETTEST)controller_nettest.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_NETTEST)controller_nettest.cpp -o$(OBJECT_DIR)controller_nettest.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_nettest.o :		$(SRC_NETTEST)windowtab_nettest.cpp		\
 										$(SRC_NETTEST)windowtab_nettest.h		\
-										$(SRC_DIR)windowtab.h					\
-										Makefile
+										$(SRC_DIR)windowtab.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_NETTEST)windowtab_nettest.cpp -o$(OBJECT_DIR)windowtab_nettest.o
 
 
@@ -3778,8 +3934,7 @@ $(OBJECT_DIR)readconfigfile.o : $(SRC_DIR)readconfigfile.c $(SRC_DIR)readconfigf
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriver.o :			$(SRC_DIR)alpacadriver.cpp				\
 										$(SRC_DIR)alpacadriver.h				\
-										$(SRC_DIR)alpaca_defs.h					\
-										Makefile
+										$(SRC_DIR)alpaca_defs.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver.cpp -o$(OBJECT_DIR)alpacadriver.o
 
 
@@ -3792,110 +3947,95 @@ $(OBJECT_DIR)alpacadriver_gps.o :		$(SRC_DIR)alpacadriver_gps.cpp			\
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriverConnect.o :	$(SRC_DIR)alpacadriverConnect.cpp		\
-										$(SRC_DIR)alpaca_defs.h					\
-										Makefile
+										$(SRC_DIR)alpaca_defs.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverConnect.cpp -o$(OBJECT_DIR)alpacadriverConnect.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriverThread.o :		$(SRC_DIR)alpacadriverThread.cpp		\
 										$(SRC_DIR)alpacadriver.h				\
-										$(SRC_DIR)alpaca_defs.h					\
-										Makefile
+										$(SRC_DIR)alpaca_defs.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverThread.cpp -o$(OBJECT_DIR)alpacadriverThread.o
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriverSetup.o :		$(SRC_DIR)alpacadriverSetup.cpp			\
 										$(SRC_DIR)alpacadriver.h				\
-										$(SRC_DIR)alpaca_defs.h					\
-										Makefile
+										$(SRC_DIR)alpaca_defs.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverSetup.cpp -o$(OBJECT_DIR)alpacadriverSetup.o
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriver_helper.o :	$(SRC_DIR)alpacadriver_helper.c			\
-										$(SRC_DIR)alpacadriver_helper.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver_helper.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver_helper.c -o$(OBJECT_DIR)alpacadriver_helper.o
 
 
 #-------------------------------------------------------------------------------------
-$(OBJECT_DIR)alpaca_discovery.o :		$(SRC_DIR)alpaca_discovery.cpp		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+$(OBJECT_DIR)alpaca_discovery.o :		$(SRC_DIR)alpaca_discovery.cpp			\
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpaca_discovery.cpp -o$(OBJECT_DIR)alpaca_discovery.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriver_templog.o :	$(SRC_DIR)alpacadriver_templog.cpp		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriver_templog.cpp -o$(OBJECT_DIR)alpacadriver_templog.o
 
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)alpacadriverLogging.o :	$(SRC_DIR)alpacadriverLogging.cpp	\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)alpacadriverLogging.cpp -o$(OBJECT_DIR)alpacadriverLogging.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver.o :			$(SRC_DIR)cameradriver.cpp			\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver.cpp -o$(OBJECT_DIR)cameradriver.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_readthread.o :$(SRC_DIR)cameradriver_readthread.cpp	\
 										$(SRC_DIR)cameradriver.h				\
-										$(SRC_DIR)alpacadriver.h				\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_readthread.cpp -o$(OBJECT_DIR)cameradriver_readthread.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriverAnalysis.o :	$(SRC_DIR)cameradriverAnalysis.cpp	\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriverAnalysis.cpp -o$(OBJECT_DIR)cameradriverAnalysis.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_fits.o :		$(SRC_DIR)cameradriver_fits.cpp		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_fits.cpp -I$(SRC_MOONRISE) -o$(OBJECT_DIR)cameradriver_fits.o
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_gps.o :		$(SRC_DIR)cameradriver_gps.cpp		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_gps.cpp -o$(OBJECT_DIR)cameradriver_gps.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_ASI.o :		$(SRC_DIR)cameradriver_ASI.cpp		\
 										$(SRC_DIR)cameradriver_ASI.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_ASI.cpp -o$(OBJECT_DIR)cameradriver_ASI.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_ATIK.o :		$(SRC_DIR)cameradriver_ATIK.cpp		\
 										$(SRC_DIR)cameradriver_ATIK.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_ATIK.cpp -o$(OBJECT_DIR)cameradriver_ATIK.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_overlay.o :	$(SRC_DIR)cameradriver_overlay.cpp	\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_overlay.cpp -o$(OBJECT_DIR)cameradriver_overlay.o
 
 
@@ -3903,16 +4043,36 @@ $(OBJECT_DIR)cameradriver_overlay.o :	$(SRC_DIR)cameradriver_overlay.cpp	\
 $(OBJECT_DIR)filterwheeldriver_ATIK.o :	$(SRC_DIR)filterwheeldriver_ATIK.cpp	\
 										$(SRC_DIR)filterwheeldriver_ATIK.h		\
 										$(SRC_DIR)filterwheeldriver.h			\
-										$(SRC_DIR)alpacadriver.h				\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver_ATIK.cpp -o$(OBJECT_DIR)filterwheeldriver_ATIK.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)filterwheeldriver_Play1.o :	$(SRC_DIR)filterwheeldriver_Play1.cpp	\
+											$(SRC_DIR)filterwheeldriver_Play1.h		\
+											$(SRC_DIR)filterwheeldriver.h				\
+											$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver_Play1.cpp -o$(OBJECT_DIR)filterwheeldriver_Play1.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_PlayerOne.o :			$(SRC_DIR)cameradriver_PlayerOne.cpp	\
+												$(SRC_DIR)cameradriver_PlayerOne.h		\
+												$(SRC_DIR)cameradriver.h				\
+												$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_PlayerOne.cpp -o$(OBJECT_DIR)cameradriver_PlayerOne.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_OGMA.o :				$(SRC_DIR)cameradriver_OGMA.cpp	\
+												$(SRC_DIR)cameradriver_OGMA.h	\
+												$(SRC_DIR)cameradriver.h		\
+												$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_OGMA.cpp -o$(OBJECT_DIR)cameradriver_OGMA.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)filterwheeldriver_QHY.o :	$(SRC_DIR)filterwheeldriver_QHY.cpp		\
 										$(SRC_DIR)filterwheeldriver_QHY.h		\
 										$(SRC_DIR)filterwheeldriver.h			\
-										$(SRC_DIR)alpacadriver.h				\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver_QHY.cpp -o$(OBJECT_DIR)filterwheeldriver_QHY.o
 
 
@@ -3920,16 +4080,14 @@ $(OBJECT_DIR)filterwheeldriver_QHY.o :	$(SRC_DIR)filterwheeldriver_QHY.cpp		\
 $(OBJECT_DIR)filterwheeldriver_sim.o :	$(SRC_DIR)filterwheeldriver_sim.cpp		\
 										$(SRC_DIR)filterwheeldriver_sim.h		\
 										$(SRC_DIR)filterwheeldriver.h			\
-										$(SRC_DIR)alpacadriver.h				\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver_sim.cpp -o$(OBJECT_DIR)filterwheeldriver_sim.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_QHY.o :		$(SRC_DIR)cameradriver_QHY.cpp		\
 										$(SRC_DIR)cameradriver_QHY.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_QHY.cpp -o$(OBJECT_DIR)cameradriver_QHY.o
 
 
@@ -3938,10 +4096,21 @@ $(OBJECT_DIR)ParseNMEA.o :				$(MLS_LIB_DIR)ParseNMEA.c 	\
 										$(MLS_LIB_DIR)ParseNMEA.h
 	$(COMPILEPLUS) $(INCLUDES)			$(MLS_LIB_DIR)ParseNMEA.c -o$(OBJECT_DIR)ParseNMEA.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)web_graphics_opencv.o :	$(MLS_LIB_DIR)web_graphics_opencv.cpp 	\
+										$(MLS_LIB_DIR)web_graphics_opencv.h
+	$(COMPILEPLUS) $(INCLUDES)			$(MLS_LIB_DIR)web_graphics_opencv.cpp -o$(OBJECT_DIR)web_graphics_opencv.o
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)gps_data.o :				$(SRC_DIR)gps_data.cpp 		\
 										$(SRC_DIR)gps_data.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)gps_data.cpp -o$(OBJECT_DIR)gps_data.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)GPS_graph.o :				$(MLS_LIB_DIR)GPS_graph.c 		\
+										$(MLS_LIB_DIR)GPS_graph.h
+	$(COMPILEPLUS) $(INCLUDES)			$(MLS_LIB_DIR)GPS_graph.c -o$(OBJECT_DIR)GPS_graph.o
 
 
 #-------------------------------------------------------------------------------------
@@ -3954,8 +4123,7 @@ $(OBJECT_DIR)NMEA_helper.o :			$(MLS_LIB_DIR)NMEA_helper.c 	\
 $(OBJECT_DIR)cameradriver_QSI.o :		$(SRC_DIR)cameradriver_QSI.cpp		\
 										$(SRC_DIR)cameradriver_QSI.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_QSI.cpp -o$(OBJECT_DIR)cameradriver_QSI.o
 
 
@@ -3963,8 +4131,7 @@ $(OBJECT_DIR)cameradriver_QSI.o :		$(SRC_DIR)cameradriver_QSI.cpp		\
 $(OBJECT_DIR)cameradriver_FLIR.o :		$(SRC_DIR)cameradriver_FLIR.cpp		\
 										$(SRC_DIR)cameradriver_FLIR.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_FLIR.cpp -o$(OBJECT_DIR)cameradriver_FLIR.o
 
 
@@ -3972,70 +4139,61 @@ $(OBJECT_DIR)cameradriver_FLIR.o :		$(SRC_DIR)cameradriver_FLIR.cpp		\
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_livewindow.o :$(SRC_DIR)cameradriver_livewindow.cpp	\
 									 	$(SRC_DIR)cameradriver.h				\
-										$(SRC_DIR)alpacadriver.h				\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_livewindow.cpp -o$(OBJECT_DIR)cameradriver_livewindow.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_PhaseOne.o 	:$(SRC_DIR)cameradriver_PhaseOne.cpp	\
 									 	$(SRC_DIR)cameradriver_PhaseOne.h		\
 									 	$(SRC_DIR)cameradriver.h				\
-										$(SRC_DIR)alpacadriver.h				\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_PhaseOne.cpp -o$(OBJECT_DIR)cameradriver_PhaseOne.o
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_save.o :		$(SRC_DIR)cameradriver_save.cpp		\
 									 	$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_save.cpp -o$(OBJECT_DIR)cameradriver_save.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_sim.o :		$(SRC_DIR)cameradriver_sim.cpp		\
 									 	$(SRC_DIR)cameradriver_sim.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_sim.cpp -o$(OBJECT_DIR)cameradriver_sim.o
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_opencv.o :	$(SRC_DIR)cameradriver_opencv.cpp	\
 									 	$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_opencv.cpp -o$(OBJECT_DIR)cameradriver_opencv.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_TOUP.o :		$(SRC_DIR)cameradriver_TOUP.cpp		\
 									 	$(SRC_DIR)cameradriver_TOUP.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_TOUP.cpp -o$(OBJECT_DIR)cameradriver_TOUP.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_jpeg.o :		$(SRC_DIR)cameradriver_jpeg.cpp 	\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_jpeg.cpp -o$(OBJECT_DIR)cameradriver_jpeg.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_png.o :		$(SRC_DIR)cameradriver_png.cpp 		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_png.cpp -o$(OBJECT_DIR)cameradriver_png.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_SONY.o :		$(SRC_DIR)cameradriver_SONY.cpp 	\
 										$(SRC_DIR)cameradriver_SONY.h		\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_SONY.cpp -o$(OBJECT_DIR)cameradriver_SONY.o
 
 
@@ -4044,39 +4202,34 @@ $(OBJECT_DIR)cameradriver_SONY.o :		$(SRC_DIR)cameradriver_SONY.cpp 	\
 $(OBJECT_DIR)multicam.o :				$(SRC_DIR)multicam.cpp				\
 										$(SRC_DIR)multicam.h				\
 										$(SRC_DIR)cameradriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)multicam.cpp -o$(OBJECT_DIR)multicam.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)domedriver.o :				$(SRC_DIR)domedriver.cpp			\
 										$(SRC_DIR)domedriver.h				\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)domedriver.cpp -o$(OBJECT_DIR)domedriver.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)domedriver_sim.o :			$(SRC_DIR)domedriver_sim.cpp		\
 										$(SRC_DIR)domedriver_sim.h			\
 										$(SRC_DIR)domedriver.h				\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)domedriver_sim.cpp -o$(OBJECT_DIR)domedriver_sim.o
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)domeshutter.o :			$(SRC_DIR)domeshutter.cpp			\
 										$(SRC_DIR)domedriver.h				\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)domeshutter.cpp -o$(OBJECT_DIR)domeshutter.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)domedriver_rpi.o :			$(SRC_DIR)domedriver_rpi.cpp		\
 										$(SRC_DIR)domedriver.h				\
 										$(SRC_DIR)domedriver_rpi.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)domedriver_rpi.cpp -o$(OBJECT_DIR)domedriver_rpi.o
 
 
@@ -4084,92 +4237,82 @@ $(OBJECT_DIR)domedriver_rpi.o :			$(SRC_DIR)domedriver_rpi.cpp		\
 $(OBJECT_DIR)domedriver_ror_rpi.o :		$(SRC_DIR)domedriver_ror_rpi.cpp	\
 										$(SRC_DIR)domedriver_ror_rpi.h		\
 										$(SRC_DIR)domedriver.h				\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)domedriver_ror_rpi.cpp -o$(OBJECT_DIR)domedriver_ror_rpi.o
 
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)shutterdriver.o :			$(SRC_DIR)shutterdriver.cpp			\
 										$(SRC_DIR)shutterdriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)shutterdriver.cpp -o$(OBJECT_DIR)shutterdriver.o
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)shutterdriver_arduino.o :	$(SRC_DIR)shutterdriver_arduino.cpp	\
 										$(SRC_DIR)shutterdriver_arduino.h	\
 										$(SRC_DIR)shutterdriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)shutterdriver_arduino.cpp -o$(OBJECT_DIR)shutterdriver_arduino.o
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)filterwheeldriver.o :		$(SRC_DIR)filterwheeldriver.cpp		\
 										$(SRC_DIR)filterwheeldriver.h		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver.cpp -o$(OBJECT_DIR)filterwheeldriver.o
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)filterwheeldriver_ZWO.o :	$(SRC_DIR)filterwheeldriver_ZWO.cpp	\
 										$(SRC_DIR)filterwheeldriver_ZWO.h 	\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)filterwheeldriver_ZWO.cpp -o$(OBJECT_DIR)filterwheeldriver_ZWO.o
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)focuserdriver.o :			$(SRC_DIR)focuserdriver.cpp			\
 										$(SRC_DIR)focuserdriver.h	 		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)focuserdriver.cpp -o$(OBJECT_DIR)focuserdriver.o
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)focuserdriver_nc.o :		$(SRC_DIR)focuserdriver_nc.cpp		\
 										$(SRC_DIR)focuserdriver_nc.h 		\
 										$(SRC_DIR)focuserdriver.h	 		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)focuserdriver_nc.cpp -o$(OBJECT_DIR)focuserdriver_nc.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)focuserdriver_sim.o :		$(SRC_DIR)focuserdriver_sim.cpp		\
 										$(SRC_DIR)focuserdriver_sim.h 		\
 										$(SRC_DIR)focuserdriver.h	 		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)focuserdriver_sim.cpp -o$(OBJECT_DIR)focuserdriver_sim.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)rotatordriver.o :			$(SRC_DIR)rotatordriver.cpp			\
 										$(SRC_DIR)rotatordriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)rotatordriver.cpp -o$(OBJECT_DIR)rotatordriver.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)rotatordriver_nc.o :		$(SRC_DIR)rotatordriver_nc.cpp		\
 										$(SRC_DIR)rotatordriver_nc.h	 	\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)rotatordriver_nc.cpp -o$(OBJECT_DIR)rotatordriver_nc.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)rotatordriver_sim.o :		$(SRC_DIR)rotatordriver_sim.cpp		\
 										$(SRC_DIR)rotatordriver_sim.h	 	\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)rotatordriver_sim.cpp -o$(OBJECT_DIR)rotatordriver_sim.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)slittracker.o :		$(SRC_DIR)slittracker.cpp				\
 										$(SRC_DIR)slittracker.h	 			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)slittracker.cpp -o$(OBJECT_DIR)slittracker.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)telescopedriver.o :		$(SRC_DIR)telescopedriver.cpp		\
 										$(SRC_DIR)telescopedriver.h			\
 										$(SRC_DIR)domedriver.h				\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver.cpp -o$(OBJECT_DIR)telescopedriver.o
 
 
@@ -4177,16 +4320,21 @@ $(OBJECT_DIR)telescopedriver.o :		$(SRC_DIR)telescopedriver.cpp		\
 $(OBJECT_DIR)telescopedriver_comm.o :	$(SRC_DIR)telescopedriver_comm.cpp	\
 										$(SRC_DIR)telescopedriver_comm.h	\
 										$(SRC_DIR)telescopedriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_comm.cpp -o$(OBJECT_DIR)telescopedriver_comm.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)telescopedriver_ExpSci.o :	$(SRC_DIR)telescopedriver_ExpSci.cpp	\
+										$(SRC_DIR)telescopedriver_ExpSci.h		\
+										$(SRC_DIR)telescopedriver.h				\
+										$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_ExpSci.cpp -o$(OBJECT_DIR)telescopedriver_ExpSci.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)telescopedriver_lx200.o :	$(SRC_DIR)telescopedriver_lx200.cpp	\
 										$(SRC_DIR)telescopedriver_lx200.h	\
 										$(SRC_DIR)telescopedriver.h			\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)telescopedriver_lx200.cpp -o$(OBJECT_DIR)telescopedriver_lx200.o
 
 
@@ -4218,8 +4366,7 @@ $(OBJECT_DIR)telescopedriver_sim.o :	$(SRC_DIR)telescopedriver_sim.cpp	\
 $(OBJECT_DIR)telescopedriver_skywatch.o :	$(SRC_DIR)telescopedriver_skywatch.cpp	\
 											$(SRC_DIR)telescopedriver_skywatch.h	\
 											$(SRC_DIR)telescopedriver.h				\
-											$(SRC_DIR)alpacadriver.h				\
-											Makefile
+											$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)				$(SRC_DIR)telescopedriver_skywatch.cpp -o$(OBJECT_DIR)telescopedriver_skywatch.o
 
 
@@ -4227,14 +4374,12 @@ $(OBJECT_DIR)telescopedriver_skywatch.o :	$(SRC_DIR)telescopedriver_skywatch.cpp
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)managementdriver.o :		$(SRC_DIR)managementdriver.cpp		\
 										$(SRC_DIR)managementdriver.h 		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)managementdriver.cpp -o$(OBJECT_DIR)managementdriver.o
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)switchdriver.o :			$(SRC_DIR)switchdriver.cpp			\
 										$(SRC_DIR)switchdriver.h		 	\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)switchdriver.cpp -o$(OBJECT_DIR)switchdriver.o
 
 #-------------------------------------------------------------------------------------
@@ -4242,16 +4387,14 @@ $(OBJECT_DIR)switchdriver_rpi.o :		$(SRC_DIR)switchdriver_rpi.cpp		\
 										$(SRC_DIR)raspberrypi_relaylib.h	\
 										$(SRC_DIR)switchdriver_rpi.h		\
 										$(SRC_DIR)switchdriver.h		 	\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)switchdriver_rpi.cpp -o$(OBJECT_DIR)switchdriver_rpi.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)switchdriver_sim.o :		$(SRC_DIR)switchdriver_sim.cpp		\
 										$(SRC_DIR)switchdriver_sim.h		\
 										$(SRC_DIR)switchdriver.h		 	\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)switchdriver_sim.cpp -o$(OBJECT_DIR)switchdriver_sim.o
 
 
@@ -4259,16 +4402,14 @@ $(OBJECT_DIR)switchdriver_sim.o :		$(SRC_DIR)switchdriver_sim.cpp		\
 $(OBJECT_DIR)obsconditionsdriver.o :	$(SRC_DIR)obsconditionsdriver.cpp	\
 										$(SRC_DIR)obsconditionsdriver.h	 	\
 										$(SRC_DIR)alpacadriver.h			\
-										$(SRC_DIR)alpaca_defs.h				\
-										Makefile
+										$(SRC_DIR)alpaca_defs.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)obsconditionsdriver.cpp -o$(OBJECT_DIR)obsconditionsdriver.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)obsconditionsdriver_rpi.o :	$(SRC_DIR)obsconditionsdriver_rpi.cpp 	\
 											$(SRC_DIR)obsconditionsdriver.h			\
 											$(SRC_DIR)alpacadriver.h				\
-											$(SRC_DIR)alpaca_defs.h					\
-											Makefile
+											$(SRC_DIR)alpaca_defs.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)obsconditionsdriver_rpi.cpp -o$(OBJECT_DIR)obsconditionsdriver_rpi.o
 
 #-------------------------------------------------------------------------------------
@@ -4276,15 +4417,13 @@ $(OBJECT_DIR)obsconditionsdriver_sim.o :	$(SRC_DIR)obsconditionsdriver_sim.cpp 	
 											$(SRC_DIR)obsconditionsdriver_sim.h		\
 											$(SRC_DIR)obsconditionsdriver.h			\
 											$(SRC_DIR)alpacadriver.h				\
-											$(SRC_DIR)alpaca_defs.h					\
-											Makefile
+											$(SRC_DIR)alpaca_defs.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)obsconditionsdriver_sim.cpp -o$(OBJECT_DIR)obsconditionsdriver_sim.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)calibrationdriver.o :			$(SRC_DIR)calibrationdriver.cpp 	\
 											$(SRC_DIR)calibrationdriver.h		\
-											$(SRC_DIR)alpacadriver.h			\
-											Makefile
+											$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibrationdriver.cpp -o$(OBJECT_DIR)calibrationdriver.o
 
 
@@ -4292,43 +4431,37 @@ $(OBJECT_DIR)calibrationdriver.o :			$(SRC_DIR)calibrationdriver.cpp 	\
 $(OBJECT_DIR)calibrationdriver_rpi.o :		$(SRC_DIR)calibrationdriver_rpi.cpp \
 											$(SRC_DIR)calibrationdriver_rpi.h	\
 											$(SRC_DIR)calibrationdriver.h		\
-											$(SRC_DIR)alpacadriver.h			\
-											Makefile
+											$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibrationdriver_rpi.cpp -o$(OBJECT_DIR)calibrationdriver_rpi.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)calibration_sim.o :			$(SRC_DIR)calibration_sim.cpp	\
 											$(SRC_DIR)calibration_sim.h		\
 											$(SRC_DIR)calibrationdriver.h	\
-											$(SRC_DIR)alpacadriver.h		\
-											Makefile
+											$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibration_sim.cpp -o$(OBJECT_DIR)calibration_sim.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)calibration_Alnitak.o :		$(SRC_DIR)calibration_Alnitak.cpp 	\
 											$(SRC_DIR)calibration_Alnitak.h		\
 											$(SRC_DIR)calibrationdriver.h		\
-											$(SRC_DIR)alpacadriver.h			\
-											Makefile
+											$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)calibration_Alnitak.cpp -o$(OBJECT_DIR)calibration_Alnitak.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)usbmanager.o :					$(SRC_DIR)usbmanager.cpp 			\
-											$(SRC_DIR)usbmanager.h				\
-											Makefile
+											$(SRC_DIR)usbmanager.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)usbmanager.cpp -o$(OBJECT_DIR)usbmanager.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)discoverythread.o :		$(SRC_DIR)discoverythread.c 		\
 										$(SRC_DIR)discoverythread.h 		\
-										$(SRC_DIR)alpacadriver.h			\
-										Makefile
+										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)discoverythread.c -o$(OBJECT_DIR)discoverythread.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)HostNames.o :				$(SRC_DIR)HostNames.c 	\
-										$(SRC_DIR)HostNames.h 	\
-										Makefile
+										$(SRC_DIR)HostNames.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)HostNames.c -o$(OBJECT_DIR)HostNames.o
 
 

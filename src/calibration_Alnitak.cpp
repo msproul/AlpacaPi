@@ -167,7 +167,7 @@ CalibrationDriverAlnitak::CalibrationDriverAlnitak(const char *argUSBpath)
 	cTurnOff								=	false;
 	cCalibrationIsOn						=	false;
 	cForceUpdate							=	false;
-	cLastUpdate_ms							=	0;
+	cLastThreadUpdate_ms					=	0;
 	cLastUpdate_milliSecs					=	0;
 
 	StartDriverThread();
@@ -238,14 +238,14 @@ uint32_t			deltaTime_ms;
 		cTurnOn			=	false;
 	}
 	currentTime_ms	=	millis();
-	deltaTime_ms	=	currentTime_ms - cLastUpdate_ms;
+	deltaTime_ms	=	currentTime_ms - cLastThreadUpdate_ms;
 	if ((deltaTime_ms > 2000) || cForceUpdate)
 	{
-//		CONSOLE_DEBUG("Updating..........");
+		CONSOLE_DEBUG_W_BOOL("Updating.......... cForceUpdate\t=", cForceUpdate);
 		Alnitak_Cover_GetStatus(alpacaErrMsg);
 		Alnitak_GetBrightness(alpacaErrMsg);
-		cLastUpdate_ms	=	millis();
-		cForceUpdate	=	false;
+		cLastThreadUpdate_ms	=	millis();
+		cForceUpdate			=	false;
 	}
 	//*	if we are moving, delay for a short time
 	if (cCoverCalibrationProp.CoverState == kCover_Moving)

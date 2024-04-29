@@ -831,7 +831,7 @@ const char	webpageTitle[]	=	"AlpacaPi Slit-tracker setup";
 	SocketWriteData(mySocketFD,	gHtmlHeader);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
-	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");
 	sprintf(lineBuff,			"<TITLE>%s</TITLE>\r\n", webpageTitle);
 	SocketWriteData(mySocketFD,	lineBuff);
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");

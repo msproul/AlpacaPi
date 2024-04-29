@@ -230,6 +230,7 @@ int				imageDataLen;
 	switch(cROIinfo.currentROIimageType)
 	{
 		case kImageType_RAW8:
+		case kImageType_MONO8:
 			CONSOLE_DEBUG("kImageType_RAW8");
 			//	9/20/2022
 			//cOpenCV_ImagePtr	=	new cv::Mat(height, width, CV_8UC3);
@@ -428,10 +429,10 @@ int				openCVimageWidth;
 int				bytesPerPixel;
 int				bytesPerPixel2;	//*	calculated 2 different ways
 
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	SETUP_TIMING();
 
-//	CONSOLE_DEBUG(__FUNCTION__);
 	GenerateFileNameRoot();
 
 	if (cOpenCV_ImagePtr != NULL)

@@ -9,9 +9,11 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Apr  9,	2024	<MLS> Created gps_data.cpp
+//*	Apr 26,	2024	<MLS> Started working on gps graph support
+//*	Apr 27,	2024	<MLS> GPS graph working from alpacapi driver
 //*****************************************************************************
 
-#define _ENABLE_GLOBAL_GPS_
+//#define _ENABLE_GLOBAL_GPS_
 
 #ifdef _ENABLE_GLOBAL_GPS_
 
@@ -24,15 +26,18 @@
 #include	<pthread.h>
 #include	<unistd.h>
 #include	<sys/stat.h>
+//#include <sys/types.h>
 
 
 #include	<fcntl.h>
 #include	<termios.h>
-#include	<sys/ioctl.h> //ioctl() call definitions
+#include	<sys/ioctl.h>	//*	ioctl() call definitions
 
+#define	_DEBUG_TIMING_
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
 
+#include	"helper_functions.h"
 
 #include	"ParseNMEA.h"
 #include	"NMEA_helper.h"
@@ -40,6 +45,10 @@
 #include	"serialport.h"
 #include	"gps_data.h"
 
+#ifdef _ENABLE_GPS_GRAPHS_
+	#include	"GPS_graph.h"
+	static void	CreateGPSgrapicsDirectory(void);
+#endif
 
 //===========================================================================
 //*	GPS info
@@ -63,12 +72,16 @@ char		theChar;
 char		nmeaLineBuff[256];
 struct stat	fileStatus;
 int			returnCode;
+uint32_t	lastGrapicsSave_ms;
+uint32_t	current_ms;
+uint32_t	delta_ms;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gSerialPortPath);
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	ParseNMEA_init(&gNMEAdata);
+	lastGrapicsSave_ms	=	0;
 	//---------------------------------------------------
 	//*	check to make sure the devices is present
 	returnCode	=	stat(gSerialPortPath, &fileStatus);		//*	fstat - check for existence of file
@@ -152,14 +165,28 @@ int			returnCode;
 				}
 			}
 		}
+//	#ifdef _ENABLE_GPS_GRAPHS_
+//		current_ms	=	millis();
+//		delta_ms	=	current_ms - lastGrapicsSave_ms;
+//		if (delta_ms > (1 * 60 * 1000))
+////		if (delta_ms > (10 * 1000))
+//		{
+//			CreateGPSgraphics();
+//			lastGrapicsSave_ms	=	current_ms;
+//		}
+//
+//	#endif // _ENABLE_GPS_GRAPHS_
 	}
 }
-
 
 //*****************************************************************************
 void	GPS_StartThread(const char *serialPortPathArg, const char baudRate)
 {
 int		threadErr;
+
+#ifdef _ENABLE_GPS_GRAPHS_
+	CreateGPSgrapicsDirectory();
+#endif
 
 	if (serialPortPathArg != NULL)
 	{
@@ -178,12 +205,84 @@ int		threadErr;
 	}
 }
 
+#ifdef _ENABLE_GPS_GRAPHS_
+//*****************************************************************************
+static void	CreateGPSgrapicsDirectory(void)
+{
+int			returnCode;
+int			mkdirErrCode;
+struct stat	fileStatus;
+
+
+	returnCode	=	stat(kGPSimageDirectory, &fileStatus);	//*	fstat - check for existence of file
+	if (returnCode == 0)
+	{
+//		CONSOLE_DEBUG_W_STR("Directory is present", kGPSimageDirectory);
+	}
+	else
+	{
+		mkdirErrCode	=	mkdir(kGPSimageDirectory, 0744);
+		if (mkdirErrCode == 0)
+		{
+			CONSOLE_DEBUG_W_NUM("mkdir() failed", mkdirErrCode);
+		}
+	}
+}
+
+static int	gGraphsCreatedCounter	=	0;
+
+//*****************************************************************************
+void	CreateGPSgraphics(void)
+{
+	CONSOLE_DEBUG_W_NUM("gGraphsCreatedCounter\t=", gGraphsCreatedCounter);
+
+	SETUP_TIMING();
+
+	gGraphsCreatedCounter++;
+#ifdef _ENABLE_SATELLITE_TRAILS_
+	CreateSatelliteTrailsGraph(NULL, kGPSimageDirectory, "satelliteTrails.jpg");
+	CreateSatelliteElevationGraph(NULL, kGPSimageDirectory, elevationGraphFileName);
+#endif
+
+#ifdef _ENABLE_LAT_LON_TRACKING_
+	CreateLatLonHistoryPlot(NULL, kGPSimageDirectory,		"latlonGraph.jpg");
+#endif
+
+#ifdef _ENABLE_ALTITUDE_TRACKING_
+	CreateAltitudeHistoryPlot(NULL, kGPSimageDirectory, 	altGraphFileName);
+#endif
+
+#ifdef _ENABLE_PDOP_TRACKING_
+	CreatePDOPhistoryPlot(NULL, kGPSimageDirectory,			pdopGraphFileName);
+#endif
+
+#ifdef _ENABLE_NMEA_POSITION_ERROR_TRACKING_
+	CreatePositionErrorHistoryPlot(NULL, kGPSimageDirectory, posErrGraphFileName);
+#endif
+
+#ifdef _ENABLE_ALTITUDE_TRACKING_
+	CreateAltitudeHistoryPlot(NULL, kGPSimageDirectory, altGraphFileName);
+#endif // _ENABLE_ALTITUDE_TRACKING_
+
+#ifdef _ENABLE_SATELLITE_ALMANAC_
+	CreateSNRdistrbutionPlot(	NULL, kGPSimageDirectory, snrGraphFileName);
+	CreateSatsInUseHistoryPlot(	NULL, kGPSimageDirectory, satsInUseGraphFileName);
+#endif // _ENABLE_SATELLITE_ALMANAC_
+
+	DEBUG_TIMING("Time to write out image files:");
+}
+#endif // _ENABLE_GPS_GRAPHS_
+
 #ifdef _INCLUDE_GPSTEST_MAIN_
 
 //*****************************************************************************
 int	main(int argc, char **argv)
 {
 	printf("Staring gps read data thread %s\r\n", __FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("kLatLonTacking_ArraySize\t=",	kLatLonTacking_ArraySize);
+	CONSOLE_DEBUG_W_NUM("kAltTacking_ArraySize   \t=",	kAltTacking_ArraySize);
+	CONSOLE_DEBUG_W_NUM("kPosErrTacking_ArraySize\t=",	kPosErrTacking_ArraySize);
+	CONSOLE_DEBUG_W_NUM("kPDOPtacking_ArraySize  \t=",	kPDOPtacking_ArraySize);
 
 	GPS_StartThread("/dev/ttyS0");
 

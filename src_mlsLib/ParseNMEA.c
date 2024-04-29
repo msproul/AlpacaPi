@@ -7,6 +7,7 @@
 //**************************************************************************************
 //*	Edit History
 //**************************************************************************************
+//*	Apr 14,	1996	<KAS> Put the boxes for the Heads-Up-Display into a Dialog Box template
 //*	Apr 19,	1996	<KAS> Separated NMEA and APRS Parse Routines
 //*	Dec 11,	1996	<KAS> Removed UpdateHUDdisplay to a different file
 //*	Dec 26,	1996	<KAS> Dave VanHorn dvanhron@cedar.net
@@ -51,12 +52,19 @@
 //*	May 15,	2017	<MLS> Added Mode tracking (1=no fix,2=2D,3=3D)
 //*	May 15,	2017	<MLS> Added Magnetic variation tracking
 //*	May 25,	2017	<MLS> Added parsing of $PRWIZCH sat signal data
+//*	Jun  9,	2017	<MLS> Added gTimeAdjustmentCount
+//*	Jun 12,	2017	<MLS> Added _ENABLE_SATELLITE_TRAILS_
+//*	Jun 12,	2017	<MLS> Added SaveSatelliteTrails()
+//*	Jun 15,	2017	<MLS> Added min/max altitude tracking
+//*	Jul 11,	2017	<MLS> Added logic in Check_And_Set_System_Time() to prevent setting time in the past
+//*	Jul 12,	2017	<MLS> Time must be off by 2 or more seconds before update occurs
 //*	Sep  5,	2023	<MLS> Removing global gNMEAdata, replacing with pointer
 //*	Sep  9,	2023	<MLS> Added GetLatLonDouble()
 //*	Sep  9,	2023	<MLS> Added ParseNMEA_FormatLatLonStrings()
 //*	Apr 10,	2024	<MLS> Added ComputeLatLonAverage()
 //*	Apr 12,	2024	<MLS> Added timing tests to ComputeLatLonAverage()
 //*	Apr 13,	2024	<MLS> Added altitude to averaging logic
+//*	Apr 16,	2024	<MLS> Added GetGPSmodeString()
 //**************************************************************************************
 
 #include	<stdio.h>
@@ -102,6 +110,10 @@
 	static void	NMEAtrack_Update(const unsigned long nmeaCode, const char *nmeaID, const char *fullString);
 #endif
 
+int						gTimeAdjustmentCount	=	0;	//*	number of times we have adjusted the time
+int						gTimeAdjustmentAhead	=	0;
+int						gTimeAdjustmentBehind	=	0;
+
 static int				gMaxSatelliteSNRvalue	=	0;
 static unsigned long	gNMEAcheckSumErrCnt		=	0;
 static unsigned long	gUnknownNEMAcount		=	0;
@@ -109,6 +121,14 @@ static unsigned long	gUnknownNEMAcount		=	0;
 #ifdef _ENABLE_TIME_DEGBUG_
 	char	gLastNMEAdata[512];
 #endif
+
+
+#ifdef _ENABLE_SATELLITE_TRAILS_
+	TYPE_SatTrailsStruct	gSatTrails[kMaxNumOfSatallites];
+	bool					gSatTrailsNeedsInit	=	true;
+	int						gSatTrailsLastIdx	=	0;
+#endif
+
 
 //**************************************************************************************
 //*	this is done as a stucture so it can be easily passed to routines instead of being a global
@@ -631,6 +651,16 @@ static void	TrackAltitudeValue(TYPE_NMEAInfoStruct	*theNmeaInfo, const double al
 {
 int	altIndex;
 
+	if (altitude_feet < theNmeaInfo->minAltitude)
+	{
+		theNmeaInfo->minAltitude	=	altitude_feet;
+	}
+	if (altitude_feet > theNmeaInfo->maxAltitude)
+	{
+		theNmeaInfo->maxAltitude	=	altitude_feet;
+	}
+
+
 	//*	we have a valid time, so we can save the altitude value
 	altIndex	=	theNmeaInfo->gpsTime / kAltTacking_deltaTime;
 	if (altIndex < kAltTacking_ArraySize)
@@ -640,6 +670,62 @@ int	altIndex;
 }
 #endif	//	_ENABLE_ALTITUDE_TRACKING_
 
+#ifdef _ENABLE_SATELLITE_TRAILS_
+//**************************************************************************************
+void	InitSatelliteTrails(void)
+{
+int	jj;
+
+	for (jj=0; jj<kMaxNumOfSatallites; jj++)
+	{
+		memset(&gSatTrails[jj], 0, sizeof(TYPE_SatTrailsStruct));
+	}
+	gSatTrailsNeedsInit	=	false;
+}
+
+
+//**************************************************************************************
+static void	SaveSatelliteTrails(unsigned long gpsTime, TYPE_SatStatsStruct *theSatData)
+{
+int	ii;
+int	jj;
+int	satTrailsIndex;
+
+	if (gSatTrailsNeedsInit)
+	{
+		InitSatelliteTrails();
+	}
+
+	//*	we have a valid time, so we can save the PDOP value
+	satTrailsIndex		=	gpsTime / kSatTrails_deltaTime;
+	gSatTrailsLastIdx	=	satTrailsIndex;
+
+	//*	now save the current values into the current time slot
+	for (jj=0; jj< kMaxNumOfSatallites; jj++)
+	{
+		gSatTrails[jj].satellitePRN					=	theSatData[jj].satellitePRN;
+		gSatTrails[jj].elvevation[satTrailsIndex]	=	theSatData[jj].elvevation;
+		gSatTrails[jj].azimuth[satTrailsIndex]		=	theSatData[jj].azimuth;
+		gSatTrails[jj].signal2Noise[satTrailsIndex]	=	theSatData[jj].signal2Noise;
+	}
+#if 0
+	//*	now lets set the next 10 values to 0
+	satTrailsIndex++;
+	ii	=	0;
+	while ((satTrailsIndex < kSatTrails_ArraySize) && (ii < 50))
+	{
+		for (jj=0; jj< kMaxNumOfSatallites; jj++)
+		{
+			gSatTrails[jj].elvevation[satTrailsIndex]	=	0;
+		//	gSatTrails[jj].azimuth[satTrailsIndex]		=	0;
+		//	gSatTrails[jj].signal2Noise[satTrailsIndex]	=	0;
+		}
+		ii++;
+		satTrailsIndex++;
+	}
+#endif
+}
+#endif	//	_ENABLE_SATELLITE_TRAILS_
 
 #ifdef _ENABLE_GPS_AVERAGE_
 //**************************************************************************************
@@ -1213,7 +1299,12 @@ double			myLon_double;
 
 		//---------------------------------------------------------------------
 	//	case	'PBER':		//-?	$GPBER
-	//	case	'PBOD':		//		$GPBOD,,T,,M,,*47	Bearing, Origin to Destination				BOD,XXX.,T,XXX.,M,CCCC,CCCC
+
+		//	$GPBOD,,T,,M,,*47	Bearing, Origin to Destination
+		//*	BOD,XXX.,T,XXX.,M,CCCC,CCCC
+		case	'PBOD':
+			break;
+
 	//	case	'PBPI':		//-?	$GPBPI
 
 		//		  1        2        3 4         5 6    7 8     9 10    1 12
@@ -1409,6 +1500,15 @@ double			myLon_double;
 				#endif
 				}
 			}
+
+		#ifdef _ENABLE_SATELLITE_TRAILS_
+			if (theNmeaInfo->gpsTime > 0)
+			{
+				SaveSatelliteTrails(theNmeaInfo->gpsTime, theNmeaInfo->theSats);
+			}
+		#endif	//	_ENABLE_SATELLITE_TRAILS_
+
+
 	#endif
 		}
 
@@ -1632,20 +1732,20 @@ int			ii;
 			theNmeaInfo->sphericalPosErr	=	atof(nmeaArgs[5].argString);
 		#ifdef _ENABLE_NMEA_POSITION_ERROR_TRACKING_
 			theNmeaInfo->gPGRME_exists		=	true;
-				if (theNmeaInfo->gpsTime > 0)
+			if (theNmeaInfo->gpsTime > 0)
+			{
+			int	trackIndex;
+
+
+				//*	we have a valid time, so we can save the altitude value
+				trackIndex	=	theNmeaInfo->gpsTime / kPosErrTacking_deltaTime;
+				if (trackIndex < kPosErrTacking_ArraySize)
 				{
-				int	trackIndex;
-
-
-					//*	we have a valid time, so we can save the altitude value
-					trackIndex	=	theNmeaInfo->gpsTime / kPosErrTacking_deltaTime;
-					if (trackIndex < kPosErrTacking_ArraySize)
-					{
-						theNmeaInfo->horzPosErrArry[trackIndex]	=	theNmeaInfo->horizontalPosErr;
-						theNmeaInfo->vertPosErrArry[trackIndex]	=	theNmeaInfo->verticalPosErr;
-						theNmeaInfo->sphrPosErrArry[trackIndex]	=	theNmeaInfo->sphericalPosErr;
-					}
+					theNmeaInfo->horzPosErrArry[trackIndex]	=	theNmeaInfo->horizontalPosErr;
+					theNmeaInfo->vertPosErrArry[trackIndex]	=	theNmeaInfo->verticalPosErr;
+					theNmeaInfo->sphrPosErrArry[trackIndex]	=	theNmeaInfo->sphericalPosErr;
 				}
+			}
 		#endif
 			break;
 
@@ -1879,7 +1979,7 @@ bool			processedOK;
 				//======================================================================
 				//*	$Pxxx		==>	Propritary data
 				processedOK	=	ParseNMEAstringsProprietary(theNMEAstring,
-															nmeaData->,
+															nmeaData,
 															&nmeaData->theNN,
 															nmeaArgs);
 
@@ -1909,6 +2009,10 @@ bool			processedOK;
 			printf("Checksum error =%s\n", theNMEAstring);
 		#endif
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("Invalid NMEA data=", theNMEAstring);
 	}
 	return(validString);
 }
@@ -2042,6 +2146,7 @@ int				ii;
 char			theDateString[16];
 char			theTimeString[16];
 bool			allDigitsFlag;
+bool			timeStringValid;
 //TYPE_timeHHMMSS	timeHHMMSS;
 int				commaCntr;
 int				slen;
@@ -2089,6 +2194,7 @@ int				slen;
 					}
 					//*	make sure they are all digits
 					allDigitsFlag	=	true;
+					timeStringValid	=	true;
 					for (ii=0; ii<6; ii++)
 					{
 						if (isdigit(theDateString[ii]) == false)
@@ -2102,7 +2208,12 @@ int				slen;
 							break;
 						}
 					}
-
+					//*	check for all 0's
+					if (strcmp(theTimeString, "000000") == 0)
+					{
+						timeStringValid	=	false;
+						nmeaData->invalidTimeCount++;	//*	keep track of the number of invalid time records
+					}
 					//*	do we have all valid data
 					if (allDigitsFlag)
 					{
@@ -2193,12 +2304,33 @@ void	GetCurrentLatLon_Strings(TYPE_NMEAInfoStruct *nmeaData, char *theLonStr,cha
 	Get_Actual_LatLon_Strings(nmeaData->xxLon, nmeaData->yyLat, theLonStr, theLatStr, includeLabel);
 }
 
+//*****************************************************************************
+void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString)
+{
+	modeString[0]	=	0;
+	switch (gpsMode1)
+	{
+		case 'A':	strcpy(modeString, "Automatic: ");	break;
+		case 'M':	strcpy(modeString, "Manual: ");	 	break;
+		default:	strcpy(modeString, "Unknown: ");	break;
+	}
+
+	switch (gpsMode2)
+	{
+		case '1':	strcat(modeString, "Fix not available");	break;
+		case '2':	strcat(modeString, "2D Fix");	 			break;
+		case '3':	strcat(modeString, "3D Fix");	 			break;
+		default:	strcat(modeString, "Unknown: ");			break;
+	}
+}
+
 #pragma mark -
 #pragma mark NMEA sentance tracking
 #ifdef _ENABLE_NMEA_SENTANCE_TRACKING_
 
 TYPE_NMEAsentance	gNMEAsentances[kMaxNMEAsentances];
 int					gNMEAsentanceCnt	=	-1;
+int					gNMEAdataRecorded	=	0;
 
 //**************************************************************************************
 static  int QsortNMEAsentance(const void *e1, const void *e2)
@@ -2222,6 +2354,7 @@ bool	keepLooking;
 //	CONSOLE_DEBUG_W_HEX("nmeaCode", nmeaCode);
 //	CONSOLE_DEBUG_W_STR("nmeaID", nmeaID);
 //	CONSOLE_DEBUG_W_STR("fullString", fullString);
+	gNMEAdataRecorded++;
 
 	//*	if the table is blank, zero it.
 	if (gNMEAsentanceCnt < 0)
@@ -2238,7 +2371,7 @@ bool	keepLooking;
 		//*	now see if we can find it in the table
 		ii			=	0;
 		keepLooking	=	true;
-		while (keepLooking && (ii<gNMEAsentanceCnt))
+		while (keepLooking && (ii < gNMEAsentanceCnt))
 		{
 			if (nmeaCode == gNMEAsentances[ii].nmea4LetterCode)
 			{

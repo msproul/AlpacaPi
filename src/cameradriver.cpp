@@ -34,7 +34,7 @@
 //*****************************************************************************
 //*	Apr 14,	2019	<MLS> Created cameradriver.cpp
 //*	Apr 15,	2019	<MLS> Added command table for camera
-//*	Apr 17,	2019	<MLS> Added Camera_OutputHTML()
+//*	Apr 17,	2019	<MLS> Added OutputHTML()
 //*	Aug 26,	2019	<MLS> Started on C++ version of alpaca camera driver
 //*	Sep  3,	2019	<MLS> Added initialization to class constructor
 //*	Sep 26,	2019	<MLS> Working on organizing camera C++ class
@@ -207,6 +207,7 @@
 //*	Sep  1,	2023	<MLS> 16 bit binary transfer working AlpacaPi client
 //*	Sep  9,	2023	<MLS> Added _USE_CAMERA_READ_THREAD_
 //*	Mar 25,	2024	<MLS> Read NASA Moon Phase on creation of camera objects
+//*	Apr 19,	2024	<MLS> Added check for flip enabled to Put_Flip()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -284,8 +285,16 @@
 	#include	"cameradriver_FLIR.h"
 #endif
 
+#ifdef	_ENABLE_OGMA_
+	#include	"cameradriver_OGMA.h"
+#endif
+
 #ifdef _ENABLE_PHASEONE_
 	#include	"cameradriver_PhaseOne.h"
+#endif
+
+#ifdef _ENABLE_CAMERA_PLAYERONE_
+	#include	"cameradriver_PlayerOne.h"
 #endif
 
 #ifdef _ENABLE_QHY_
@@ -330,20 +339,24 @@ int	cameraCnt;
 //-----------------------------------------------------------
 //*	ATIK needs to be before ASI for multiple camera starts
 #ifdef _ENABLE_ATIK_
-	cameraCnt	+=	CreateATIK_CameraObjects();
+	cameraCnt	+=	CreateCameraObjects_ATIK();
 #endif
 //-----------------------------------------------------------
 #ifdef _ENABLE_ASI_
-	cameraCnt	+=	CreateASI_CameraObjects();
+	cameraCnt	+=	CreateCameraObjects_ASI();
 #endif
 //-----------------------------------------------------------
 //#ifdef _ENABLE_FLIR_) && (__GNUC__ > 5)
 #ifdef _ENABLE_FLIR_
-	cameraCnt	+=	CreateFLIR_CameraObjects();
+	cameraCnt	+=	CreateCameraObjects_FLIR();
 #endif
 //-----------------------------------------------------------
 #ifdef _ENABLE_PHASEONE_
-	cameraCnt	+=	CreatePhaseOne_CameraObjects();
+	cameraCnt	+=	CreateCameraObjects_PhaseOne();
+#endif
+//-----------------------------------------------------------
+#ifdef _ENABLE_CAMERA_PLAYERONE_
+	cameraCnt	+=	CreateCameraObjects_PlayerOne();
 #endif
 //-----------------------------------------------------------
 #ifdef _ENABLE_QHY_
@@ -351,17 +364,21 @@ int	cameraCnt;
 #endif
 //-----------------------------------------------------------
 #ifdef _ENABLE_QSI_
-	cameraCnt	+=	CreateQSI_CameraObjects();
+	cameraCnt	+=	CreateCameraObjects_QSI();
 #endif
 //-----------------------------------------------------------
 #ifdef _ENABLE_TOUP_
-	cameraCnt	+=	CreateTOUP_CameraObjects();
+	cameraCnt	+=	CreateCameraObjects_TOUP();
+#endif
+//-----------------------------------------------------------
+#ifdef	_ENABLE_OGMA_
+	cameraCnt	+=	CreateCameraObjects_OGMA();
 #endif
 //-----------------------------------------------------------
 #ifdef _ENABLE_SONY_
-	CreateSONY_CameraObjects();
+	cameraCnt	+=	CreateCameraObjects_SONY();
 #endif
-
+//-----------------------------------------------------------
 #ifdef _ENABLE_CAMERA_SIMULATOR_
 	cameraCnt	+=	CreateCameraObjects_Sim();
 #endif
@@ -409,6 +426,11 @@ CameraDriver::CameraDriver(void)
 int	mkdirErrCode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+
+	//*	set everything to false first
+	memset(&cCameraProp,	0,	sizeof(TYPE_CameraProperties));
+	memset(&cROIinfo,		0,	sizeof(TYPE_IMAGE_ROI_Info));
+
 	//*	set all of the class data to known states
 
 	SetImageDataDirectory("/media/pi/rpdata/imagedata");
@@ -422,8 +444,6 @@ int	mkdirErrCode;
 	cDriverCmdTablePtr	=	gCameraCmdTable;
 	TemperatureLog_SetDescription("Camera Temperature");
 
-	//*	set everything to false first
-	memset(&cCameraProp, 0, sizeof(TYPE_CameraProperties));
 
 	cUUID.part3						=	'CA';					//*	model number
 	cCameraProp.SensorType			=   kSensorType_Monochrome;
@@ -3501,8 +3521,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 		alpacaErrCode	=	Read_SensorTargetTemp();
 		if (alpacaErrCode != kASCOM_Err_Success)
 		{
-			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
-			CONSOLE_DEBUG_W_DBL("SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
+//			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+//			CONSOLE_DEBUG_W_DBL("SetCCDTemperature\t=",	cCameraProp.SetCCDTemperature);
 		}
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
 										reqData->jsonTextBuffer,
@@ -4433,6 +4453,7 @@ bool	xmit16BitAs32Bit	=	false;
 	{
 		case kImageType_RAW8:
 		case kImageType_Y8:
+		case kImageType_MONO8:
 			CONSOLE_DEBUG("kImageType_RAW8");
 			binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
 			if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
@@ -4555,6 +4576,7 @@ bool	xmit16BitAs32Bit	=	false;
 			{
 				case kImageType_RAW8:
 				case kImageType_Y8:
+				case kImageType_MONO8:
 					CONSOLE_DEBUG("kImageType_RAW8");
 					switch (binaryImageHdr.TransmissionElementType)
 					{
@@ -4790,6 +4812,7 @@ char				httpHeader[500];
 			case kImageType_RAW8:
 			case kImageType_Y8:
 			case kImageType_RAW16:
+			case kImageType_MONO8:
 			default:
 				imgRank	=	2;
 				break;
@@ -4814,6 +4837,7 @@ char				httpHeader[500];
 		{
 			case kImageType_RAW8:
 			case kImageType_Y8:
+			case kImageType_MONO8:
 				CONSOLE_DEBUG("kImageType_RAW8");
 				Send_imagearray_raw8(	mySocket,
 										cCameraDataBuffer,
@@ -5295,6 +5319,7 @@ TYPE_ASCOM_STATUS	tempSensorErr;
 
 			//====================================================================
 			case kImageType_RAW8:
+			case kImageType_MONO8:
 				CONSOLE_DEBUG("kImageType_RAW8");
 				Send_RGBarray_raw8(mySocket, pixelPtr, pixelCount);
 				break;
@@ -6979,7 +7004,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::Write_Gain(const int newBinYvalue)
+TYPE_ASCOM_STATUS	CameraDriver::Write_Gain(const int newGainValue)
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
@@ -7046,6 +7071,10 @@ TYPE_IMAGE_TYPE	myImageType;
 	else if (strcasecmp(imageTypeString, "Y8") == 0)
 	{
 		myImageType	=	kImageType_Y8;
+	}
+	else if (strcasecmp(imageTypeString, "MONO8") == 0)
+	{
+		myImageType	=	kImageType_MONO8;
 	}
 	else
 	{
@@ -7252,7 +7281,8 @@ char	myImageTypeStr[16];
 				case kImageType_RAW8:	strcpy(myImageTypeStr,	"RAW8");	break;
 				case kImageType_RAW16:	strcpy(myImageTypeStr,	"RAW16");	break;
 				case kImageType_RGB24:	strcpy(myImageTypeStr,	"RGB24");	break;
-				case kImageType_Y8:		strcpy(myImageTypeStr,	"Y8");	break;
+				case kImageType_Y8:		strcpy(myImageTypeStr,	"Y8");		break;
+				case kImageType_MONO8:	strcpy(myImageTypeStr,	"MONO8");	break;
 
 				case kImageType_Invalid:
 				case kImageType_last:
@@ -7276,7 +7306,7 @@ TYPE_ASCOM_STATUS	CameraDriver::Read_SensorTemp(void)
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
-	CONSOLE_DEBUG(cLastCameraErrMsg);
+//	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -7286,7 +7316,7 @@ TYPE_ASCOM_STATUS	CameraDriver::Read_SensorTargetTemp(void)
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
-	CONSOLE_DEBUG(cLastCameraErrMsg);
+//	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -7444,7 +7474,7 @@ int	CameraDriver::RunStateMachine_TakingPicture(void)
 int					exposureState;
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	exposureState	=	Check_Exposure(true);
 	if (cVerboseDebug)
@@ -7454,7 +7484,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 	switch(exposureState)
 	{
 		case kExposure_Idle:
-			CONSOLE_DEBUG("Reseting to idle");
+			CONSOLE_DEBUG("Resetting to idle");
 			cInternalCameraState	=	kCameraState_Idle;
 			cWorkingLoopCnt			=	0;
 			break;
@@ -7466,7 +7496,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			{
 //				CONSOLE_DEBUG("kExposure_Working");
 				Check_Exposure(true);
-			//	CONSOLE_DEBUG_W_STR("Aborting.... Reseting to idle-", cDeviceManufAbrev);
+			//	CONSOLE_DEBUG_W_STR("Aborting.... Resetting to idle-", cDeviceManufAbrev);
 			//	cInternalCameraState	=	kCameraState_Idle;
 				cWorkingLoopCnt			=	0;
 			}
@@ -7477,6 +7507,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 			break;
 
 		case kExposure_Success:
+			CONSOLE_DEBUG("kExposure_Success");
 			cFramesRead++;
 			if (gVerbose)
 			{
@@ -7800,8 +7831,6 @@ char		fileNameDateString[64];
 
 //	CONSOLE_DEBUG_W_STR("cFileNameRoot\t=", cFileNameRoot);
 }
-
-
 
 #pragma mark -
 
@@ -8235,52 +8264,63 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Put_Flip(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newFlipMode;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG(reqData->contentData);
-	if (reqData != NULL)
+	if (cCanFlipImage)
 	{
-		//*	look for filter
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"flip",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		CONSOLE_DEBUG(reqData->contentData);
+		if (reqData != NULL)
 		{
-			newFlipMode	=	atoi(argumentString);
-			if ((newFlipMode >= kFlip_None) && (newFlipMode <= kFlip_Both))
+			//*	look for filter
+			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+													"flip",
+													argumentString,
+													(sizeof(argumentString) -1));
+			if (foundKeyWord)
 			{
-				alpacaErrCode	=	SetFlipMode(newFlipMode);
-				if (alpacaErrCode != kASCOM_Err_Success)
+				newFlipMode	=	atoi(argumentString);
+				if ((newFlipMode >= kFlip_None) && (newFlipMode <= kFlip_Both))
 				{
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+					alpacaErrCode	=	SetFlipMode(newFlipMode);
+					if (alpacaErrCode == kASCOM_Err_Success)
+					{
+						cFlipMode		=	newFlipMode;
+					}
+					else
+					{
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+					}
+				}
+				else
+				{
+					alpacaErrCode	=	kASCOM_Err_InvalidValue;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid flip value");
 				}
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid flip value");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'flip' not found");
 			}
 		}
 		else
 		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'flip' not found");
+			alpacaErrCode	=	kASCOM_Err_InternalError;
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "flip not supported");
 	}
 	return(alpacaErrCode);
 
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriver::SetFlipMode(int newFlipMode)
+TYPE_ASCOM_STATUS	CameraDriver::SetFlipMode(const int newFlipMode)
 {
 	//*	this routine needs to be over ridden if you want to enable flip mode
 	//*	IT IS THE RESPONSIBILITY OF THIS ROUTINE TO ACTUALLY SET cFlipMode
@@ -9357,7 +9397,7 @@ bool		checkedFlag;
 	SocketWriteData(mySocketFD,	gHtmlHeader);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
-	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");
 	sprintf(lineBuff,			"<TITLE>%s</TITLE>\r\n", cameraTitle);
 	SocketWriteData(mySocketFD,	lineBuff);
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");

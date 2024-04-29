@@ -1,4 +1,4 @@
-History Comments found =3305 in 498 files
+History Comments found =3378 in 513 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -19,37 +19,38 @@ PDS_ReadNASAfiles.c:47   	//*	Jul 11,	1992	Added code to close window routine to
 PDS_ReadNASAfiles.c:48   	//*	Sep  7,	1992	Started implemented"Open PDS Database" menu,	auto dim working
 PDS_ReadNASAfiles.c:49   	//*	Nov  6,	1992	Minor bugs fixed in voyager browse stuff
 PDS_ReadNASAfiles.c:50   	//*	Apr 15,	1993	Received 47 CD-ROMs from NASA
-ParseNMEA.c:10           	//*	Apr 19,	1996	<KAS> Separated NMEA and APRS Parse Routines
+ParseNMEA.c:10           	//*	Apr 14,	1996	<KAS> Put the boxes for the Heads-Up-Display into a Dialog Box template
+ParseNMEA.c:11           	//*	Apr 19,	1996	<KAS> Separated NMEA and APRS Parse Routines
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
 StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
-ParseNMEA.c:11           	//*	Dec 11,	1996	<KAS> Removed UpdateHUDdisplay to a different file
-ParseNMEA.c:12           	//*	Dec 26,	1996	<KAS> Dave VanHorn dvanhron@cedar.net
-ParseNMEA.c:13           	//*	Dec 26,	1996	<KAS> PNI Compass, same as Jameco
-ParseNMEA.c:14           	//*	Dec 26,	1996	<KAS> Talked them into RAW data output
+ParseNMEA.c:12           	//*	Dec 11,	1996	<KAS> Removed UpdateHUDdisplay to a different file
+ParseNMEA.c:13           	//*	Dec 26,	1996	<KAS> Dave VanHorn dvanhron@cedar.net
+ParseNMEA.c:14           	//*	Dec 26,	1996	<KAS> PNI Compass, same as Jameco
+ParseNMEA.c:15           	//*	Dec 26,	1996	<KAS> Talked them into RAW data output
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
 eph.c:11                 	//*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
 StarData.c:9             	//*	Nov 20,	1999	<MLS> major re-writing and re-organization
-ParseNMEA.c:15           	//*	Feb  6,	2001	<MLS> ReturnNMEAAltitude - Modified to use ATOF instead of ATOL
-ParseNMEA.c:16           	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentences
-ParseNMEA.c:1725         	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentenses
-ParseNMEA.c:17           	//*	May 20,	2002	<KAS> Started working on adaptive beaconing and corner pegging
-ParseNMEA.c:18           	//*	Sep 16,	2004	<MLS> Added support for $GPNVP for special Korean GPS, requested by customer
-ParseNMEA.c:19           	//*	Nov 17,	2004	<MLS> Started separating out NMEA parsing into smaller more manageable routines
-ParseNMEA.c:20           	//*	Apr 30,	2012	<MLS> Started on GPS support.
-ParseNMEA.c:21           	//*	Apr 30,	2012	<MLS> GPS parsing code implemented
+ParseNMEA.c:16           	//*	Feb  6,	2001	<MLS> ReturnNMEAAltitude - Modified to use ATOF instead of ATOL
+ParseNMEA.c:17           	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentences
+ParseNMEA.c:1825         	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentenses
+ParseNMEA.c:18           	//*	May 20,	2002	<KAS> Started working on adaptive beaconing and corner pegging
+ParseNMEA.c:19           	//*	Sep 16,	2004	<MLS> Added support for $GPNVP for special Korean GPS, requested by customer
+ParseNMEA.c:20           	//*	Nov 17,	2004	<MLS> Started separating out NMEA parsing into smaller more manageable routines
+ParseNMEA.c:21           	//*	Apr 30,	2012	<MLS> Started on GPS support.
+ParseNMEA.c:22           	//*	Apr 30,	2012	<MLS> GPS parsing code implemented
 ParseNMEA.h:10           	//*	Apr 30,	2012	<MLS> Structures created to hold gps data for parsing
 ConsoleDebug.h:8         	//*	Jul 12,	2012	<MLS> Created ConsoleDebug.h
-ParseNMEA.c:22           	//*	Sep 11,	2012	<MLS> Added Get_Actual_LatLon_Strings() for GPS display formatting
+ParseNMEA.c:23           	//*	Sep 11,	2012	<MLS> Added Get_Actual_LatLon_Strings() for GPS display formatting
 ParseNMEA.h:11           	//*	Sep 11,	2012	<MLS> Added validDate to NMEA structure
-ParseNMEA.c:23           	//*	Nov 21,	2012	<MLS> Added GetCurrentLatLon_Strings() for metadata saving
+ParseNMEA.c:24           	//*	Nov 21,	2012	<MLS> Added GetCurrentLatLon_Strings() for metadata saving
 ConsoleDebug.h:9         	//*	Nov 30,	2012	<MLS> Added CONSOLE_ERROR macros, same as CONSOLE_DEBUG but always print
-ParseNMEA.c:24           	//*	Dec  5,	2012	<MLS> Check for max SNR value from satellite GSV string
-ParseNMEA.c:25           	//*	Dec  5,	2012	<MLS> Added GetMaxSatSignalStrength()
-ParseNMEA.c:1398         	//*	Dec  5,	2012	<MLS> Check for max snr value from satellite GSV string
-ParseNMEA.c:26           	//*	Jan  2,	2013	<MLS> Added LatLonType argument to ReturnNMEALatLon()
+ParseNMEA.c:25           	//*	Dec  5,	2012	<MLS> Check for max SNR value from satellite GSV string
+ParseNMEA.c:26           	//*	Dec  5,	2012	<MLS> Added GetMaxSatSignalStrength()
+ParseNMEA.c:1489         	//*	Dec  5,	2012	<MLS> Check for max snr value from satellite GSV string
+ParseNMEA.c:27           	//*	Jan  2,	2013	<MLS> Added LatLonType argument to ReturnNMEALatLon()
 ParseNMEA.h:12           	//*	Jan  2,	2013	<MLS> Added LatLonType to TYPE_NMEAInfoStruct
-ParseNMEA.c:27           	//*	Mar 12,	2013	<MLS> Added support for separate test program,
-ParseNMEA.c:28           	//*	Mar 12,	2013	<MLS> Fixed lat/lon bug in ReturnNMEALatLon (bug was introduced 1/2/13)
+ParseNMEA.c:28           	//*	Mar 12,	2013	<MLS> Added support for separate test program,
+ParseNMEA.c:29           	//*	Mar 12,	2013	<MLS> Fixed lat/lon bug in ReturnNMEALatLon (bug was introduced 1/2/13)
 VectorMath.h:3           	//*	Mar 14,	2014	<MLS> Added more matrix support
 VectorMath.c:5           	//*	Mar 28,	2014	<MLS> Started on Vector Math
 VectorMath.c:6           	//*	Apr  4,	2014	<MLS> Added VectorScale() and VectorAdd()
@@ -61,43 +62,69 @@ VectorMath.c:10          	//*	Mar 15,	2015	<MLS> Added Matrix_Cofactor()
 VectorMath.c:11          	//*	Mar 15,	2015	<MLS> Added Matrix_Determinant()
 VectorMath.c:12          	//*	Mar 15,	2015	<MLS> Added Matrix_Inverse()
 VectorMath.c:13          	//*	Mar 15,	2015	<MLS> Added Matrix_Transpose()
-ParseNMEA.c:29           	//*	Oct  3,	2016	<MLS> Updating to be a general purpose GPS parser
-ParseNMEA.c:1278         	//*	Oct  3,	2016	TODO: Compare this with MacAPRS code
+ParseNMEA.c:30           	//*	Oct  3,	2016	<MLS> Updating to be a general purpose GPS parser
+ParseNMEA.c:1369         	//*	Oct  3,	2016	TODO: Compare this with MacAPRS code
 ParseNMEA.h:13           	//*	Oct  3,	2016	<MLS> Added TYPE_timeHHMMSS
 ParseNMEA.h:14           	//*	Oct  3,	2016	<MLS> Added _ENABLE_SATELLITE_ALMANAC_ to save on memory if not needed
 NMEA_helper.c:9          	//*	Oct  4,	2016	<MLS> Created NMEA_helper.c to avoid duplication
-ParseNMEA.c:30           	//*	Oct  4,	2016	<MLS> Moved checksum routines to helper file
-ParseNMEA.c:31           	//*	Oct  6,	2016	<MLS> Updated ReturnNMEAAltitude() to check for valid altitude
-ParseNMEA.c:32           	//*	Oct  6,	2016	<MLS> Updated ReturnNMEASpeed() to check for valid speed
+ParseNMEA.c:31           	//*	Oct  4,	2016	<MLS> Moved checksum routines to helper file
+ParseNMEA.c:32           	//*	Oct  6,	2016	<MLS> Updated ReturnNMEAAltitude() to check for valid altitude
+ParseNMEA.c:33           	//*	Oct  6,	2016	<MLS> Updated ReturnNMEASpeed() to check for valid speed
 ParseNMEA.h:15           	//*	Oct  6,	2016	<MLS> Added _ENABLE_WAYPOINT_PARSING_ to save on memory if not needed
 ParseNMEA.h:16           	//*	Oct  6,	2016	<MLS> Added _ENABLE_PROPRIETARY_PARSING_ to save on memory if not needed
-ParseNMEA.c:33           	//*	Oct 10,	2016	<MLS> Added ParseNMEA_init()
-ParseNMEA.c:34           	//*	Apr 17,	2017	<MLS> Moved GPS code to separate library directory. I need this for many projects
-ParseNMEA.c:35           	//*	Apr 18,	2017	<MLS> Removing MacAPRS specific code
-ParseNMEA.c:36           	//*	Apr 20,	2017	<MLS> Changing sat SNR data from char strings to shorts (int)
-ParseNMEA.c:37           	//*	Apr 20,	2017	<MLS> Cleaned up $GPGSV paring code
+ParseNMEA.c:34           	//*	Oct 10,	2016	<MLS> Added ParseNMEA_init()
+Statistics.c:6           	//*	Nov  9,	2016	<MLS> Started on Statistics.c
+Statistics.c:7           	//*	Nov  9,	2016	<MLS> Added STAT_Rand_SD()
+Statistics.c:8           	//*	Nov  9,	2016	<MLS> Added STAT_GenerateData_SD()
+Statistics.c:9           	//*	Nov  9,	2016	<MLS> Added STAT_CalcMean()
+Statistics.c:10          	//*	Nov  9,	2016	<MLS> Added STAT_CalcVariance()
+Statistics.c:11          	//*	Nov  9,	2016	<MLS> Added STAT_CalcStdDeviation()
+Statistics.c:12          	//*	Dec  9,	2016	<MLS> Added STAT_GetMinimum() & STAT_GetMaximum()
+Statistics.c:13          	//*	Jan 26,	2017	<MLS> Added STAT_CalcSigmaForX() & STAT_CalcSigmaCurve()
+ParseNMEA.c:35           	//*	Apr 17,	2017	<MLS> Moved GPS code to separate library directory. I need this for many projects
+ParseNMEA.c:36           	//*	Apr 18,	2017	<MLS> Removing MacAPRS specific code
+GPS_graph.c:8            	//*	Apr 20,	2017	<MLS> Added almanac graphing
+ParseNMEA.c:37           	//*	Apr 20,	2017	<MLS> Changing sat SNR data from char strings to shorts (int)
+ParseNMEA.c:38           	//*	Apr 20,	2017	<MLS> Cleaned up $GPGSV paring code
 ParseNMEA.h:17           	//*	Apr 20,	2017	<MLS> Changing sat snr data from char strings to shorts (int)
 ParseNMEA.h:18           	//*	Apr 20,	2017	<MLS> Increased sat count from 32 to 96
+GPS_graph.c:9            	//*	Apr 21,	2017	<MLS> Added DrawGPS_AlmanacGrid()
+GPS_graph.c:10           	//*	Apr 21,	2017	<MLS> Added CreateSNRdistrbutionPlot()
 ParseNMEA.h:19           	//*	Apr 21,	2017	<MLS> Added _ENABLE_PDOP_TRACKING_
-ParseNMEA.c:38           	//*	Apr 23,	2017	<MLS> Added $PRWIZCH, Rockwell channel data
-ParseNMEA.c:39           	//*	Apr 24,	2017	<MLS> Added checksum error count
+ParseNMEA.c:39           	//*	Apr 23,	2017	<MLS> Added $PRWIZCH, Rockwell channel data
+GPS_graph.c:11           	//*	Apr 24,	2017	<MLS> Added NMEA sentence list
+ParseNMEA.c:40           	//*	Apr 24,	2017	<MLS> Added checksum error count
 ParseNMEA.h:20           	//*	Apr 24,	2017	<MLS> Added _ENABLE_NMEA_SENTANCE_TRACKING_
-ParseNMEA.c:40           	//*	Apr 25,	2017	<MLS> Added _ENABLE_PDOP_TRACKING_
-ParseNMEA.c:41           	//*	May  3,	2017	<MLS> Added _ENABLE_ALTITUDE_TRACKING_
-ParseNMEA.c:1726         	//*	May  3,	2017	<MLS> Copying Magellan code from MacAPRS
-ParseNMEA.c:42           	//*	May  4,	2017	<MLS> Added parsing for ($PMGLF), no documentation on what it is
-ParseNMEA.c:43           	//*	May  4,	2017	<MLS> Added parsing for GPS sensor temp ($PGRMT)
+GPS_graph.c:12           	//*	Apr 25,	2017	<MLS> Added Legend to satellite position plot
+ParseNMEA.c:41           	//*	Apr 25,	2017	<MLS> Added _ENABLE_PDOP_TRACKING_
+GPS_graph.c:13           	//*	May  3,	2017	<MLS> Added plotting of altitude over time
+ParseNMEA.c:42           	//*	May  3,	2017	<MLS> Added _ENABLE_ALTITUDE_TRACKING_
+ParseNMEA.c:1826         	//*	May  3,	2017	<MLS> Copying Magellan code from MacAPRS
+ParseNMEA.c:43           	//*	May  4,	2017	<MLS> Added parsing for ($PMGLF), no documentation on what it is
+ParseNMEA.c:44           	//*	May  4,	2017	<MLS> Added parsing for GPS sensor temp ($PGRMT)
+GPS_graph.c:14           	//*	May  9,	2017	<MLS> Added sat numbers on almanac
 ParseNMEA.h:21           	//*	May  9,	2017	<MLS> Added gPGRME_exists to indicate that a PGRME sentance had been received
-ParseNMEA.c:44           	//*	May 10,	2017	<MLS> Altitude values now in double as well as int
-ParseNMEA.c:45           	//*	May 10,	2017	<MLS> Added lat lon tracking as double values
-ParseNMEA.c:46           	//*	May 10,	2017	<MLS> Added _ENABLE_LAT_LON_TRACKING_
-ParseNMEA.c:47           	//*	May 11,	2017	<MLS> Added ParseNMEA_TimeString()
-ParseNMEA.c:48           	//*	May 12,	2017	<MLS> Setting system time working on Linux
-ParseNMEA.c:49           	//*	May 12,	2017	<MLS> Added Check_And_Set_System_Time()
-ParseNMEA.c:50           	//*	May 15,	2017	<MLS> Added satellites in use tracking
-ParseNMEA.c:51           	//*	May 15,	2017	<MLS> Added Mode tracking (1=no fix,2=2D,3=3D)
-ParseNMEA.c:52           	//*	May 15,	2017	<MLS> Added Magnetic variation tracking
-ParseNMEA.c:53           	//*	May 25,	2017	<MLS> Added parsing of $PRWIZCH sat signal data
+ParseNMEA.c:45           	//*	May 10,	2017	<MLS> Altitude values now in double as well as int
+ParseNMEA.c:46           	//*	May 10,	2017	<MLS> Added lat lon tracking as double values
+ParseNMEA.c:47           	//*	May 10,	2017	<MLS> Added _ENABLE_LAT_LON_TRACKING_
+ParseNMEA.c:48           	//*	May 11,	2017	<MLS> Added ParseNMEA_TimeString()
+ParseNMEA.c:49           	//*	May 12,	2017	<MLS> Setting system time working on Linux
+ParseNMEA.c:50           	//*	May 12,	2017	<MLS> Added Check_And_Set_System_Time()
+GPS_graph.c:15           	//*	May 15,	2017	<MLS> Added CreateSatsInUseHistoryPlot()
+ParseNMEA.c:51           	//*	May 15,	2017	<MLS> Added satellites in use tracking
+ParseNMEA.c:52           	//*	May 15,	2017	<MLS> Added Mode tracking (1=no fix,2=2D,3=3D)
+ParseNMEA.c:53           	//*	May 15,	2017	<MLS> Added Magnetic variation tracking
+ParseNMEA.c:54           	//*	May 25,	2017	<MLS> Added parsing of $PRWIZCH sat signal data
+GPS_graph.c:16           	//*	Jun  8,	2017	<MLS> Moved graphing routines to separate file
+GPS_graph.c:17           	//*	Jun  9,	2017	<MLS> Added vertical line at the current time in the history plots
+ParseNMEA.c:55           	//*	Jun  9,	2017	<MLS> Added gTimeAdjustmentCount
+GPS_graph.c:18           	//*	Jun 12,	2017	<MLS> Added CreateSatelliteTrailsGraph()
+ParseNMEA.c:56           	//*	Jun 12,	2017	<MLS> Added _ENABLE_SATELLITE_TRAILS_
+ParseNMEA.c:57           	//*	Jun 12,	2017	<MLS> Added SaveSatelliteTrails()
+GPS_graph.c:19           	//*	Jun 13,	2017	<MLS> Added CreateSatelliteElevationGraph()
+ParseNMEA.c:58           	//*	Jun 15,	2017	<MLS> Added min/max altitude tracking
+ParseNMEA.c:59           	//*	Jul 11,	2017	<MLS> Added logic in Check_And_Set_System_Time() to prevent setting time in the past
+ParseNMEA.c:60           	//*	Jul 12,	2017	<MLS> Time must be off by 2 or more seconds before update occurs
 ConsoleDebug.h:10        	//*	Sep  6,	2018	<MLS> Re-arranged ifdefs such that stdio is not included if debuging not enabled
 json_parse.c:15          	//*	Nov  8,	2018	<MLS> Started on json_parse library
 json_parse.c:16          	//*	Nov 13,	2018	<MLS> Added support for escape chars (i.e. \t)
@@ -146,8 +173,8 @@ JsonResponse.c:18        	//*	Apr 15,	2019	<MLS> Change to send directly to the 
 alpacadriver.cpp:50      	//*	Apr 16,	2019	<MLS> Breaking up AlpacaCallback() to reduce complexity
 alpacadriver.cpp:51      	//*	Apr 16,	2019	<MLS> Added ProcessGetPutRequest()
 JsonResponse.c:19        	//*	Apr 16,	2019	<MLS> Added JsonResponse_CreateHeader()
-cameradriver.cpp:37      	//*	Apr 17,	2019	<MLS> Added Camera_OutputHTML()
-cameradriver_ASI.cpp:35  	//*	Apr 17,	2019	<MLS> Added Camera_OutputHTML()
+cameradriver.cpp:37      	//*	Apr 17,	2019	<MLS> Added OutputHTML()
+cameradriver_ASI.cpp:35  	//*	Apr 17,	2019	<MLS> Added OutputHTML()
 cameradriver_ASI.cpp:36  	//*	Apr 17,	2019	<MLS> Read temperature working on ASI1600
 alpacadriver.cpp:52      	//*	Apr 18,	2019	<MLS> Downloaded ZWO Filter Wheel library
 filterwheeldriver.cpp:25 	//*	Apr 18,	2019	<MLS> Created filterwheeldriver.c
@@ -2379,7 +2406,7 @@ cameradriver.cpp:179     	//*	Sep 29,	2022	<MLS> Added gImageDataDir for specify
 cameradriver.cpp:180     	//*	Sep 29,	2022	<MLS> Added SetImageDataDirectory()
 windowtab_iplist.cpp:26  	//*	Sep 29,	2022	<MLS> Added dynamic display CPU temp when mouse is moved over graph
 windowtab_iplist.cpp:27  	//*	Sep 30,	2022	<MLS> Added HandleMouseMovedInGraph()
-cameradriver_ASI.cpp:83  	//*	Oct  1,	2022	<MLS> Changed CreateASI_CameraObjects() to return camera count
+cameradriver_ASI.cpp:83  	//*	Oct  1,	2022	<MLS> Changed CreateCameraObjects_ASI() to return camera count
 windowtab_skytravel.cpp:112	//*	Oct  2,	2022	<MLS> Cleaned up button setting code in SetupWindowControls()
 windowtab_skytravel.cpp:113	//*	Oct  2,	2022	<MLS> Added which SQL database in use to main display
 controller_obsconditions.cpp:22	//*	Oct  3,	2022	<MLS> Fixed connection status for observing conditions window
@@ -2638,7 +2665,7 @@ rotatordriver_sim.cpp:26 	//*	Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> P
 switchdriver_sim.cpp:25  	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.cpp
 switchdriver_sim.h:11    	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.h
 alpacadriver.cpp:157     	//*	Mar  3,	2023	<MLS> Added ProcessAlpacaCommand()
-alpacadriver.cpp:3984    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
+alpacadriver.cpp:4022    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
 alpacadriver_helper.c:13 	//*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
 calibration_sim.cpp:20   	//*	Mar  3,	2023	<MLS> Created calibration_sim.cpp
 cameradriver_SONY.cpp:1295	//*	Mar  3,	2023	<MLS> this line caused a compile err
@@ -3057,8 +3084,8 @@ cameradriver_gps.cpp:29  	//*	Sep  1,	2023	<MLS> Added lots of GPS data to FITS 
 cameradriver_gps.cpp:30  	//*	Sep  5,	2023	<MLS> Working on matching SharpCap FITS header
 cameradriver_QHY.cpp:43  	//*	Sep  5,	2023	<MLS> More work on qhy image header
 ConsoleDebug.h:18        	//*	Sep  5,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE() to quite mode
-ParseNMEA.c:54           	//*	Sep  5,	2023	<MLS> Removing global gNMEAdata, replacing with pointer
-ParseNMEA.c:1356         	//*	Sep  5,	2023	<MLS> Added NumSats from GPGSV
+ParseNMEA.c:61           	//*	Sep  5,	2023	<MLS> Removing global gNMEAdata, replacing with pointer
+ParseNMEA.c:1447         	//*	Sep  5,	2023	<MLS> Added NumSats from GPGSV
 ParseNMEA.h:22           	//*	Sep  5,	2023	<MLS> Added	currSatsInUse & currSatMode
 alpacadriver.cpp:178     	//*	Sep  6,	2023	<MLS> Added all the device version info to Get_Readall_Common()
 cameradriver_overlay.cpp:25	//*	Sep  6,	2023	<MLS> Created cameradriver_overlay.cpp
@@ -3077,8 +3104,8 @@ cameradriver_ASI.cpp:86  	//*	Sep  9,	2023	<MLS> Deleted _USE_THREADS_FOR_ASI_CA
 cameradriver_readthread.cpp:25	//*	Sep  9,	2023	<MLS> Created cameradriver_readthread.cpp
 controller_remoteview.cpp:20	//*	Sep  9,	2023	<MLS> Created controller_remoteview.cpp
 controller_remoteview.h:2	//*	Sep  9,	2023	<MLS> Created controller_remoteview.h
-ParseNMEA.c:55           	//*	Sep  9,	2023	<MLS> Added GetLatLonDouble()
-ParseNMEA.c:56           	//*	Sep  9,	2023	<MLS> Added ParseNMEA_FormatLatLonStrings()
+ParseNMEA.c:62           	//*	Sep  9,	2023	<MLS> Added GetLatLonDouble()
+ParseNMEA.c:63           	//*	Sep  9,	2023	<MLS> Added ParseNMEA_FormatLatLonStrings()
 cameradriver_fits.cpp:95 	//*	Sep 10,	2023	<MLS> Added FLIP mode to FITS camera info
 cameradriver_jpeg.cpp:32 	//*	Sep 10,	2023	<MLS> Test lib jpeg routines again, working fine
 imu_lib.c:9              	//*	Sep 11,	2023	<MLS> Added IMU_Print_Calibration()
@@ -3190,7 +3217,7 @@ windowtab_sw_versions.cpp:21	//*	Feb 10,	2024	<MLS> Created windowtab_sw_version
 telescopedriver.cpp:70   	//*	Feb 11,	2024	<MLS> Added IMU-Roll, IMU-Pitch, & IMU-Yaw to telescope readall
 telescope_AlpacaCmds.cpp:11	//*	Feb 11,	2024	<MLS> Added Roll, Pitch & Yaw to telescope extras command table
 windowtab_telescope.cpp:31	//*	Feb 11,	2024	<MLS> Added Roll, Pitch & Yaw to telescope control window
-imu_lib.c:14             	//*	Feb 25,	2024	<ML>S Added IMU_GetIMUtypeString()
+imu_lib.c:14             	//*	Feb 25,	2024	<MLS> Added IMU_GetIMUtypeString()
 controller_skyimage.cpp:9	//*	Mar  9,	2024	<MLS> Created controller_skyimage.cpp
 controller_skyimage.h:2  	//*	Mar  9,	2024	<MLS> Created controller_skyimage.h
 controller_skytravel.cpp:23	//*	Mar  9,	2024	<MLS> Fixed bug where Software Version screen was not getting updated
@@ -3279,12 +3306,12 @@ alpacadriver.cpp:185     	//*	Apr 10,	2024	<MLS> Started on global GPS support
 cameradriver_fits.cpp:104	//*	Apr 10,	2024	<MLS> FITS data now supports GPS from serial port
 cameradriver_gps.cpp:31  	//*	Apr 10,	2024	<MLS> Added WriteFITS_GPSinfo()
 cameradriver_gps.cpp:32  	//*	Apr 10,	2024	<MLS> Added WriteFITS_Global_GPSinfo()
-ParseNMEA.c:57           	//*	Apr 10,	2024	<MLS> Added ComputeLatLonAverage()
+ParseNMEA.c:64           	//*	Apr 10,	2024	<MLS> Added ComputeLatLonAverage()
 ParseNMEA.h:24           	//*	Apr 10,	2024	<MLS> Added _ENABLE_GPS_AVERAGE_
 ConsoleDebug.h:19        	//*	Apr 12,	2024	<MLS> Added CONSOLE_DEBUG_W_INT64()
 helper_functions.c:21    	//*	Apr 12,	2024	<MLS> Added FormatTimeStringISO8601_tm()
-ParseNMEA.c:58           	//*	Apr 12,	2024	<MLS> Added timing tests to ComputeLatLonAverage()
-ParseNMEA.c:59           	//*	Apr 13,	2024	<MLS> Added altitude to averaging logic
+ParseNMEA.c:65           	//*	Apr 12,	2024	<MLS> Added timing tests to ComputeLatLonAverage()
+ParseNMEA.c:66           	//*	Apr 13,	2024	<MLS> Added altitude to averaging logic
 discovery_lib.c:28       	//*	Apr 14,	2024	<MLS> Added DumpAlpacaUnit()
 windowtab_image.cpp:39   	//*	Apr 14,	2024	<MLS> Added RUN button to step through images
 windowtab_iplist.cpp:32  	//*	Apr 14,	2024	<MLS> Added +/- to enable/disable graph display of selected device
@@ -3292,8 +3319,54 @@ alpacadriver_gps.cpp:27  	//*	Apr 15,	2024	<MLS> Created alpacadriver_gps.cpp
 alpacadriver_gps.cpp:28  	//*	Apr 15,	2024	<MLS> Added SendHtml_GPS()
 alpaca_defs.h:96         	//*	Apr 15,	2024	<MLS> Build 176
 windowtab_sw_versions.cpp:23	//*	Apr 15,	2024	<MLS> Fixed buffer overflow bug in UpdateOnScreenWidgetList()
-cameradriver.cpp:211     	//*	Jan  1,	2119	<TODO> ----------------------------------------
-cameradriver.cpp:212     	//*	Jun 26,	2119	<TODO> Add support for sub frames
+cameradriver_ser.cpp:11  	//*	Apr 16,	2024	<MLS> Created cameradriver_ser.cpp
+ParseNMEA.c:67           	//*	Apr 16,	2024	<MLS> Added GetGPSmodeString()
+cameradriver_fits.cpp:105	//*	Apr 18,	2024	<MLS> Added filter wheel serial number to fits output if it exists
+cameradriver_PlayerOne.cpp:28	//*	Apr 18,	2024	<MLS> Discussed Alpaca migration with Vanessa Zhang
+filterwheeldriver_Play1.cpp:27	//*	Apr 18,	2024	<MLS> Borrowed Player-One filter wheel from Vanessa Zhang
+filterwheeldriver_Play1.cpp:28	//*	Apr 18,	2024	<MLS> Created filterwheeldriver_Play1.cpp
+filterwheeldriver_Play1.cpp:29	//*	Apr 18,	2024	<MLS> PlayerOne filterwheel working
+cameradriver.cpp:210     	//*	Apr 19,	2024	<MLS> Added check for flip enabled to Put_Flip()
+cameradriver.h:31        	//*	Apr 19,	2024	<MLS> Added kImageType_MONO8
+cameradriver_PlayerOne.cpp:29	//*	Apr 19,	2024	<MLS> Created cameradriver_PlayerOne.cpp
+cameradriver_PlayerOne.h:11	//*	Apr 19,	2024	<MLS> Created cameradriver_PlayerOne.h
+telescopedriver_ExpSci.cpp:33	//*	Apr 20,	2024	<MLS> Ordered Exlpore Scientific iEXOS-100-2 PMC-Eight Equatorial Tracker System
+cameradriver_OGMA.cpp:30 	//*	Apr 21,	2024	<MLS> Discussed Alpaca protocol with Juan Martinez at OGMA
+cameradriver_OGMA.cpp:31 	//*	Apr 21,	2024	<MLS> Juan told me that OGMA is almost identical to ToupTek, nearly identical SDK
+cameradriver_OGMA.cpp:32 	//*	Apr 21,	2024	<MLS> OGMA cameras gave me one of their low-end cameras https://getogma.com/
+cameradriver_PlayerOne.cpp:30	//*	Apr 21,	2024	<MLS> Purchased Player One Neptune-C II Camera (4 mega-pixels)
+telescopedriver_ExpSci.cpp:34	//*	Apr 21,	2024	<MLS> Created telescopedriver_ExpSci.cpp
+telescopedriver_ExpSci.h:18	//*	Apr 21,	2024	<MLS> Created telescopedriver_ExpSci.h
+alpacadriver.cpp:186     	//*	Apr 22,	2024	<MLS> Started working on multi-language support
+cameradriverAnalysis.cpp:47	//*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
+cameradriver_fits.cpp:106	//*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
+cameradriver_OGMA.cpp:33 	//*	Apr 22,	2024	<MLS> Downloaded SDK from https://github.com/OGMAvision/OGMAcamSDK
+cameradriver_PlayerOne.cpp:31	//*	Apr 22,	2024	<MLS> PlayerOne camera reading images properly
+cameradriver_PlayerOne.cpp:32	//*	Apr 22,	2024	<MLS> Finished Read/Write Gain
+cameradriver_PlayerOne.cpp:33	//*	Apr 22,	2024	<MLS> Image flip working
+cameradriver_PlayerOne.cpp:34	//*	Apr 22,	2024	<MLS> Finished Read/Write Offset
+cameradriver_readthread.cpp:27	//*	Apr 22,	2024	<MLS> Added RunThread_CheckPictureStatus()
+Makefile:67              	#++	Apr 22,	2024	<MLS> Added _INCLUDE_MULTI_LANGUAGE_SUPPORT_
+cameradriver_OGMA.cpp:34 	//*	Apr 23,	2024	<MLS> Created cameradriver_OGMA.cpp
+telescopedriver_ExpSci.cpp:35	//*	Apr 23,	2024	<MLS> Started on Explore Scientific setup web page
+cameradriver_OGMA.h:11   	//*	Apr 24,	2024	<MLS> Created cameradriver_OGMA.cpp
+telescopedriver.cpp:71   	//*	Apr 24,	2024	<MLS> Working on GPS input for telescope site location
+telescopedriver.cpp:72   	//*	Apr 24,	2024	<MLS> Added GPS_TelescopeThread()
+telescopedriver.cpp:73   	//*	Apr 24,	2024	<MLS> Added Set_SiteLatitude(), Set_SiteLongitude(), Set_SiteAltitude()
+alpacadriver.cpp:187     	//*	Apr 25,	2024	<MLS> Successfully got JavaScript to send HTTP PUT command
+alpacadriver.cpp:188     	//*	Apr 25,	2024	<MLS> Added ProcessOptionsCommand()
+telescopedriver.cpp:74   	//*	Apr 25,	2024	<MLS> Added averaging to Lat/Lon updates from GPS
+gps_data.cpp:12          	//*	Apr 26,	2024	<MLS> Started working on gps graph support
+web_graphics_opencv.cpp:12	//*	Apr 26,	2024	<MLS> Created web_graphics_opencv.cpp
+web_graphics_opencv.cpp:13	//*	Apr 26,	2024	<MLS> Started on opencv version of web_graphics librar
+web_graphics_opencv.h:9  	//*	Apr 26,	2024	<MLS> Created web_graphics_opencv.h
+gps_data.cpp:13          	//*	Apr 27,	2024	<MLS> GPS graph working from alpacapi driver
+GPS_graph.c:20           	//*	Apr 27,	2024	<MLS> Added _ENABLE_HTML_OUTPUT_
+alpacadriver.cpp:189     	//*	Apr 28,	2024	<MLS> Fixed ProcessGetPutRequest() to properly handle image requests
+telescopedriver.cpp:75   	//*	APr 28,	2024	<MLS> Added DumpTelescopeDriverStruct()
+alpaca_defs.h:97         	//*	Apr 29,	2024	<MLS> Build 177
+cameradriver.cpp:212     	//*	Jan  1,	2119	<TODO> ----------------------------------------
+cameradriver.cpp:213     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:48 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:49 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -3304,19 +3377,19 @@ controller_camera.cpp:79 	//*	Feb  6,	2121	<TODO> Move downloading of images to 
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3305 in 498 files
-Total lines              = 230219
-Total comment Lines      = 37698 (16.4%)
-Total comments           = 42286 (18.4%)
-Total history comments   = 3305 (1.4%)
-Total C files            = 67
-Total C++ files          = 186
-Total H files            = 243
-Preprocssor cnt          = 7276
-Total SLOC               = 145995
-Total SLOC-Logical       = 112548
+History Comments found   = 3378 in 513 files
+Total lines              = 239476
+Total comment Lines      = 39002 (16.3%)
+Total comments           = 43750 (18.3%)
+Total history comments   = 3378 (1.4%)
+Total C files            = 69
+Total C++ files          = 192
+Total H files            = 250
+Preprocssor cnt          = 7681
+Total SLOC               = 152125
+Total SLOC-Logical       = 117254
 Programmer comment summary
-MLS             = 2901
+MLS             = 2974
 TODO            =   11
 DDB             =    1
 JMH             =    3
@@ -3324,5 +3397,5 @@ PDB             =    6
 ADD             =    8
 SCV             =    1
 RNS             =  332
-KAS             =   13
-ML              =    1
+KAS             =   14
+CRN             =    1

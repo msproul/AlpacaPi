@@ -76,7 +76,7 @@ class CameraDriverSIM: public CameraDriver
 //		virtual	TYPE_ASCOM_STATUS		Stop_Video(void);
 //		virtual	TYPE_ASCOM_STATUS		Take_Video(void);
 //
-//		virtual	TYPE_ASCOM_STATUS		SetFlipMode(int newFlipMode);
+//		virtual	TYPE_ASCOM_STATUS		SetFlipMode(const int newFlipMode);
 //
 //		virtual	TYPE_ALPACA_CAMERASTATE	Read_AlapcaCameraState(void);
 //

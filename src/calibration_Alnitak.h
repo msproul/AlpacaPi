@@ -53,7 +53,7 @@ class CalibrationDriverAlnitak: public CalibrationDriver
 				bool				cTurnOn;
 				bool				cTurnOff;
 				int					cNewBrightnessValue;
-				uint32_t			cLastUpdate_ms;
+				uint32_t			cLastThreadUpdate_ms;
 				bool				cForceUpdate;
 
 				//*	these are the routines that actually talk to the hardware

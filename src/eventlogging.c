@@ -157,7 +157,8 @@ const char	gHtmlHeaderLog[]	=
 	"Connection: close\r\n"
 	"\r\n"
 	"<!DOCTYPE html>\r\n"
-	"<HTML><HEAD>\r\n"
+	"<HTML lang=\"en\">\r\n"
+	"<HEAD>\r\n"
 
 };
 

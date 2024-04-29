@@ -42,6 +42,7 @@ typedef struct
 {
 	double	ApertureDiam;
 	char	Camera[64];
+	double	Exposure_Secs;
 	char	Date[64];
 	char	Filter[64];
 	double	FocalLength;

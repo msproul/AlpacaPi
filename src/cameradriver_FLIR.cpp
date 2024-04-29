@@ -75,7 +75,7 @@ static	void	GetSpinnakerErrorString(_spinError errorCode, char *errorString);
 
 
 //**************************************************************************************
-int		CreateFLIR_CameraObjects(void)
+int		CreateCameraObjects_FLIR(void)
 {
 int				cameraCreatedCount;
 char			rulesFileName[]	=	"40-flir-spinnaker.rules";

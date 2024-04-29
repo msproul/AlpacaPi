@@ -39,6 +39,9 @@
 #include	<sys/time.h>
 
 
+
+//**************************************************************************************
+//*	These are configured in the Makefile
 //**************************************************************************************
 //*	configuration options, comment out to save memory
 //#define	_ENABLE_ALTITUDE_TRACKING_
@@ -47,10 +50,15 @@
 //#define	_ENABLE_NMEA_SENTANCE_TRACKING_
 //#define	_ENABLE_NMEA_POSITION_ERROR_TRACKING_
 //#define	_ENABLE_PROPRIETARY_PARSING_
-#define	_ENABLE_SATELLITE_ALMANAC_
+//#define	_ENABLE_SATELLITE_ALMANAC_
 //#define	_ENABLE_WAYPOINT_PARSING_
 //**************************************************************************************
 
+
+
+#if defined(_ENABLE_SATELLITE_TRAILS_) && !defined(_ENABLE_SATELLITE_ALMANAC_)
+	#error	_ENABLE_SATELLITE_TRAILS_ cannot be enabled without _ENABLE_SATELLITE_ALMANAC_
+#endif
 
 
 #ifndef __cplusplus
@@ -119,10 +127,32 @@ typedef	struct
 	short			elvevation;			//*	Elevation in degrees, 90 maximum
 	short			azimuth;			//*	Azimuth, degrees from true north, 000 to 359
 	short			signal2Noise;		//*	Signal to Noise Ratio, 00-99 dB (null when not tracking)
-	short			maxSNR;				//*	max SNR seen on this sat
+	short			maxSNR;				//*	max SNR seen on this satellite
 
 	char			prn[kSatDataLen];	//*	SV PRN number	(Pseudo Random Noise)
 } TYPE_SatStatsStruct;
+#endif
+
+#ifdef _ENABLE_SATELLITE_TRAILS_
+//*****************************************************************************
+//*	satetllite trails
+
+//*	this HAS to be 60
+#define	kSatTrails_deltaTime		60			//*seconds between data points
+#define	kSatTrails_ArraySize	((24 * 60 * 60)	/ kSatTrails_deltaTime)
+
+typedef	struct
+{
+	short			satellitePRN;							//*	SV PRN number	(Pseudo Random Noise)
+	short			elvevation[kSatTrails_ArraySize];		//*	Elevation in degrees, 90 maximum
+	short			azimuth[kSatTrails_ArraySize];			//*	Azimuth, degrees from true north, 000 to 359
+	short			signal2Noise[kSatTrails_ArraySize];		//*	Signal to Noise Ratio, 00-99 dB (null when not tracking)
+
+} TYPE_SatTrailsStruct;
+
+extern TYPE_SatTrailsStruct	gSatTrails[kMaxNumOfSatallites];
+extern	int					gSatTrailsLastIdx;
+
 #endif
 
 //*****************************************************************************
@@ -188,7 +218,7 @@ typedef	struct
 } TYPE_timeHHMMSS;
 
 //*	15 minute interval
-#define	kLoggingIntervalMinutes	10
+#define	kLoggingIntervalMinutes	1
 
 #ifdef _ENABLE_PDOP_TRACKING_
 	#define	kPDOPtacking_deltaTime	(kLoggingIntervalMinutes * 60)
@@ -237,6 +267,7 @@ typedef	struct
 	unsigned long		gpsTime;			//	Time in seconds since midnight (GMT)
 	TYPE_timeHHMMSS		gpsTimeHHMMSS;		//*	Time in HH:MM:SS - added Oct 3, 2016
 	unsigned long		deltaGPSTime;
+	unsigned long		invalidTimeCount;
 	LatLonType			latitude;
 	LatLonType			longitude;
 	double				lat_double;
@@ -293,6 +324,8 @@ typedef	struct
 
 #ifdef _ENABLE_ALTITUDE_TRACKING_
 	double				altitudeHistory[kAltTacking_ArraySize];
+	double				minAltitude;
+	double				maxAltitude;
 #endif
 
 	double				horizontalPosErr;
@@ -311,7 +344,15 @@ typedef	struct
 	double				magVariationArray[kMagVariationTracking_ArraySize];
 #endif
 
+	//------------------------------------------------------------------------------
+	//*	for AlpacaPi so that we can display this info on a live web page
+	double		latitude_avg;
+	double		latitude_std;
+	double		longitude_avg;
+	double		longitude_std;
 
+
+	//------------------------------------------------------------------------------
 	//*	for MacAPRS
 	long				xxLon;				//	Internal Units (100'ts of an arc second)
 	long				yyLat;				//	Internal Units (100'ts of an arc second)
@@ -323,25 +364,26 @@ typedef	struct
 extern TYPE_NMEAInfoStruct	gNMEAdata;
 
 #ifdef _ENABLE_SATELLITE_ALMANAC_
-//	int	GetSatSignalStrength(int satNumber);
 	int	GetSatSignalStrength(TYPE_NMEAInfoStruct *nmeaData, int satNumber);
 #endif
 
 
-void	ParseNMEA_init(TYPE_NMEAInfoStruct *nmeaData);
-bool	ParseNMEAstring(TYPE_NMEAInfoStruct *nmeaData, char *theNMEAstring);
-//bool	ParseNMEA_TimeString(char *theNMEAstring, bool setSystemTime);
-bool	ParseNMEA_TimeString(TYPE_NMEAInfoStruct *nmeaData, char *theNMEAstring, bool setSystemTime);
+void	ParseNMEA_init(				TYPE_NMEAInfoStruct *nmeaData);
+bool	ParseNMEAstring(			TYPE_NMEAInfoStruct *nmeaData, char *theNMEAstring);
+bool	ParseNMEA_TimeString(		TYPE_NMEAInfoStruct *nmeaData, char *theNMEAstring, bool setSystemTime);
+void	GetCurrentLatLon_Strings(	TYPE_NMEAInfoStruct *nmeaData, char *theLonStr,char *theLatStr, bool includeLabel);
+void	DumpGPSdata(				TYPE_NMEAInfoStruct	*theNmeaInfo);
 
 void	Get_Actual_LatLon_Strings(long theLon, long theLat, char *theLonStr,char *theLatStr, bool includeLabel);
 int		Ascii2charsToInt(const char *charPtr);
-//void	GetCurrentLatLon_Strings(char *theLonStr,char *theLatStr, bool includeLabel);
-void	GetCurrentLatLon_Strings(TYPE_NMEAInfoStruct *nmeaData, char *theLonStr,char *theLatStr, bool includeLabel);
 int		GetMaxSatSignalStrength(void);
-void	DumpGPSdata(TYPE_NMEAInfoStruct	*theNmeaInfo);
 double	GetLatLonDouble(LatLonType *latLonPtr);
 void	ParseNMEA_FormatLatLonStrings(double latValue, char *latString, double lonValue, char *lonString);
+void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString);
 
+extern	int					gTimeAdjustmentCount;	//*	number of times we have adjusted the time
+extern	int					gTimeAdjustmentAhead;
+extern	int					gTimeAdjustmentBehind;
 
 
 #ifdef _ENABLE_NMEA_SENTANCE_TRACKING_
@@ -360,6 +402,8 @@ typedef	struct
 
 #define	kMaxNMEAsentances	50
 extern	TYPE_NMEAsentance	gNMEAsentances[kMaxNMEAsentances];
+extern	int					gNMEAsentanceCnt;
+extern	int					gNMEAdataRecorded;
 
 #endif
 

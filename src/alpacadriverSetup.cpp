@@ -68,7 +68,7 @@ char	lineBuff[256];
 
 	SocketWriteData(mySocketFD,	gHtmlHeader);
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
-	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");
 	SocketWriteData(mySocketFD,	"<TITLE>Form Testing</TITLE>\r\n");
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<H1>Form Testing</H1>\r\n");
@@ -146,7 +146,7 @@ int		mySocketFD;
 	SocketWriteData(mySocketFD,	gHtmlHeader);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
-	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<H1>Saved succesfully</H1>\r\n");
 	SocketWriteData(mySocketFD,	"</CENTER>\r\n");

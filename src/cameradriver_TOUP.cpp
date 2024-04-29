@@ -97,7 +97,7 @@
 
 
 //**************************************************************************************
-int	CreateTOUP_CameraObjects(void)
+int	CreateCameraObjects_TOUP(void)
 {
 int				cameraCount;
 int				ii;

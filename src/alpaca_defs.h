@@ -94,6 +94,7 @@
 //*	Feb 10,	2024	<MLS> Pushed Build 174
 //*	Mar 22,	2024	<MLS> Build 175
 //*	Apr 15,	2024	<MLS> Build 176
+//*	Apr 29,	2024	<MLS> Build 177
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -113,7 +114,7 @@
 
 #define	kApplicationName		"AlpacaPi"
 #define	kVersionString			"V0.7.2"
-#define	kBuildNumber			176
+#define	kBuildNumber			177
 #define kAlpacaDiscoveryPORT	32227
 #define kAlpacaPiDefaultPORT	6800
 
@@ -582,6 +583,7 @@ typedef struct	//	TYPE_TelescopeProperties
 	double							IMU_Yaw;
 } TYPE_TelescopeProperties;
 
+void	DumpTelescopeDriverStruct(TYPE_TelescopeProperties *telescopeDriver);
 
 //*****************************************************************************
 //*	Dome properties as described by ASCOM

@@ -39,7 +39,7 @@
 	#include	"cameradriver.h"
 #endif
 
-int	CreateFLIR_CameraObjects(void);
+int	CreateCameraObjects_FLIR(void);
 
 //**************************************************************************************
 class CameraDriverFLIR: public CameraDriver

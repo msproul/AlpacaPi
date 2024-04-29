@@ -28,6 +28,7 @@
 //*	Oct  9,	2022	<MLS> Added cCameraIsSiumlated flag
 //*	Jun  4,	2023	<MLS> Added cSaveAsFITS, cSaveAsJPEG, cSaveAsPNG, cSaveAsRAW
 //*	Aug 31,	2023	<MLS> Adding support for GPS, specifically the QHY174-GPS
+//*	Apr 19,	2024	<MLS> Added kImageType_MONO8
 //*****************************************************************************
 //#include	"cameradriver.h"
 
@@ -168,6 +169,7 @@ typedef enum
 	kImageType_RAW16,
 	kImageType_RGB24,
 	kImageType_Y8,
+	kImageType_MONO8,
 
 	kImageType_last
 } TYPE_IMAGE_TYPE;
@@ -586,7 +588,7 @@ class CameraDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS		Stop_Video(void);
 		virtual	TYPE_ASCOM_STATUS		Take_Video(void);
 
-		virtual	TYPE_ASCOM_STATUS		SetFlipMode(int newFlipMode);
+		virtual	TYPE_ASCOM_STATUS		SetFlipMode(const int newFlipMode);
 
 		virtual	TYPE_ALPACA_CAMERASTATE	Read_AlapcaCameraState(void);
 
@@ -811,6 +813,7 @@ protected:
 protected:
 	virtual	void				RunThread_Startup(void);
 	virtual	void				RunThread_Loop(void);
+	virtual	void				RunThread_CheckPictureStatus(void);
 public:
 #endif // _USE_CAMERA_READ_THREAD_
 

@@ -258,7 +258,7 @@ class AlpacaDriver
 				char				cAlpacaName[32];
 				char				cDeviceModel[kDeviceModelStrLen];
 				char				cDeviceManufacturer[64];
-				char				cDeviceManufAbrev[8];
+				char				cDeviceManufAbrev[16];
 				char				cDeviceSerialNum[kDeviceSerialNumStrLen];
 				char				cDeviceVersion[kDeviceVersionStrLen];
 				char				cDeviceFirmwareVersStr[64];

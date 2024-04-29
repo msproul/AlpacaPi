@@ -44,6 +44,7 @@
 //*	Dec 26,	2019	<MLS> Added SaveHistogramFile()
 //*	Jan 12,	2020	<MLS> Added better limit checking to AutoAdjustExposure()
 //*	Feb 15,	2020	<MLS> Fixed negative exposure bug in AutoAdjustExposure()
+//*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
 //**************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -92,6 +93,7 @@ uint32_t		bluValue;
 		switch(cROIinfo.currentROIimageType)
 		{
 			case kImageType_RAW8:
+			case kImageType_MONO8:
 			case kImageType_Y8:
 				imageDataPtr8bit	=	(uint8_t *)cCameraDataBuffer;
 				for (ii=0; ii<imageDataLen; ii++)
@@ -180,6 +182,7 @@ uint32_t		bluValue;
 		switch(cROIinfo.currentROIimageType)
 		{
 			case kImageType_RAW8:
+			case kImageType_MONO8:
 			case kImageType_Y8:
 				imageDataPtr8bit	=	(uint8_t *)cCameraDataBuffer;
 				for (ii=0; ii<imageDataLen; ii++)
@@ -272,6 +275,7 @@ uint8_t			*imageDataPtr8bit;
 		switch(cROIinfo.currentROIimageType)
 		{
 			case kImageType_RAW8:
+			case kImageType_MONO8:
 			case kImageType_Y8:
 				imageDataPtr8bit	=	(uint8_t *)cCameraDataBuffer;
 				for (ii=0; ii<imageDataLen; ii++)
@@ -367,6 +371,7 @@ uint32_t		maxPixelValue;
 	switch(cROIinfo.currentROIimageType)
 	{
 		case kImageType_RAW8:
+		case kImageType_MONO8:
 		case kImageType_Y8:
 		case kImageType_RGB24:
 			histogramMaxPrct	=	(100.0 * maxPixelValue) / 255.0;
@@ -585,6 +590,7 @@ bool			lookingForMin;
 		switch(cROIinfo.currentROIimageType)
 		{
 			case kImageType_RAW8:
+			case kImageType_MONO8:
 			case kImageType_Y8:
 				imageDataPtr8bit	=	(uint8_t *)cCameraDataBuffer;
 				for (iii=0; iii<imageDataLen; iii++)

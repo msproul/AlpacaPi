@@ -16,6 +16,9 @@
 #ifndef _FILTERWHEELDRIVER_H_
 #define	_FILTERWHEELDRIVER_H_
 
+#ifndef	_ALPACA_DEFS_H_
+	#include	"alpaca_defs.h"
+#endif
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
 #endif

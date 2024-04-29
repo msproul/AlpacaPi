@@ -31,6 +31,7 @@
 #endif
 
 
+#define	kMinutesPerDay	(24 * 60)
 
 
 double		AsciiToDouble(		const char *asciiString);

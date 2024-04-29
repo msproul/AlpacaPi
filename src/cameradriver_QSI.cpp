@@ -66,7 +66,7 @@
 #define	_ENABLE_CAMERA_SIMULATOR_
 
 //**************************************************************************************
-int	CreateQSI_CameraObjects(void)
+int	CreateCameraObjects_QSI(void)
 {
 int				cameraCreatedCount;
 unsigned int	qsi_Result;

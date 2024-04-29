@@ -247,6 +247,14 @@ virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer
 				bool						cDriverSupports_SlewSettleTime;
 				bool						cDriverSupports_LimitSwitches;
 
+#ifdef _ENABLE_GLOBAL_GPS_
+				pthread_t					cGPStelescopeThreadID;
+	public:
+				bool						cGPStelescopeKeepRunning;
+				void						Set_SiteLatitude(const double newSiteLatitude);
+				void						Set_SiteLongitude(const double newSiteLongitude);
+				void						Set_SiteAltitude(const double newSiteAlititude);
+#endif // _ENABLE_GLOBAL_GPS_
 };
 
 

@@ -11,7 +11,7 @@
 //*	Jan 15,	2024	<MLS> Added IMU_GetRoll_Pitch_Yaw()
 //*	Jan 15,	2024	<MLS> Moved IMU averaging from imu_lib_bno055.c to imu_lib.c
 //*	Jan 15,	2024	<MLS> The LIS2DH12 has roll off by 90 degrees, fixed in IMU_GetAverageRoll()
-//*	Feb 25,	2024	<ML>S Added IMU_GetIMUtypeString()
+//*	Feb 25,	2024	<MLS> Added IMU_GetIMUtypeString()
 //*****************************************************************************
 
 #ifdef _ENABLE_IMU_

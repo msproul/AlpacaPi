@@ -183,6 +183,10 @@
 //*	Nov  1,	2023	<MLS>	/management/v1/description?ClientID=1&ClientTransactionID=2
 //*	Nov 26,	2023	<MLS> Removed links form HTML cmd table for cmds starting with "-"
 //*	Apr 10,	2024	<MLS> Started on global GPS support
+//*	Apr 22,	2024	<MLS> Started working on multi-language support
+//*	Apr 25,	2024	<MLS> Successfully got JavaScript to send HTTP PUT command
+//*	Apr 25,	2024	<MLS> Added ProcessOptionsCommand()
+//*	Apr 28,	2024	<MLS> Fixed ProcessGetPutRequest() to properly handle image requests
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -224,6 +228,7 @@
 #include	"helper_functions.h"
 #include	"JsonResponse.h"
 #include	"alpacadriver.h"
+#include	"alpacadriver_gps.h"
 #include	"alpacadriver_helper.h"
 #include	"eventlogging.h"
 #include	"socket_listen.h"
@@ -290,7 +295,6 @@
 
 #ifdef _ENABLE_GLOBAL_GPS_
 	#include	"gps_data.h"
-	#include	"alpacadriver_gps.h"
 #endif
 
 #if defined(__arm__) && defined(_ENABLE_WIRING_PI_)
@@ -327,7 +331,7 @@ bool			gImageDownloadInProgress					=	false;
 char			gHostName[48]								=	"";
 char			gUserAgentAlpacaPiStr[80]					=	"";
 int				gUserAgentCounters[kHTTPclient_last];
-
+int				gHTTP_OptionsRequestCnt						=	0;
 
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
 	int				gTimeUnitsSinceTopOfHour	=	0;
@@ -1938,7 +1942,8 @@ const char	gBadResponse400[]	=
 	"Connection: close\r\n"
 	"\r\n"
 	"<!DOCTYPE html>\r\n"
-	"<HTML><HEAD>\r\n"
+	"<HTML lang=\"en\">\r\n"
+	"<HEAD>\r\n"
 	"<TITLE>Invalid URL</TITLE>\r\n"
 	"</HEAD><BODY>\r\n"
 	"<H1>Invalid URL</H1>\r\n"
@@ -1956,9 +1961,11 @@ const char	gHtmlHeader[]	=
 	"User-Agent: AlpacaPi\r\n"
 	"Content-Type: text/html\r\n"
 	"Connection: close\r\n"
+	"Access-Control-Allow-Origin: *\r\n"
 	"\r\n"
 	"<!DOCTYPE html>\r\n"
-	"<HTML><HEAD>\r\n"
+	"<HTML lang=\"en\">\r\n"
+	"<HEAD>\r\n"
 
 
 
@@ -2014,6 +2021,12 @@ int			returnCode;
 		SocketWriteData(mySocketFD,	"<UL>\r\n");
 
 		SocketWriteData(mySocketFD,	"<LI><A HREF=setup>AlpacaPi Settings for this server</A>\r\n");
+#ifdef _ENABLE_GLOBAL_GPS_
+		if (gEnableGlobalGPS)
+		{
+			SocketWriteData(mySocketFD,	"<LI><A HREF=gps>GPS Statistics for GPS connected to this server</A>\r\n");
+		}
+#endif // _ENABLE_GLOBAL_GPS_
 		SocketWriteData(mySocketFD,	"<P>\r\n");
 
 		//*	check to see if the docs folder and index file are present
@@ -2083,6 +2096,30 @@ static const char	gWatchDogHelpMsg[]	=
 
 };
 
+//*****************************************************************************
+static const char	gLanguageSelection[]	=
+{
+//	"<label for=\"language\">Language:</label>"
+//	"<select name=\"Language\" id=\"language\">"
+//	"<option value=\"english\">English</option>"
+//	"<option value=\"spanish\">Spanish</option>"
+//	"<option value=\"chinese\">Chinese</option>"
+//	"</select>"
+
+	"<div id=\"google_translate_element\"></div>\n"
+	"<script type=\"text/javascript\">\n"
+	"	function googleTranslateElementInit()\n"
+	"	{\n"
+	"		new google.translate.TranslateElement(\n"
+	"			{pageLanguage: 'en'},\n"
+	"			'google_translate_element');\n"
+	"	}\n"
+	"</script>\n"
+
+	"<script type=\"text/javascript\"\n"
+	"	src=\"https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit\">\n"
+	"</script>\n"
+};
 
 //*****************************************************************************
 static void	SendHtml_MainPage(TYPE_GetPutRequestData *reqData)
@@ -2108,6 +2145,9 @@ int		iii;
 
 		SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+#ifdef _INCLUDE_MULTI_LANGUAGE_SUPPORT_
+		SocketWriteData(mySocketFD,	gLanguageSelection);
+#endif // _INCLUDE_MULTI_LANGUAGE_SUPPORT_
 
 		OutPutObservatoryInfoHTML(mySocketFD);
 
@@ -2841,7 +2881,7 @@ int				totalBytesWritten;
 bool			keepGoing;
 char			dataBuffer[1600];
 
-	CONSOLE_DEBUG_W_STR("Sending file:", fileName);
+//	CONSOLE_DEBUG_W_STR("Sending file:", fileName);
 	totalBytesWritten	=	0;
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
@@ -2906,30 +2946,26 @@ int				returnCode;
 
 	if (strcasestr(jpegFileName, ".png") != NULL)
 	{
-		CONSOLE_DEBUG("Sending PNG file!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG("Sending PNG file!!!!!!!!!!!!!!");
 		SocketWriteData(socket,	gHTML_HeaderPNG);
 	}
 	else
 	{
-		CONSOLE_DEBUG("Sending JPEG file!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG("Sending JPEG file!!!!!!!!!!!!!!");
 		SocketWriteData(socket,	gHTML_HeaderJpeg);
 	}
 	if (jpegFileName != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("jpegFileName\t=", jpegFileName);
-		//*	check to see if the file is present
-		returnCode	=	stat(jpegFileName, &fileStatus);
-		CONSOLE_DEBUG_W_HEX("fileStatus.st_mode\t=", fileStatus.st_mode);
-		if (returnCode == 0)
+//		CONSOLE_DEBUG_W_STR("jpegFileName\t=", jpegFileName);
+		myFilenamePtr	=	(char *)jpegFileName;
+		if (*myFilenamePtr == '/')
 		{
-			myFilenamePtr	=	(char *)jpegFileName;
-			if (*myFilenamePtr == '/')
-			{
-				myFilenamePtr++;
-			}
-			StrcpyUntilChar(myJpegFileName, jpegFileName, 0x20, sizeof(myJpegFileName));
+			myFilenamePtr++;
 		}
-		else
+		StrcpyUntilChar(myJpegFileName, myFilenamePtr, 0x20, sizeof(myJpegFileName));
+		//*	check to see if the file is present
+		returnCode	=	stat(myJpegFileName, &fileStatus);
+		if (returnCode != 0)
 		{
 			//*	ok, the file is not there, lets look in docs
 			StrcpyUntilChar(altJpegFileName, jpegFileName, 0x20, sizeof(altJpegFileName));
@@ -2945,9 +2981,9 @@ int				returnCode;
 			}
 		}
 
-		CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
+//		CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
 
-
+		//*	make sure there is nothing past the extension
 		myFilenamePtr	=	strstr(myJpegFileName, ".jpg");
 		if (myFilenamePtr != NULL)
 		{
@@ -2963,7 +2999,7 @@ int				returnCode;
 	{
 		strcpy(myJpegFileName, "image.jpg");
 	}
-	CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
+//	CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
 	totalBytesWritten	=	SendFileToSocket(socket, myJpegFileName);
 	if (totalBytesWritten <= 0)
 	{
@@ -3744,17 +3780,17 @@ char				*delimPtr;
 		}
 	}
 
-//	CONSOLE_DEBUG_W_NUM("slashCounter\t=",	slashCounter);
+	//CONSOLE_DEBUG_W_NUM("slashCounter\t=",	slashCounter);
 	//---------------------------------------------------
 	if (slashCounter >= 3)
 	{
-//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString\t=",	myAlpacaVersionString);
+		//CONSOLE_DEBUG_W_STR("myAlpacaVersionString\t=",	myAlpacaVersionString);
 
 		if (myAlpacaVersionString[0] == 'v')
 		{
 			reqData->alpacaVersion		=	myAlpacaVersionString[1] & 0x0f;
 		}
-//		CONSOLE_DEBUG_W_NUM("reqData->alpacaVersion\t=",	reqData->alpacaVersion);
+		//CONSOLE_DEBUG_W_NUM("reqData->alpacaVersion\t=",	reqData->alpacaVersion);
 		strcpy(reqData->deviceType,		myDeviceString);
 	}
 
@@ -3814,8 +3850,7 @@ char				*delimPtr;
 	{
 		strcpy(reqData->deviceType,		"unknown");
 		reqData->deviceCommand[0]	=	0;
-		CONSOLE_DEBUG_W_STR("Unknown device type:", reqData->cmdBuffer);
-//		CONSOLE_ABORT(__FUNCTION__);
+//		CONSOLE_DEBUG_W_STR("Unknown device type:", reqData->cmdBuffer);
 	}
 
 	//*	figure out the base type of the request (see enum list above)
@@ -3974,7 +4009,10 @@ int	iii;
 		parseChrPtr++;
 	}
 
-//	DumpRequestStructure(__FUNCTION__, &reqData);
+//	if (requestType != kRequestType_API)
+//	{
+//		DumpRequestStructure(__FUNCTION__, &reqData);
+//	}
 
 	alpacaErrCode	=	kASCOM_Err_Success;
 	switch(requestType)
@@ -4053,35 +4091,36 @@ int	iii;
 			//-------------------------------------------------------------------
 			if (strncasecmp(parseChrPtr,	"/favicon.ico", 12) == 0)
 			{
-				CONSOLE_DEBUG("favicon.ico");
+//				CONSOLE_DEBUG("favicon.ico");
 				SendJpegResponse(socket, "favicon.ico");
 			}
 			//-------------------------------------------------------------------
 			else if (strncasecmp(parseChrPtr,	"/image.jpg", 10) == 0)
 			{
-				CONSOLE_DEBUG("image.jpg");
+//				CONSOLE_DEBUG("image.jpg");
 				SendJpegResponse(socket, NULL);
 			}
 			//-------------------------------------------------------------------
 			else if (strstr(parseChrPtr, ".jpg") != NULL)
 			{
-				CONSOLE_DEBUG(".....jpg");
+//				CONSOLE_DEBUG(".....jpg");
 				SendJpegResponse(socket, parseChrPtr);
 			}
 			//-------------------------------------------------------------------
 			else if (strstr(parseChrPtr, ".png") != NULL)
 			{
+//				CONSOLE_DEBUG(".....png");
 				SendJpegResponse(socket, parseChrPtr);
 			}
 			else
 			{
-				CONSOLE_DEBUG_W_STR("Incomplete alpaca command\t=",	htmlData);
+//				CONSOLE_DEBUG_W_STR("Unknown http request\t=",	htmlData);
+				CONSOLE_DEBUG_W_STR("parseChrPtr\t=", parseChrPtr);
 				DumpRequestStructure(__FUNCTION__, &reqData);
 				SocketWriteData(socket,	gBadResponse400);
 			}
 			break;
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -4113,6 +4152,30 @@ int		bytesWritten;
 	bytesWritten	=	SocketWriteData(socket,	postResponse);
 	CONSOLE_DEBUG_W_NUM("bytesWritten\t=",	bytesWritten);
 }
+
+//*****************************************************************************
+static void	ProcessOptionsCommand(const int socket)
+{
+char	optionsResponse[2048];
+int		bytesWritten;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	gHTTP_OptionsRequestCnt++;
+
+	strcpy(optionsResponse,	"HTTP/1.0 200 OK\r\n");
+	strcat(optionsResponse,	"Content-Type: text/plain\r\n");
+	strcat(optionsResponse,	"Allow: OPTIONS, GET, PUT, HEAD, POST\r\n");
+	strcat(optionsResponse,	"Access-Control-Allow-Origin: *\r\n");
+	strcat(optionsResponse,	"Access-Control-Allow-Headers: *\r\n");
+	strcat(optionsResponse,	"Access-Control-Allow-Methods: GET, PUT, POST\r\n");
+	strcat(optionsResponse,	"Connection: close\r\n");
+
+//	CONSOLE_DEBUG_W_STR("Sending data:\r\n", optionsResponse);
+
+	bytesWritten	=	SocketWriteData(socket,	optionsResponse);
+//	CONSOLE_DEBUG_W_NUM("bytesWritten\t=",	bytesWritten);
+}
+
 
 
 //*****************************************************************************
@@ -4151,15 +4214,17 @@ CONSOLE_DEBUG_W_STR("\r\n", htmlData);
 	}
 	else if (strncmp(htmlData, "POST", 4) == 0)
 	{
-		CONSOLE_DEBUG("POST command not supported (yet)");
-		CONSOLE_DEBUG_W_STR("htmlData\t=",	htmlData);
-		CONSOLE_DEBUG_W_LONG("byteCount\t=",	byteCount);
 		ProcessPostCommand(socket);
+		gServerTransactionID++;	//*	we are the "server"
+	}
+	else if (strncmp(htmlData, "OPTIONS", 7) == 0)
+	{
+		ProcessOptionsCommand(socket);
 		gServerTransactionID++;	//*	we are the "server"
 	}
 	else if (byteCount > 0)
 	{
-		CONSOLE_DEBUG_W_STR("Invalid HTML get/put command\t=",	htmlData);
+		CONSOLE_DEBUG_W_STR("Invalid HTML get/put command\t=\r\n",	htmlData);
 		CONSOLE_DEBUG_W_LONG("byteCount\t=",	byteCount);
 	}
 
@@ -4201,6 +4266,8 @@ static void	PrintHelp(const char *appName)
 	printf("\t%-20s\t%s\r\n",	"-g9",				"Sets baud rate to 9600 (default)");
 	printf("\t%-20s\t%s\r\n",	"-g4",				"Sets baud rate to 4800");
 	printf("\t%-20s\t%s\r\n",	"-g4/dev/ttyUSB0",	"Sets baud rate to 4800 and port to /dev/ttyUSB0");
+#else
+	printf("\t%-20s\t%s\r\n",	"-g...",			"GPS support not enabled in this build");
 #endif
 	printf("\t%-20s\t%s\r\n",	"-h",				"This help message");
 	printf("\t%-20s\t%s\r\n",	"-l",				"Live mode");
@@ -4713,7 +4780,7 @@ struct tm		*linuxTime;
 				kASCOM_Err_Success,
 				gFullVersionString);
 
-	DEBUG_TIMING(__FUNCTION__);
+	DEBUG_TIMING("Timing step 1");
 	gObservatorySettingsOK	=	ObservatorySettings_ReadFile();
 
 #ifdef _ENABLE_IMU_
@@ -4737,15 +4804,15 @@ int	imu_ReturnCode;
 	}
 #endif
 
-	DEBUG_TIMING(__FUNCTION__);
+	DEBUG_TIMING("Timing step 2:");
 	//--------------------------------------------------------
 	//*	create the various driver objects
 	CreateDriverObjects();
-	DEBUG_TIMING(__FUNCTION__);
+	DEBUG_TIMING("Timing step 3:");
 
 	//*********************************************************
 	StartDiscoveryListenThread(gAlpacaListenPort);
-	DEBUG_TIMING(__FUNCTION__);
+	DEBUG_TIMING("Timing step 4:");
 #ifdef _JETSON_
 	StartExtraListenThread(4520);
 #endif
@@ -4768,7 +4835,7 @@ int	imu_ReturnCode;
 		CONSOLE_DEBUG_W_NUM("threadErr=", threadErr);
 	}
 
-	DEBUG_TIMING(__FUNCTION__);
+	DEBUG_TIMING("Timing step 5:");
 
 #ifdef _ENABLE_GLOBAL_GPS_
 	if (gEnableGlobalGPS)
@@ -5331,7 +5398,7 @@ int		mySocketFD;
 	SocketWriteData(mySocketFD,	gHtmlHeader);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
-	SocketWriteData(mySocketFD,	"<HTML>\r\n");
+	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");
 	SocketWriteData(mySocketFD,	"<TITLE>Form Testing</TITLE>\r\n");
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<H1>Form Testing</H1>\r\n");

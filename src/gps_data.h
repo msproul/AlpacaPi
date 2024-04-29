@@ -15,7 +15,17 @@
 #ifndef _GPS_DATA_H_
 #define	_GPS_DATA_H_
 
+#ifndef _PARSE_NMEA_H_
+	#include	"ParseNMEA.h"
+#endif
 
+
+void	CreateGPSgraphics(void);
+
+//*	the folder name cannot start with "gps" as it confuses the parser
+#define		kGPSimageDirectory	"graphs-gps"
+
+extern TYPE_NMEAInfoStruct	gNMEAdata;
 
 #define	kMaxNMEAlen	80
 

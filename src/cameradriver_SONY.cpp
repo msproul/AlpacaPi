@@ -115,7 +115,7 @@ void				LogFunctionCall(	const char		*callingFunc,
 
 
 //*****************************************************************************
-int		CreateSONY_CameraObjects(void)
+int		CreateCameraObjects_SONY(void)
 {
 int			cameraCreatedCount;
 CrInt32u	versionNumber;
@@ -2728,7 +2728,7 @@ struct sigaction	signalAction;
 
 	sigaction(SIGSEGV, &signalAction, NULL);
 
-	CreateSONY_CameraObjects();
+	CreateCameraObjects_SONY();
 
 	if (gSonyCameraObj != NULL)
 	{

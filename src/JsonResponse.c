@@ -121,6 +121,8 @@ char	lineBuff[64];
 		}
 		strcat(jsonHdrBUffer,	"Content-type: application/json; charset=utf-8\r\n");
 		strcat(jsonHdrBUffer,	"Server: AlpacaPi\r\n");
+		strcat(jsonHdrBUffer,	"Access-Control-Allow-Origin: *\r\n");
+
 //		strcat(jsonHdrBUffer,	"Accept: text/html,application/json\r\n");
 //		strcat(jsonHdrBUffer,	"Accept-Language:en-US,en;q=0.8\r\n");
 

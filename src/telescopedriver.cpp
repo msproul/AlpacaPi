@@ -68,6 +68,11 @@
 //*	Jan 15,	2024	<MLS> Added Get_IMU()
 //*	Jan 16,	2024	<MLS> Added Telescope_CalculateSideOfPier()
 //*	Feb 11,	2024	<MLS> Added IMU-Roll, IMU-Pitch, & IMU-Yaw to telescope readall
+//*	Apr 24,	2024	<MLS> Working on GPS input for telescope site location
+//*	Apr 24,	2024	<MLS> Added GPS_TelescopeThread()
+//*	Apr 24,	2024	<MLS> Added Set_SiteLatitude(), Set_SiteLongitude(), Set_SiteAltitude()
+//*	Apr 25,	2024	<MLS> Added averaging to Lat/Lon updates from GPS
+//*	APr 28,	2024	<MLS> Added DumpTelescopeDriverStruct()
 //*****************************************************************************
 
 
@@ -93,14 +98,24 @@
 #include	"sidereal.h"
 
 #include	"observatory_settings.h"
+#ifdef _ENABLE_GLOBAL_GPS_
+//	#include	"gps_data.h"
+	#include	"ParseNMEA.h"
+#endif
 
+//----------------------------------------------------------------------
 #include	"telescopedriver.h"
+
+#ifdef _ENABLE_TELESCOPE_EXP_SCI_
+	#include	"telescopedriver_ExpSci.h"
+#endif
 
 #ifdef _ENABLE_TELESCOPE_LX200_
 	#include	"telescopedriver_lx200.h"
 #endif
 
 #ifdef _ENABLE_TELESCOPE_RIGEL_
+	#include	"telescopedriver_Rigel.h"
 #endif
 
 #ifdef _ENABLE_TELESCOPE_SKYWATCH_
@@ -117,12 +132,12 @@
 
 #ifdef _ENABLE_IMU_
 	#include "imu_lib.h"
-//	#include "imu_lib_bno055.h"
 #endif
 
 #include	"telescope_AlpacaCmds.h"
 #include	"telescope_AlpacaCmds.cpp"
 
+static void	*GPS_TelescopeThread(void *arg);
 
 //**************************************************************************************
 int	CreateTelescopeObjects(void)
@@ -132,6 +147,12 @@ int	telescopeCnt;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	telescopeCnt	=	0;
+
+
+#ifdef _ENABLE_TELESCOPE_EXP_SCI_
+	telescopeCnt	+=	CreateTelescopeObjects_ExploreScientific();
+#endif
+
 #ifdef _ENABLE_TELESCOPE_LX200_
 	new TelescopeDriverLX200(kDevCon_Ethernet, "192.168.1.104:49152");
 	telescopeCnt++;
@@ -262,7 +283,21 @@ int		iii;
 //	IMU_BNO055_StartBackgroundThread();
 	IMU_StartBackgroundThread(NULL);
 #endif // _ENABLE_IMU_
+
+
+#ifdef _ENABLE_GLOBAL_GPS_
+int		threadErr;
+
+	CONSOLE_DEBUG("Creating GPS_TelescopeThread");
+	cGPStelescopeKeepRunning	=	true;
+	threadErr	=	pthread_create(&cGPStelescopeThreadID, NULL, &GPS_TelescopeThread, this);
+	if (threadErr != 0)
+	{
+		CONSOLE_DEBUG_W_NUM("threadErr=", threadErr);
+	}
+#endif // _ENABLE_GLOBAL_GPS_
 }
+
 
 //**************************************************************************************
 // Destructor
@@ -270,6 +305,9 @@ int		iii;
 TelescopeDriver::~TelescopeDriver(void)
 {
 	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _ENABLE_GLOBAL_GPS_
+	cGPStelescopeKeepRunning	=	false;
+#endif
 }
 
 
@@ -295,7 +333,6 @@ int					mySocket;
 	mySocket	=	reqData->socket;
 
 	strcpy(alpacaErrMsg, "");
-	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 
 	//*	set up the json response
 	JsonResponse_CreateHeader(reqData->jsonTextBuffer);
@@ -317,6 +354,7 @@ int					mySocket;
 
 	//*	look up the command
 //	CONSOLE_DEBUG_W_STR("deviceCommand\t=", reqData->deviceCommand);
+	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gTelescopeCmdTable, &cmdType);
 	switch(cmdEnumValue)
 	{
@@ -637,8 +675,14 @@ int					mySocket;
 			break;
 
 		case kCmd_Telescope_abortslew:					//*	Immediately stops a slew in progress.
-			alpacaErrCode	=	Put_AbortSlew(reqData, alpacaErrMsg);
-			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+			if (reqData->get_putIndicator == 'P')
+			{
+				alpacaErrCode	=	Put_AbortSlew(reqData, alpacaErrMsg);
+			}
+			else
+			{
+				CONSOLE_DEBUG("Abort slew is PUT only!!!!!");
+			}
 			break;
 
 		case kCmd_Telescope_axisrates:					//*	Returns the rates at which the telescope may be moved about the specified axis.
@@ -787,6 +831,10 @@ int					mySocket;
 			}
 			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
+	}
+	if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 	}
 //	CONSOLE_DEBUG_W_NUM("Calling RecordCmdStats(), cmdEnumValue=", cmdEnumValue);
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -2489,6 +2537,8 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Put_AbortSlew(TYPE_GetPutRequestData *reqData
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+//	DumpRequestStructure(__FUNCTION__, reqData);
+
 //	CONSOLE_DEBUG(reqData->contentData);
 
 	alpacaErrMsg[0]	=	0;
@@ -3561,7 +3611,6 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_Readall(TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int		mySocket;
-char	dataString[256];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _DEBUG_CONFORM_
@@ -3640,13 +3689,14 @@ char	dataString[256];
 		alpacaErrCode	=	Get_HourAngle(			reqData, alpacaErrMsg, "HourAngle");
 		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PhysicalSideOfPier");
 #ifdef _ENABLE_IMU_
+char	imudataString[256];
 		alpacaErrCode	=	Get_IMU(				reqData, alpacaErrMsg, "IMU");
-		IMU_GetIMUtypeString(dataString);
+		IMU_GetIMUtypeString(imudataString);
 		JsonResponse_Add_String(mySocket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"IMU-Type",
-								dataString,
+								imudataString,
 								INCLUDE_COMMA);
 #endif // _ENABLE_IMU_
 
@@ -3938,5 +3988,155 @@ double			myElevation;
 	}
 	return(sideOfPier);
 }
+
+//**************************************************************************************
+void	DumpTelescopeDriverStruct(TYPE_TelescopeProperties *telescopeDriver)
+{
+	CONSOLE_DEBUG_W_NUM("CanUnpark             \t=", telescopeDriver->CanUnpark);
+	CONSOLE_DEBUG_W_NUM("CanMoveAxis[kAxis_RA] \t=", telescopeDriver->CanMoveAxis[kAxis_RA]);
+	CONSOLE_DEBUG_W_NUM("CanMoveAxis[kAxis_DEC]\t=", telescopeDriver->CanMoveAxis[kAxis_DEC]);
+}
+
+#ifdef _ENABLE_GLOBAL_GPS_
+//**************************************************************************************
+void	TelescopeDriver::Set_SiteLatitude(const double newSiteLatitude)
+{
+	if ((newSiteLatitude >= -90.0) && (newSiteLatitude <= 90.0))
+	{
+		cTelescopeProp.SiteLatitude		=	newSiteLatitude;
+	}
+}
+
+//**************************************************************************************
+void	TelescopeDriver::Set_SiteLongitude(const double newSiteLongitude)
+{
+	if ((newSiteLongitude >= -180.0) && (newSiteLongitude <= 360.0))
+	{
+		cTelescopeProp.SiteLongitude		=	newSiteLongitude;
+	}
+}
+				void						Set_SiteAltitude(const double newSiteAlititude);
+//**************************************************************************************
+void	TelescopeDriver::Set_SiteAltitude(const double newSiteAlititude)
+{
+	if ((newSiteAlititude >= -200.0) && (newSiteAlititude <= 10000.0))
+	{
+		cTelescopeProp.SiteElevation		=	newSiteAlititude;
+	}
+}
+
+#define	kTelescopeLatLonAvgCnt	32
+//**************************************************************************************
+static double	ComputeAveage(const double *numberList, const int avgCount)
+{
+double	total;
+int		iii;
+
+	total	=	0.0;
+	for (iii=0; iii<avgCount; iii++)
+	{
+		total	+=	numberList[iii];
+	}
+	return(total / avgCount);
+}
+
+//**************************************************************************************
+static void	*GPS_TelescopeThread(void *arg)
+{
+TelescopeDriver	*myTelescopeDriver;
+double			latitudeArray[kTelescopeLatLonAvgCnt];
+double			longitudeArray[kTelescopeLatLonAvgCnt];
+double			altitudeArray[kTelescopeLatLonAvgCnt];
+double			avgValue;
+int				iii;
+int				sleepDuration;
+int				latLonArrayIdx;
+int				altArrayIdx;
+int				latlonUpdateCnt;
+int				altitudeUpdateCnt;
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (arg != NULL)
+	{
+		for (iii=0; iii<kTelescopeLatLonAvgCnt; iii++)
+		{
+			latitudeArray[iii]	=	0.0;
+			longitudeArray[iii]	=	0.0;
+			altitudeArray[iii]	=	0.0;
+		}
+		latlonUpdateCnt		=	0;
+		altitudeUpdateCnt	=	0;
+		latLonArrayIdx		=	0;
+		altArrayIdx			=	0;
+		myTelescopeDriver	=	(TelescopeDriver *)arg;
+		while (myTelescopeDriver->cGPStelescopeKeepRunning)
+		{
+			sleepDuration	=	60;
+			if (gNMEAdata.validData)
+			{
+				if (gNMEAdata.validLatLon)
+				{
+//					CONSOLE_DEBUG("Updating Telescope lat/lon from gps");
+
+					//*	save in the array for averaging
+					latitudeArray[latLonArrayIdx]	=	gNMEAdata.lat_average;
+					longitudeArray[latLonArrayIdx]	=	gNMEAdata.lon_average;
+					latLonArrayIdx++;
+					if (latLonArrayIdx >= kTelescopeLatLonAvgCnt)
+					{
+						latLonArrayIdx	=	0;
+					}
+					if (latlonUpdateCnt > kTelescopeLatLonAvgCnt)
+					{
+						avgValue	=	ComputeAveage(latitudeArray, kTelescopeLatLonAvgCnt);
+						myTelescopeDriver->Set_SiteLatitude(avgValue);
+						avgValue	=	ComputeAveage(longitudeArray, kTelescopeLatLonAvgCnt);
+						myTelescopeDriver->Set_SiteLongitude(avgValue);
+					}
+					else
+					{
+						myTelescopeDriver->Set_SiteLatitude(gNMEAdata.lat_average);
+						myTelescopeDriver->Set_SiteLongitude(gNMEAdata.lon_average);
+					}
+					latlonUpdateCnt++;
+				}
+				if (gNMEAdata.validAlt)
+				{
+//					CONSOLE_DEBUG("Updating Telescope alititude from gps");
+					altitudeArray[altArrayIdx]	=	gNMEAdata.alt_average;
+					altArrayIdx++;
+					if (altArrayIdx >= kTelescopeLatLonAvgCnt)
+					{
+						altArrayIdx	=	0;
+					}
+					if (altitudeUpdateCnt > kTelescopeLatLonAvgCnt)
+					{
+						avgValue	=	ComputeAveage(altitudeArray, kTelescopeLatLonAvgCnt);
+						myTelescopeDriver->Set_SiteAltitude(avgValue);
+					}
+					else
+					{
+						myTelescopeDriver->Set_SiteAltitude(gNMEAdata.alt_average);
+					}
+					altitudeUpdateCnt++;
+				}
+				if (latlonUpdateCnt < 10)
+				{
+					sleepDuration	=	15;
+				}
+			}
+			sleep(sleepDuration);
+		}
+	}
+//	else
+//	{
+//		CONSOLE_DEBUG("Invalid");
+//	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "EXIT!!!!!!!!!!!!!!");
+	return(NULL);
+}
+#endif // _ENABLE_GLOBAL_GPS_
+
+
 
 #endif	//	_ENABLE_TELESCOPE_

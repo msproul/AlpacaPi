@@ -75,20 +75,25 @@
 //*****************************************************************************
 //*	does not write anything if no GPS present
 //*	QHY GPS takes priority over global GPS
+//*****************************************************************************
 void	CameraDriver::WriteFITS_GPSinfo(fitsfile *fitsFilePtr)
 {
 	if (cGPS.Present)
 	{
 		WriteFITS_QHY_GPSinfo(fitsFilePtr);
 	}
+#ifdef _ENABLE_GLOBAL_GPS_
 	else if (gNMEAdata.SequenceNumber > 0)
 	{
 		WriteFITS_Global_GPSinfo(fitsFilePtr);
 	}
+#endif
 }
 
+
+#ifndef _ENABLE_GLOBAL_GPS_
 //*****************************************************************************
-static void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString)
+void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString)
 {
 	modeString[0]	=	0;
 	switch (gpsMode1)
@@ -106,7 +111,58 @@ static void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString)
 		default:	strcat(modeString, "Unknown: ");			break;
 	}
 }
+//**************************************************************************************
+void	ParseNMEA_FormatLatLonStrings(double latValue, char *latString, double lonValue, char *lonString)
+{
+int		degrees;
+int		minutes;
+double	seconds;
+char	signChar;
+double	myLatLonValue;
+int		myLatLonValueMinutes;
 
+	//*	first do the lat
+	if (latValue < 0)
+	{
+		signChar			=	'S';
+		myLatLonValue		=	-latValue;
+	}
+	else
+	{
+		signChar			=	'N';
+		myLatLonValue		=	latValue;
+	}
+	degrees					=	myLatLonValue;
+	myLatLonValueMinutes	=	myLatLonValue * 60;
+	minutes					=	myLatLonValueMinutes % 60;
+	seconds					=	(myLatLonValue * 3600) - (degrees * 3600) - (minutes * 60);
+
+	sprintf(latString, "%03d:%02d:%05.3f %c", degrees, minutes, seconds, signChar);
+//	CONSOLE_DEBUG_W_STR("latString\t=", latString);
+
+	//*	now do the lon
+	if (lonValue < 0)
+	{
+		signChar			=	'W';
+		myLatLonValue		=	-lonValue;
+	}
+	else
+	{
+		signChar			=	'E';
+		myLatLonValue		=	lonValue;
+	}
+	degrees					=	myLatLonValue;
+	myLatLonValueMinutes	=	myLatLonValue * 60;
+	minutes					=	myLatLonValueMinutes % 60;
+	seconds					=	(myLatLonValue * 3600) - (degrees * 3600) - (minutes * 60);
+
+	sprintf(lonString, "%03d:%02d:%05.3f %c", degrees, minutes, seconds, signChar);
+//	CONSOLE_DEBUG_W_STR("lonString\t=", lonString);
+}
+#endif // _ENABLE_GLOBAL_GPS_
+
+
+#ifdef _ENABLE_GLOBAL_GPS_
 
 //*****************************************************************************
 void	CameraDriver::WriteFITS_Global_GPSinfo(fitsfile *fitsFilePtr)
@@ -260,6 +316,7 @@ char	tempstring[100];
 //$GPGSV,3,2,11,13,29,048,14,05,22,093,16,10,17,289,16,27,13,313,16*72
 //$GPGSV,3,3,11,29,09,200,14,32,02,233,14,37,,,*7C
 //$GPRMC,023427.000,A,4121.6634,N,07458.8293,W,0.24,70.83,110424,,,A*4B
+#endif // _ENABLE_GLOBAL_GPS_
 
 
 

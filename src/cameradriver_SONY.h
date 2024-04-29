@@ -36,7 +36,7 @@
 	#include	"IDeviceCallback.h"
 #endif
 
-int		CreateSONY_CameraObjects(void);
+int		CreateCameraObjects_SONY(void);
 
 
 #ifndef	_CAMERA_DRIVER_H_

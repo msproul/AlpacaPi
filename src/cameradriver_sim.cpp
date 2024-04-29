@@ -368,6 +368,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 				cROIinfo.currentROIimageType	=	kImageType_Y8;
 				break;
 
+			case kImageType_MONO8:
+				cROIinfo.currentROIimageType	=	kImageType_MONO8;
+				break;
+
 			case kImageType_Invalid:
 			case kImageType_last:
 				break;

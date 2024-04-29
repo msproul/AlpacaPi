@@ -24,6 +24,7 @@
 //*****************************************************************************
 //*	Sep  9,	2023	<MLS> Created cameradriver_readthread.cpp
 //*	Sep 23,	2023	<MLS> Moved camera temp logging to CameraDriver::RunThread_Loop()
+//*	Apr 22,	2024	<MLS> Added RunThread_CheckPictureStatus()
 //*****************************************************************************
 
 #ifdef _ENABLE_CAMERA_
@@ -58,7 +59,7 @@ void	CameraDriver::RunThread_Loop(void)
 time_t		deltaSeconds;
 time_t		currentSeconds;
 
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Camera");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Camera");
 	switch(cInternalCameraState)
 	{
 		case kCameraState_Idle:
@@ -66,6 +67,7 @@ time_t		currentSeconds;
 			break;
 
 		case kCameraState_TakingPicture:
+			RunThread_CheckPictureStatus();
 			break;
 
 		case kCameraState_StartVideo:
@@ -101,8 +103,17 @@ time_t		currentSeconds;
 	usleep(25000);
 }
 
-
+//*****************************************************************************
+void	CameraDriver::RunThread_CheckPictureStatus(void)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+}
 
 
 #endif // _USE_CAMERA_READ_THREAD_
 #endif // _ENABLE_CAMERA_
+
+
+
+
+

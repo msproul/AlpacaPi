@@ -85,7 +85,7 @@
 //**************************************************************************************
 //*	returns the number of camera objects created
 //**************************************************************************************
-int	CreateATIK_CameraObjects(void)
+int	CreateCameraObjects_ATIK(void)
 {
 int		devNum;
 int		atikDeviceCount;

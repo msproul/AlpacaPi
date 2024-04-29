@@ -69,6 +69,9 @@
 #ifdef _ENABLE_FILTERWHEEL_ATIK_
 	#include	"filterwheeldriver_ATIK.h"
 #endif
+#ifdef _ENABLE_FILTERWHEEL_PLAYERONE_
+	#include	"filterwheeldriver_Play1.h"
+#endif
 #ifdef _ENABLE_FILTERWHEEL_QHY_
 	#include	"filterwheeldriver_QHY.h"
 #endif
@@ -90,6 +93,10 @@ void	CreateFilterWheelObjects(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 #ifdef _ENABLE_FILTERWHEEL_ATIK_
 	CreateFilterWheelObjects_ATIK();
+#endif
+
+#ifdef _ENABLE_FILTERWHEEL_PLAYERONE_
+	CreateFilterWheelObjects_PlayerOne();
 #endif
 
 #ifdef _ENABLE_FILTERWHEEL_QHY_
@@ -536,8 +543,8 @@ bool				positionFound;
 char				poisitonString[32];
 char				commentString[128];
 
-	CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
-	CONSOLE_DEBUG_W_NUM("max positions\t=",	cNumberOfPositions);
+//	CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+//	CONSOLE_DEBUG_W_NUM("max positions\t=",	cNumberOfPositions);
 
 	positionFound		=	GetKeyWordArgument(	reqData->contentData,
 												"Position",

@@ -24,7 +24,7 @@
 	#include	"ASICamera2.h"
 #endif
 
-int		CreateASI_CameraObjects(void);
+int		CreateCameraObjects_ASI(void);
 
 
 //**************************************************************************************
@@ -76,7 +76,7 @@ class CameraDriverASI: public CameraDriver
 //		virtual	TYPE_ASCOM_STATUS		Read_Readoutmodes(char *readOutModeString, bool includeQuotes=false);
 		virtual	TYPE_ASCOM_STATUS		Read_Fastreadout(void);
 		virtual	TYPE_ASCOM_STATUS		Read_ImageData(void);
-		virtual	TYPE_ASCOM_STATUS		SetFlipMode(int newFlipMode);
+		virtual	TYPE_ASCOM_STATUS		SetFlipMode(const int newFlipMode);
 
 
 

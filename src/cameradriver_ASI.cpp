@@ -32,7 +32,7 @@
 //*****************************************************************************
 //*	Apr 14,	2019	<MLS> Started on camera code
 //*	Apr 15,	2019	<MLS> Added command table for camera
-//*	Apr 17,	2019	<MLS> Added Camera_OutputHTML()
+//*	Apr 17,	2019	<MLS> Added OutputHTML()
 //*	Apr 17,	2019	<MLS> Read temperature working on ASI1600
 //*	Apr 27,	2019	<MLS> Added error messages for ASI failures
 //*	Apr 29,	2019	<MLS> Reading images from ASI camera
@@ -80,7 +80,7 @@
 //*	Mar 26,	2021	<MLS> Offset value read/write working in ASI cameras
 //*	Oct 13,	2021	<MLS> Added Write_BinX() & Write_BinY() to ASI driver
 //*	May 17,	2022	<MLS> Changed the way power level is reported
-//*	Oct  1,	2022	<MLS> Changed CreateASI_CameraObjects() to return camera count
+//*	Oct  1,	2022	<MLS> Changed CreateCameraObjects_ASI() to return camera count
 //*	Apr 30,	2023	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp()
 //*	Sep  9,	2023	<MLS> Moved read thread stuff to parent class
 //*	Sep  9,	2023	<MLS> Deleted _USE_THREADS_FOR_ASI_CAMERA_
@@ -139,7 +139,7 @@ static void	Get_ASI_ImageTypeString(ASI_IMG_TYPE imageType, char *typeString);
 //**************************************************************************************
 //*	returns the number of camera objects created
 //**************************************************************************************
-int	CreateASI_CameraObjects(void)
+int	CreateCameraObjects_ASI(void)
 {
 int		devNum;
 char	driverVersionString[64];
@@ -1951,6 +1951,7 @@ ASI_BOOL			bAuto;
 		}
 		else
 		{
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 			strcpy(cLastCameraErrMsg, "Failed to set gain");
 			CONSOLE_DEBUG(cLastCameraErrMsg);
 		}
@@ -2654,6 +2655,7 @@ char				asiErrorMsgString[64];
 				}
 				else
 				{
+					alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 					strcpy(cLastCameraErrMsg, "Failed to allocate buffer");
 					CONSOLE_DEBUG(cLastCameraErrMsg);
 				}
@@ -2692,7 +2694,7 @@ char				asiErrorMsgString[64];
 }
 
 //*****************************************************************************
-TYPE_ASCOM_STATUS	CameraDriverASI::SetFlipMode(int newFlipMode)
+TYPE_ASCOM_STATUS	CameraDriverASI::SetFlipMode(const int newFlipMode)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 ASI_ERROR_CODE		asiErrorCode;

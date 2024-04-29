@@ -23,7 +23,7 @@
 
 #include	"AtikCameras.h"
 
-int	CreateATIK_CameraObjects(void);
+int	CreateCameraObjects_ATIK(void);
 
 
 //**************************************************************************************

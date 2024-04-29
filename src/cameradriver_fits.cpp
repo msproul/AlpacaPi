@@ -102,6 +102,8 @@
 //*	Mar 25,	2024	<MLS> Now using NASA Moon Phase info if available
 //*	Mar 27,	2024	<MLS> Added lunar polar axis to moon fits info
 //*	Apr 10,	2024	<MLS> FITS data now supports GPS from serial port
+//*	Apr 18,	2024	<MLS> Added filter wheel serial number to fits output if it exists
+//*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
@@ -246,6 +248,8 @@ void	GetImageTypeString(TYPE_IMAGE_TYPE imageType, char *imageTypeString)
 		case kImageType_RAW16:	strcpy(imageTypeString,	"RAW16");	break;
 		case kImageType_RGB24:	strcpy(imageTypeString,	"RGB24");	break;
 		case kImageType_Y8:		strcpy(imageTypeString,	"Y8");		break;
+		case kImageType_MONO8:	strcpy(imageTypeString,	"MONO8");	break;
+
 		default:				strcpy(imageTypeString,	"unknown");	break;
 	}
 }
@@ -440,6 +444,7 @@ int				iii;
 	switch(cROIinfo.currentROIimageType)
 	{
 		case kImageType_RAW8:
+		case kImageType_MONO8:
 //			CONSOLE_DEBUG("kImageType_RAW8");
 			fits_bitpix		=	BYTE_IMG;
 			fitsDataType	=	TBYTE;
@@ -636,6 +641,7 @@ int				iii;
 			{
 				case kImageType_RAW8:
 				case kImageType_RAW16:
+				case kImageType_MONO8:
 					fitsRetCode		=	fits_write_pix(	fitsFilePtr,
 														fitsDataType,
 														fpixelArray,
@@ -1359,6 +1365,14 @@ int		fitsStatus;
 														"Filter wheel used", &fitsStatus);
 			}
 
+			//----------------------------------------------------------------------
+			if (strlen(cConnectedFilterWheel->cDeviceSerialNum) > 0)
+			{
+				fitsStatus	=	0;
+				fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+														cConnectedFilterWheel->cDeviceSerialNum,
+														"Serial Number", &fitsStatus);
+			}
 
 			fwAlpacaErr	=	cConnectedFilterWheel->Read_CurrentFilterPositon(&filterPosition);
 			if (fwAlpacaErr == kASCOM_Err_Success)
@@ -1714,19 +1728,6 @@ struct tm		myLocalTime;
 											stringBuf,
 											"Local Sidereal Time start of exposure", &fitsStatus);
 
-	modifiedJulianDate	=	Julian_CalcMJD(&cCameraProp.Lastexposure_StartTime);
-	fitsStatus			=	0;
-	fits_write_key(fitsFilePtr, TDOUBLE,	"MJD-OBS",
-											&modifiedJulianDate,
-											"MJD of observation", &fitsStatus);
-	if (cCameraProp.Lastexposure_EndTime.tv_sec > cCameraProp.Lastexposure_StartTime.tv_sec)
-	{
-		modifiedJulianDate	=	Julian_CalcMJD(&cCameraProp.Lastexposure_EndTime);
-		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TDOUBLE,	"MJDEND",
-												&modifiedJulianDate,
-												"MJD at end of exposure", &fitsStatus);
-	}
 	//==============================================================
 	//*	include the local time as well
 	localTime		=	localtime(&cCameraProp.Lastexposure_StartTime.tv_sec);
@@ -1745,6 +1746,19 @@ struct tm		myLocalTime;
 											(void *)myLocalTime.tm_zone,
 											"Time Zone",
 											&fitsStatus);
+
+	//==============================================================
+	modifiedJulianDate	=	Julian_CalcMJD(&cCameraProp.Lastexposure_StartTime);
+	fitsStatus			=	0;
+	fits_write_key(fitsFilePtr, TDOUBLE,	"MJD-OBS",
+											&modifiedJulianDate,
+											"MJD of observation", &fitsStatus);
+
+	modifiedJulianDate	=	Julian_CalcMJD(&cCameraProp.Lastexposure_EndTime);
+	fitsStatus	=	0;
+	fits_write_key(fitsFilePtr, TDOUBLE,	"MJDEND",
+											&modifiedJulianDate,
+											"MJD at end of exposure", &fitsStatus);
 
 	//==============================================================
 	fitsStatus	=	0;
@@ -1910,7 +1924,7 @@ void	CameraDriver::WriteFITS_RotatorInfo(fitsfile *fitsFilePtr)
 
 			//*	model
 			cConnectedRotator->GetRotatorModel(dataBuff);
-			if (strlen(lineBuff) > 0)
+			if (strlen(dataBuff) > 0)
 			{
 				strcpy(lineBuff, "Rotator Model: ");
 				strcat(lineBuff, dataBuff);
@@ -1922,7 +1936,7 @@ void	CameraDriver::WriteFITS_RotatorInfo(fitsfile *fitsFilePtr)
 
 			//*	serial number
 			cConnectedRotator->GetRotatorSerialNumber(dataBuff);
-			if (strlen(lineBuff) > 0)
+			if (strlen(dataBuff) > 0)
 			{
 				strcpy(lineBuff, "Rotator Serial Number: ");
 				strcat(lineBuff, dataBuff);
@@ -2304,7 +2318,7 @@ TYPE_MoonPhase	moonPhaseInfo;
 												(char *)"Calculated WRT UTC time and location (Greenwich, UK)",
 												NULL, &fitsStatus);
 		fitsStatus	=	0;
-		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+		fits_write_key(fitsFilePtr, TSTRING,	"MOONDATE",
 												timeString,
 												NULL, &fitsStatus);
 

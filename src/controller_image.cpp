@@ -1659,10 +1659,12 @@ void	ControllerImage::ProcessFitsHeader(const char *imageFilePath)
 fitsfile	*fptr;
 char		card[FLEN_CARD];
 char		valueString[FLEN_CARD];
+char		statusString[64];
 int			status;
 int			nkeys;
 int			iii;
 int			fitsKeyWordEnum;
+double		ccdTemperature;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, imageFilePath);
@@ -1706,8 +1708,11 @@ int			fitsKeyWordEnum;
 
 				case kFitsKeyword_CCDTEMP:
 					GetDataFromFitsLine(card, valueString);
-					strcat(valueString, " deg C");
-					SetWidgetText(	kTab_Image, kImageDisplay_CameraTemp, valueString);
+					ccdTemperature	=	atof(valueString);
+					sprintf(statusString, "%3.1f deg C", ccdTemperature);
+					CONSOLE_DEBUG_W_DBL("ccdTemperature\t=",	ccdTemperature);
+					CONSOLE_DEBUG_W_STR("statusString  \t=",	statusString);
+					SetWidgetText(	kTab_Image, kImageDisplay_CameraTemp, statusString);
 					break;
 
 				case kFitsKeyword_Date:
@@ -1715,6 +1720,7 @@ int			fitsKeyWordEnum;
 
 				case kFitsKeyword_EXPTIME:
 					GetDataFromFitsLine(card, valueString);
+					cFitsHeaderData.Exposure_Secs	=	atof(valueString);
 					SetWidgetText(	kTab_Image, kImageDisplay_Exposure, valueString);
 					break;
 
@@ -1917,6 +1923,13 @@ char		theString[128];
 		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Camera:",	cFitsHeaderData.Camera);
 		yyLoc	+=	cDeltaYloc;
 	}
+	if (cFitsHeaderData.Exposure_Secs > 0.0)
+	{
+		sprintf(theString, "%3.6f seconds", cFitsHeaderData.Exposure_Secs);
+		DrawTextString2(xxLoc1,	xxLoc2, yyLoc,	"Exposure:",	theString);
+		yyLoc	+=	cDeltaYloc;
+	}
+
 	if (strlen(cFitsHeaderData.Filter) > 0)
 	{
 		if (strcasecmp(cFitsHeaderData.Filter, "None") != 0)
