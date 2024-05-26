@@ -1,4 +1,4 @@
-History Comments found =3462 in 515 files
+History Comments found =3463 in 515 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -3331,29 +3331,29 @@ windowtab_sw_versions.cpp:23	//*	Apr 15,	2024	<MLS> Fixed buffer overflow bug in
 cameradriver_ser.cpp:11  	//*	Apr 16,	2024	<MLS> Created cameradriver_ser.cpp
 ParseNMEA.c:67           	//*	Apr 16,	2024	<MLS> Added GetGPSmodeString()
 cameradriver_fits.cpp:105	//*	Apr 18,	2024	<MLS> Added filter wheel serial number to fits output if it exists
-cameradriver_PlayerOne.cpp:28	//*	Apr 18,	2024	<MLS> Discussed Alpaca migration with Vanessa Zhang
+cameradriver_PlayerOne.cpp:29	//*	Apr 18,	2024	<MLS> Discussed Alpaca migration with Vanessa Zhang
 filterwheeldriver_Play1.cpp:27	//*	Apr 18,	2024	<MLS> Borrowed Player-One filter wheel from Vanessa Zhang
 filterwheeldriver_Play1.cpp:28	//*	Apr 18,	2024	<MLS> Created filterwheeldriver_Play1.cpp
 filterwheeldriver_Play1.cpp:29	//*	Apr 18,	2024	<MLS> PlayerOne filterwheel working
 cameradriver.cpp:210     	//*	Apr 19,	2024	<MLS> Added check for flip enabled to Put_Flip()
 cameradriver.h:31        	//*	Apr 19,	2024	<MLS> Added kImageType_MONO8
-cameradriver_PlayerOne.cpp:29	//*	Apr 19,	2024	<MLS> Created cameradriver_PlayerOne.cpp
+cameradriver_PlayerOne.cpp:30	//*	Apr 19,	2024	<MLS> Created cameradriver_PlayerOne.cpp
 cameradriver_PlayerOne.h:11	//*	Apr 19,	2024	<MLS> Created cameradriver_PlayerOne.h
 telescopedriver_ExpSci.cpp:33	//*	Apr 20,	2024	<MLS> Ordered Explore Scientific iEXOS-100-2 PMC-Eight Equatorial Tracker System
 cameradriver_OGMA.cpp:30 	//*	Apr 21,	2024	<MLS> Discussed Alpaca protocol with Juan Martinez at OGMA
 cameradriver_OGMA.cpp:31 	//*	Apr 21,	2024	<MLS> Juan told me that OGMA is almost identical to ToupTek, nearly identical SDK
 cameradriver_OGMA.cpp:32 	//*	Apr 21,	2024	<MLS> OGMA cameras gave me one of their low-end cameras https://getogma.com/
-cameradriver_PlayerOne.cpp:30	//*	Apr 21,	2024	<MLS> Purchased Player One Neptune-C II Camera (4 mega-pixels)
+cameradriver_PlayerOne.cpp:31	//*	Apr 21,	2024	<MLS> Purchased Player One Neptune-C II Camera (4 mega-pixels)
 telescopedriver_ExpSci.cpp:34	//*	Apr 21,	2024	<MLS> Created telescopedriver_ExpSci.cpp
 telescopedriver_ExpSci.h:18	//*	Apr 21,	2024	<MLS> Created telescopedriver_ExpSci.h
 alpacadriver.cpp:186     	//*	Apr 22,	2024	<MLS> Started working on multi-language support
 cameradriverAnalysis.cpp:47	//*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
 cameradriver_fits.cpp:106	//*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
 cameradriver_OGMA.cpp:33 	//*	Apr 22,	2024	<MLS> Downloaded SDK from https://github.com/OGMAvision/OGMAcamSDK
-cameradriver_PlayerOne.cpp:31	//*	Apr 22,	2024	<MLS> PlayerOne camera reading images properly
-cameradriver_PlayerOne.cpp:32	//*	Apr 22,	2024	<MLS> Finished Read/Write Gain
-cameradriver_PlayerOne.cpp:33	//*	Apr 22,	2024	<MLS> Image flip working
-cameradriver_PlayerOne.cpp:34	//*	Apr 22,	2024	<MLS> Finished Read/Write Offset
+cameradriver_PlayerOne.cpp:32	//*	Apr 22,	2024	<MLS> PlayerOne camera reading images properly
+cameradriver_PlayerOne.cpp:33	//*	Apr 22,	2024	<MLS> Finished Read/Write Gain
+cameradriver_PlayerOne.cpp:34	//*	Apr 22,	2024	<MLS> Image flip working
+cameradriver_PlayerOne.cpp:35	//*	Apr 22,	2024	<MLS> Finished Read/Write Offset
 cameradriver_readthread.cpp:27	//*	Apr 22,	2024	<MLS> Added RunThread_CheckPictureStatus()
 Makefile:67              	#++	Apr 22,	2024	<MLS> Added _INCLUDE_MULTI_LANGUAGE_SUPPORT_
 cameradriver_OGMA.cpp:34 	//*	Apr 23,	2024	<MLS> Created cameradriver_OGMA.cpp
@@ -3448,7 +3448,8 @@ windowtab_MoonPhase.cpp:30	//*	May 23,	2024	<MLS> Added RA/Dec graph moon phase 
 windowtab_fov.cpp:33     	//*	May 25,	2024	<MLS> Added ProcessMouseEvent(), ProcessLineSelect(), SetNewSelectedDevice()
 windowtab_fov.cpp:34     	//*	May 25,	2024	<MLS> Line select now working in FOV window
 alpaca_defs.h:99         	//*	May 26,	2024	<MLS> Build 178
-cameradriver_PlayerOne.cpp:35	//*	May 26,	2024	<MLS> Fixed common property "Name"  aka DeviceName
+cameradriver_PlayerOne.cpp:36	//*	May 26,	2024	<MLS> Fixed common property "Name"  aka DeviceName
+cameradriver_PlayerOne.cpp:37	//*	May 26,	2024	<MLS> Found new version of PlayerOne SDK V3.6.2
 cameradriver.cpp:213     	//*	Jan  1,	2119	<TODO> ----------------------------------------
 cameradriver.cpp:214     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
@@ -3461,19 +3462,19 @@ controller_camera.cpp:79 	//*	Feb  6,	2121	<TODO> Move downloading of images to 
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3462 in 515 files
-Total lines              = 243886
-Total comment Lines      = 39953 (16.4%)
-Total comments           = 44805 (18.4%)
-Total history comments   = 3462 (1.4%)
+History Comments found   = 3463 in 515 files
+Total lines              = 243890
+Total comment Lines      = 39956 (16.4%)
+Total comments           = 44808 (18.4%)
+Total history comments   = 3463 (1.4%)
 Total C files            = 69
 Total C++ files          = 193
 Total H files            = 251
 Preprocssor cnt          = 7789
-Total SLOC               = 154996
-Total SLOC-Logical       = 119518
+Total SLOC               = 154997
+Total SLOC-Logical       = 119519
 Programmer comment summary
-MLS             = 3052
+MLS             = 3053
 TODO            =   11
 DDB             =    1
 JMH             =    3

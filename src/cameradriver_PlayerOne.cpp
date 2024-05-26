@@ -21,6 +21,7 @@
 //*
 //*	References:
 //*		https://player-one-astronomy.com/
+//*		https://player-one-astronomy.com/service/software/
 //*****************************************************************************
 //*	Edit History
 //*		<MLS>	=	Mark L Sproul
@@ -33,7 +34,9 @@
 //*	Apr 22,	2024	<MLS> Image flip working
 //*	Apr 22,	2024	<MLS> Finished Read/Write Offset
 //*	May 26,	2024	<MLS> Fixed common property "Name"  aka DeviceName
+//*	May 26,	2024	<MLS> Found new version of PlayerOne SDK V3.6.2
 //*****************************************************************************
+//https://player-one-astronomy.com/download/softwares/PlayerOne_Camera_SDK_Linux_V3.6.2.tar.gz
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_CAMERA_PLAYERONE_)
 
@@ -194,7 +197,7 @@ POAErrors		poError;
 		CONSOLE_DEBUG_W_STR("camera SN:             \t",	cPlayerOneProp.SN);
 		CONSOLE_DEBUG_W_STR("sensorModelName:       \t",	cPlayerOneProp.sensorModelName);
 		CONSOLE_DEBUG_W_STR("cCommonProp.Name:      \t",	cCommonProp.Name);
-		CONSOLE_DEBUG_W_STR("cCommonProp.SensorName:\t",	cCommonProp.SensorName);
+		CONSOLE_DEBUG_W_STR("cCameraProp.SensorName:\t",	cCameraProp.SensorName);
 
 //	char userCustomID[16];			///< user custom name, it will be will be added after the camera name, max len 16 bytes,like:Mars-C [Juno], default is empty
 //	int cameraID;					///< it's unique,camera can be controlled and set by the cameraID

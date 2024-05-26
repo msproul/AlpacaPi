@@ -3014,6 +3014,7 @@ poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 poz	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_FilterWheel_SDK_Linux_V1.2.0/include
 poz	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
+poz	:		INCLUDES		+=	-I./PlayerOne/include_camera
 poz	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 poz	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 poz	:												\
