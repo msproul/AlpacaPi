@@ -42,7 +42,8 @@
 //*	Oct 20,	2022	<MLS> Added DumpFocuserProperties()
 //*	Nov  4,	2022	<MLS> Added GetCommandArgumentString()
 //*	Nov  8,	2022	<MLS> Fixed bug in JSON for temperatureLog in all drivers.
-//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to focuser dirver
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to focuser driver
+//*	May 17,	2024	<MLS> Added http error 400 processing to focuser driver
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -299,40 +300,43 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ClientTransactionID",
-								gClientTransactionID,
-								INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ClientTransactionID",
+										reqData->ClientTransactionID,
+										INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ServerTransactionID",
-								gServerTransactionID,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ServerTransactionID",
+										gServerTransactionID,
+										INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorNumber",
-								alpacaErrCode,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ErrorNumber",
+										alpacaErrCode,
+										INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorMessage",
-								alpacaErrMsg,
-								NO_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ErrorMessage",
+										alpacaErrMsg,
+										NO_COMMA);
 
-	//*	Nov  8,	2022	<MLS> Fixed bug in JSON for temperatureLog in all drivers.
-	JsonResponse_Add_Finish(	mySocket,
-								reqData->jsonTextBuffer,
-								(cHttpHeaderSent == false));		//*	required for long JSON output
-
+		//*	Nov  8,	2022	<MLS> Fixed bug in JSON for temperatureLog in all drivers.
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+																reqData->httpRetCode,
+																reqData->jsonTextBuffer,
+																(cHttpHeaderSent == false));	//*	required for long JSON output
+	}
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 	return(alpacaErrCode);
@@ -478,37 +482,48 @@ TYPE_ASCOM_STATUS	FocuserDriver::Put_Tempcomp(TYPE_GetPutRequestData *reqData, c
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 bool				foundKeyWord;
 char				argumentString[32];
+bool				validData;
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"TempComp",
+											argumentString,
+											(sizeof(argumentString) -1));
+	validData	=	false;
+	if (foundKeyWord)
 	{
-		if (cFocuserProp.TempCompAvailable)
+		if (IsValidTrueFalseString(argumentString))
 		{
-			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-													"TempComp",
-													argumentString,
-													(sizeof(argumentString) -1));
-			if (foundKeyWord)
-			{
-				cFocuserProp.TempComp	=	IsTrueFalse(argumentString);
-				alpacaErrCode			=	kASCOM_Err_Success;
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "keyword 'TempComp' not specified");
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
+			validData	=	true;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TempComp not supported");
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TempComp is non-boolean");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "keyword 'TempComp' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+
+	if (cFocuserProp.TempCompAvailable)
+	{
+		if (validData)
+		{
+			cFocuserProp.TempComp	=	IsTrueFalse(argumentString);
+			alpacaErrCode			=	kASCOM_Err_Success;
+		}
+	}
+	else
+	{
+		alpacaErrCode			=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "TempComp not supported");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);}
 
@@ -581,40 +596,31 @@ bool				foundKeyWord;
 char				argumentString[32];
 int32_t				newPosition;
 
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "**********************************************************");
 //	SETUP_TIMING();
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "**********************************************************");
-
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Position",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-//		CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Position",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
-		{
-			newPosition		=	atoi(argumentString);
+		newPosition		=	atoi(argumentString);
 //	DEBUG_TIMING(__FUNCTION__);
-			alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
+		alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
 //	DEBUG_TIMING(__FUNCTION__);
-			if (alpacaErrCode != kASCOM_Err_Success)
-			{
-				CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
-				CONSOLE_DEBUG_W_STR("alpacaErrMsg \t=",	alpacaErrMsg);
-			}
-		}
-		else
+		if (alpacaErrCode != kASCOM_Err_Success)
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "keyword 'Position' not specified");
-			CONSOLE_DEBUG(alpacaErrMsg);
+			CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
+			CONSOLE_DEBUG_W_STR("alpacaErrMsg \t=",	alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "keyword 'Position' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 
 //	DEBUG_TIMING(__FUNCTION__);
@@ -638,13 +644,24 @@ int32_t				newPosition;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-			//*	new position is the current position plus the new offset
-			newPosition		=	cFocuserProp.Position + atoi(argumentString);
-			alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
+			if (IsValidNumericString(argumentString))
+			{
+				//*	new position is the current position plus the new offset
+				newPosition		=	cFocuserProp.Position + atoi(argumentString);
+				alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
+			}
+			else
+			{
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Position is non-numeric");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
@@ -823,51 +840,48 @@ int			mySocketFD;
 char		lineBuffer[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		mySocketFD	=	reqData->socket;
+	mySocketFD	=	reqData->socket;
 
 
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Focuser</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>AlpacaPi Focuser</H2>\r\n");
 
-		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-
-
-		//*-----------------------------------------------------------
-		OutputHTMLrowData(mySocketFD,	"Focuser",		cCommonProp.Name);
-		OutputHTMLrowData(mySocketFD,	"Model",		cDeviceModel);
-		OutputHTMLrowData(mySocketFD,	"Version",		cDeviceVersion);
-		OutputHTMLrowData(mySocketFD,	"Serial Num",	cDeviceSerialNum);
-
-		//*	focuser position
-		sprintf(lineBuffer, "%d", cFocuserProp.Position);
-		OutputHTMLrowData(mySocketFD,	"Focuser position",	lineBuffer);
-
-		//*	rotator position
-		sprintf(lineBuffer, "%d", cRotatorPosition);
-		OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
-
-		//*	Aux position
-		sprintf(lineBuffer, "%d", cAuxPosition);
-		OutputHTMLrowData(mySocketFD,	"Aux position",	lineBuffer);
-
-		//*	Temperature
-		sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserProp.Temperature_DegC,  DEGREES_F(cFocuserProp.Temperature_DegC));
-		OutputHTMLrowData(mySocketFD,	"Temperature",	lineBuffer);
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
 
-		sprintf(lineBuffer, "%3.1f VDC", cFocuserVoltage);
-		OutputHTMLrowData(mySocketFD,	"Voltage",	lineBuffer);
+	//*-----------------------------------------------------------
+	OutputHTMLrowData(mySocketFD,	"Focuser",		cCommonProp.Name);
+	OutputHTMLrowData(mySocketFD,	"Model",		cDeviceModel);
+	OutputHTMLrowData(mySocketFD,	"Version",		cDeviceVersion);
+	OutputHTMLrowData(mySocketFD,	"Serial Num",	cDeviceSerialNum);
 
-		//*	error count
-		sprintf(lineBuffer, "%d", cInvalidStringErrCnt);
-		OutputHTMLrowData(mySocketFD,	"Error count",	lineBuffer);
+	//*	focuser position
+	sprintf(lineBuffer, "%d", cFocuserProp.Position);
+	OutputHTMLrowData(mySocketFD,	"Focuser position",	lineBuffer);
 
-		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<P>\r\n");
-	}
+	//*	rotator position
+	sprintf(lineBuffer, "%d", cRotatorPosition);
+	OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
+
+	//*	Aux position
+	sprintf(lineBuffer, "%d", cAuxPosition);
+	OutputHTMLrowData(mySocketFD,	"Aux position",	lineBuffer);
+
+	//*	Temperature
+	sprintf(lineBuffer, "%3.1f&deg;C / %3.1f&deg;F", cFocuserProp.Temperature_DegC,  DEGREES_F(cFocuserProp.Temperature_DegC));
+	OutputHTMLrowData(mySocketFD,	"Temperature",	lineBuffer);
+
+
+	sprintf(lineBuffer, "%3.1f VDC", cFocuserVoltage);
+	OutputHTMLrowData(mySocketFD,	"Voltage",	lineBuffer);
+
+	//*	error count
+	sprintf(lineBuffer, "%d", cInvalidStringErrCnt);
+	OutputHTMLrowData(mySocketFD,	"Error count",	lineBuffer);
+
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
 }
 
 //*****************************************************************************

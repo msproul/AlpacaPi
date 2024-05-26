@@ -85,8 +85,8 @@
 #include	"controller.h"
 #include	"windowtab_drvrInfo.h"
 
-static int	gClientID				=	1;
-static int	gClientTransactionID	=	1;
+static uint32_t		gClientID				=	1;
+static uint32_t		gClientTransactionID	=	1;
 
 #include	"common_AlpacaCmds.h"
 #include	"common_AlpacaCmds.cpp"

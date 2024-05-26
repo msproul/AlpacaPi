@@ -29,7 +29,8 @@ void	JsonResponse_CreateHeader(char *jsonTextBuffer);
 
 
 
-void	JsonResponse_FinishHeader(	char *jsonHdrBUffer, const char *jsonTextBuffer);
+//-void	JsonResponse_FinishHeader(	char *jsonHdrBUffer, const char *jsonTextBuffer);
+void	JsonResponse_FinishHeader(const int httpRetCode,	char *jsonHdrBUffer, const char *jsonTextBuffer);
 
 
 void	JsonResponse_Add_HDR(		char *jsonTextBuffer, const int maxLen);
@@ -48,6 +49,12 @@ int		JsonResponse_Add_Int32(		const int		socketFD,
 									const int		maxLen,
 									const char		*itemName,
 									const int32_t	intValue,
+									bool			includeTrailingComma);
+int		JsonResponse_Add_Uint32(	const int		socketFD,
+									char			*jsonTextBuffer,
+									const int		maxLen,
+									const char		*itemName,
+									const uint32_t	uIntValue,
 									bool			includeTrailingComma);
 
 int		JsonResponse_Add_Double(	const int		socketFD,
@@ -82,6 +89,7 @@ int		JsonResponse_Add_ArrayEnd(	const int		socketFD,
 #define	kInclude_HTTP_Header	true
 #define	kNo_HTTP_Header			false
 int		JsonResponse_Add_Finish(	const int		socketFD,
+									const int		httpRetCode,
 									char			*jsonTextBuffer,
 									bool			includeHeader);
 

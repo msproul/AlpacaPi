@@ -29,7 +29,7 @@ typedef struct
 
 	double					ImgSizeX_microns;
 	double					ImgSizeY_microns;
-
+	double					ImageDiagonal_mm;		//*	calculated diagonal dimension in mm
 	double					PixelScale;				//*	Arc seconds / pixel
 
 	double					FocalLen_mm;			//*	focal length in mm

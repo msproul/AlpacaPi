@@ -278,7 +278,7 @@ char	cmdLineString[256];
 	switch(theStarData->dataSrc)
 	{
 		case kDataSrc_AAVSOalert:
-			sprintf(urlString,	"https://www.aavso.org/aavso-alert-notice-%d", theStarData->id);
+			sprintf(urlString,	"https://www.aavso.org/aavso-alert-notice-%ld", theStarData->id);
 			strcpy(cmdLineString, gWebBrowserCmdString);
 			strcat(cmdLineString, " ");
 			strcat(cmdLineString, urlString);
@@ -286,7 +286,7 @@ char	cmdLineString[256];
 			break;
 
 		case kDataSrc_Messier:
-			sprintf(urlString,	"https://en.wikipedia.org/wiki/Messier_%d", theStarData->id);
+			sprintf(urlString,	"https://en.wikipedia.org/wiki/Messier_%ld", theStarData->id);
 			strcpy(cmdLineString, gWebBrowserCmdString);
 			strcat(cmdLineString, " ");
 			strcat(cmdLineString, urlString);
@@ -303,11 +303,11 @@ char	cmdLineString[256];
 		case kDataSrc_NGC2000:
 			if (strncmp(theStarData->longName, "IC", 2) == 0)
 			{
-				sprintf(urlString,	"https://en.wikipedia.org/wiki/IC_%d", theStarData->id);
+				sprintf(urlString,	"https://en.wikipedia.org/wiki/IC_%ld", theStarData->id);
 			}
 			else
 			{
-				sprintf(urlString,	"https://en.wikipedia.org/wiki/NGC_%d", theStarData->id);
+				sprintf(urlString,	"https://en.wikipedia.org/wiki/NGC_%ld", theStarData->id);
 			}
 			strcpy(cmdLineString, gWebBrowserCmdString);
 			strcat(cmdLineString, " ");

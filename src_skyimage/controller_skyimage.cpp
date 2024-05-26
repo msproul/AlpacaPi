@@ -12,6 +12,8 @@
 //*	Mar 24,	2024	<MLS> Added recursive directory reading
 //*	Mar 24,	2024	<MLS> Fixed crash bug when image failed to load
 //*	Mar 27,	2024	<MLS> Added NASA MoonPhase window ti SkyImage
+//*	May  5,	2024	<MLS> Fixed bug in running background tasks
+//*	May  7,	2024	<MLS> Modified file name parsing to display partial path
 //*****************************************************************************
 
 
@@ -46,7 +48,12 @@
 #include	"windowtab_MoonPhase.h"
 #include	"controller_image.h"
 #include	"imagelist.h"
+#include	"linuxerrors.h"
 
+#ifdef _ENABLE_NASA_PDS_
+	#include	"PDS.typedefs.h"
+	#include	"PDS_ReadNASAfiles.h"
+#endif
 
 bool	gKeepRunning			=	true;
 bool	gVerbose				=	false;
@@ -60,7 +67,9 @@ char			gDirectoryPath[256]	=	"";
 int				gImageCount			=	0;
 int				gCurrentImageIndex	=	0;
 
-static void	ReadFitsInfoForImage(TYPE_ImageFile *imageFileData);
+static void	ReadImageHeader_FITS(TYPE_ImageFile *imageFileData);
+static void	ReadImageHeader_PDS(TYPE_ImageFile *imageFileData);
+
 static void	ExtractFileExtension(const char *fileName, char *extension);
 static void	SetImageFileType(TYPE_ImageFile *imageFileInfo, const char *fileExtension);
 static int	FileNameQSort(const void *e1, const void* e2);
@@ -81,6 +90,7 @@ ControllerSkyImage::ControllerSkyImage(	const char *argWindowName, const char *a
 	cBackGroundImgIdx		=	0;
 
 	strcpy(cDirectoryPath, argDirectoryPath);
+	cDirectoryPathLen	=	strlen(cDirectoryPath);
 	ReadFileDirectory(cDirectoryPath);
 
 	SetupWindowControls();
@@ -106,7 +116,8 @@ ControllerSkyImage::~ControllerSkyImage(void)
 //**************************************************************************************
 bool	ControllerSkyImage::RunFastBackgroundTasks(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_ABORT(__FUNCTION__);
 	//---------------------------------------------
 	//*	Moon Phase window
 	if (cMoonPhaseTabObjPtr != NULL)
@@ -158,37 +169,55 @@ void	ControllerSkyImage::SetupWindowControls(void)
 	}
 }
 
+static bool	gBackGroundTaskActive	=	false;
+
 //**************************************************************************************
 void	ControllerSkyImage::RunBackgroundTasks(const char *callingFunction, bool enableDebug)
 {
 unsigned int	startMilliSecs;
 unsigned int	deltaMilliSecs;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (gBackGroundTaskActive)
+	{
+		CONSOLE_DEBUG_W_STR("Called from", callingFunction);
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+	gBackGroundTaskActive	=	true;
+
 	if (cBackGroundImgIdx < gImageCount)
 	{
 		startMilliSecs	=	millis();
 		deltaMilliSecs	=	0;
-		while ((deltaMilliSecs < 50) && (cBackGroundImgIdx < gImageCount))
+		while ((deltaMilliSecs < 100) && (cBackGroundImgIdx < gImageCount))
 		{
-	//		CONSOLE_DEBUG_W_NUM("cBackGroundImgIdx\t=", cBackGroundImgIdx);
-	//		CONSOLE_DEBUG_W_NUM("gImageCount      \t=", gImageCount);
+//			CONSOLE_DEBUG_W_NUM("cBackGroundImgIdx\t=", cBackGroundImgIdx);
+//			CONSOLE_DEBUG_W_NUM("gImageCount      \t=", gImageCount);
 			if (gImageList[cBackGroundImgIdx].FitsProcessed == false)
 			{
 				if (gImageList[cBackGroundImgIdx].ImageFileType == kImageFileType_FITS)
 				{
-					ReadFitsInfoForImage(&gImageList[cBackGroundImgIdx]);
+					ReadImageHeader_FITS(&gImageList[cBackGroundImgIdx]);
 				}
 				else
 				{
-	//				CONSOLE_DEBUG_W_STR("File is PDS\t=", gImageList[cBackGroundImgIdx].FileName);
+//					CONSOLE_DEBUG_W_NUM("cBackGroundImgIdx\t=", cBackGroundImgIdx);
+//					CONSOLE_DEBUG_W_STR("File is PDS      \t=", gImageList[cBackGroundImgIdx].FileName);
+//					CONSOLE_DEBUG_W_STR("File is PDS      \t=", gImageList[cBackGroundImgIdx].FilePath);
+					ReadImageHeader_PDS(&gImageList[cBackGroundImgIdx]);
 					gImageList[cBackGroundImgIdx].FitsProcessed	=	true;
 				}
 				cFitsProcessCntr++;
 			}
 			cBackGroundImgIdx++;
 
+			if ((cBackGroundImgIdx % 50) == 0)
+			{
+				SetWidgetNumber(kTab_SI_ImgList, kImageList_Btn_Scan, cBackGroundImgIdx);
+			}
 			//*	update the window but not every time
-			if ((cBackGroundImgIdx % 10) == 0)
+			if ((cBackGroundImgIdx % 25) == 0)
 			{
 				if (cImageListTabObjPtr != NULL)
 				{
@@ -201,10 +230,30 @@ unsigned int	deltaMilliSecs;
 	}
 	else if (cFitsProcessCntr > 0)
 	{
+	int		unProcessedCount;
+	int		iii;
+		//*	go through the entire list and see how many have not been processed
+		unProcessedCount	=	0;
+		for (iii=0; iii<gImageCount; iii++)
+		{
+			if (gImageList[iii].FitsProcessed == false)
+			{
+				unProcessedCount++;
+			}
+		}
+		CONSOLE_DEBUG_W_NUM("unProcessedCount\t=",	unProcessedCount);
 		//*	if the sort order gets changed while we are reading the fits info,
 		//*	this will make sure everything gets read properly
-		cBackGroundImgIdx	=	0;
+		if (unProcessedCount > 0)
+		{
+			CONSOLE_DEBUG("Reseting cBackGroundImgIdx to 0")
+			cBackGroundImgIdx	=	0;
+		}
 		cFitsProcessCntr	=	0;
+	}
+	else
+	{
+		SetWidgetText(kTab_SI_ImgList, kImageList_Btn_Scan, "Scan");
 	}
 
 	//---------------------------------------------
@@ -214,7 +263,10 @@ unsigned int	deltaMilliSecs;
 		cMoonPhaseTabObjPtr->RunWindowBackgroundTasks();
 		cUpdateWindow	=	true;
 	}
+	gBackGroundTaskActive	=	false;
 }
+
+static int	gRecursionLevel	=	0;
 
 //*****************************************************************************
 int	ControllerSkyImage::BuildFileList(const char *directoryPath)
@@ -225,7 +277,9 @@ bool			keepGoing;
 char			curFileName[512];
 char			fileExtension[16];
 
+	gRecursionLevel++;
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, directoryPath);
+	CONSOLE_DEBUG_W_NUM("gRecursionLevel\t=", gRecursionLevel);
 	directory	=	opendir(directoryPath);
 	if (directory != NULL)
 	{
@@ -249,13 +303,13 @@ char			fileExtension[16];
 						strcpy(subDirectoryName, directoryPath);
 						strcat(subDirectoryName, dir->d_name);
 						strcat(subDirectoryName, "/");
-						CONSOLE_DEBUG_W_STR(dir->d_name, "Is a directory");
 						BuildFileList(subDirectoryName);
 					}
 				}
 
 				if ((strcasecmp(fileExtension, ".fits") == 0) ||
 					(strcasecmp(fileExtension, ".fit") == 0) ||
+//					(strcasecmp(fileExtension, ".ibg") == 0) ||
 					(strcasecmp(fileExtension, ".img") == 0) ||
 					(strcasecmp(fileExtension, ".imq") == 0))
 				{
@@ -263,20 +317,23 @@ char			fileExtension[16];
 					{
 						gImageList[cFileIndex].validEntry	=	true;
 						strcpy(gImageList[cFileIndex].DirectoryPath,	directoryPath);
-						strcpy(gImageList[cFileIndex].FileName,		curFileName);
 						strcpy(gImageList[cFileIndex].FilePath,		directoryPath);
 						strcat(gImageList[cFileIndex].FilePath,		curFileName);
 
+						//*	we want to display the part of the path that was NOT specified on the command line
+						strcpy(gImageList[cFileIndex].FileName,		&gImageList[cFileIndex].FilePath[cDirectoryPathLen]);
+//						strcpy(gImageList[cFileIndex].FileName,		curFileName);
+
 
 						//*	check file extension to determine file type
-						SetImageFileType(&gImageList[cFileIndex],fileExtension);
+						SetImageFileType(&gImageList[cFileIndex], fileExtension);
 
 						cFileIndex++;
 					}
 					else
 					{
 						CONSOLE_DEBUG_W_NUM("Ran out of room, cnt\t=",	cFileIndex);
-						return(cFileIndex);
+						keepGoing	=	false;
 					}
 				}
 			}
@@ -295,9 +352,15 @@ char			fileExtension[16];
 	}
 	else
 	{
+	char	errorString[256];
+
 		CONSOLE_DEBUG_W_STR("Failed to open directory\t=",	directoryPath);
+		CONSOLE_DEBUG_W_NUM("errno\t=",	errno);
+		GetLinuxErrorString(errno, errorString);
+		CONSOLE_DEBUG_W_STR("errno\t=",	errorString);
 	}
 //	CONSOLE_ABORT(__FUNCTION__);
+	gRecursionLevel--;
 	return(cFileIndex);
 }
 
@@ -373,19 +436,20 @@ bool	LoadNextImageFromList(ControllerImage *imageController)
 {
 bool	successFlag	=	false;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	if (imageController != NULL)
 	{
 		gCurrentImageIndex++;
 		if ((gCurrentImageIndex >= 0) && (gCurrentImageIndex < gImageCount))
 		{
+			CONSOLE_DEBUG_W_STR("Next FilePath:", gImageList[gCurrentImageIndex].FilePath);
 			successFlag	=	imageController->LoadImage(gImageList[gCurrentImageIndex].FilePath);
 		}
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("gCurrentImageIndex out of range", gCurrentImageIndex);
 			gCurrentImageIndex	=	gImageCount - 1;
-			successFlag	=	false;
+			successFlag			=	false;
 		}
 	}
 //	CONSOLE_DEBUG_W_BOOL(__FUNCTION__, successFlag);
@@ -456,7 +520,8 @@ char	*dataPtr;
 //DATAMAX =                  236 / Maximum pixel value
 	dataPtr	=	cardData;
 	dataPtr	+=	9;
-	while ((*dataPtr == 0x20) && (*dataPtr > 0x20))
+//	while ((*dataPtr == 0x20) && (*dataPtr > 0x20))
+	while (*dataPtr == 0x20)
 	{
 		dataPtr++;
 	}
@@ -464,7 +529,7 @@ char	*dataPtr;
 }
 
 //*****************************************************************************
-static void	ReadFitsInfoForImage(TYPE_ImageFile *imageFileData)
+static void	ReadImageHeader_FITS(TYPE_ImageFile *imageFileData)
 {
 fitsfile	*fptr;
 char		card[FLEN_CARD];
@@ -472,6 +537,9 @@ char		valueString[FLEN_CARD];
 int			status;
 int			nkeys;
 int			iii;
+int			jjj;
+int			ccc;
+int			sLen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG(imageFileData->DirectoryPath);
@@ -513,6 +581,25 @@ int			iii;
 				GetDataFromFitsLine(card, valueString);
 				imageFileData->Gain	=	atoi(valueString);
 			}
+			else if (strncmp(card, "OBJECT", 4) == 0)
+			{
+				GetDataFromFitsLine(card, valueString);
+				jjj		=	0;
+				ccc		=	0;
+				sLen	=	strlen(valueString);
+				if (valueString[jjj] == '\'')
+				{
+					jjj++;
+				}
+//				CONSOLE_DEBUG_W_NUM("jjj        \t=", jjj);
+				while ((valueString[jjj] >= 0x20) && (valueString[jjj] != '\'') && (jjj < sLen))
+				{
+					imageFileData->Object[ccc]	=	valueString[jjj];
+					ccc++;
+					jjj++;
+				}
+				imageFileData->Object[ccc]	=	0;
+			}
 		}
 	}
 	else
@@ -528,6 +615,165 @@ int			iii;
 	{
 		fits_report_error(stderr, status);
 	}
+}
+
+//*****************************************************************************
+static void	ExtractKeywordValue(char *line, char *keyword, char *valueString)
+{
+int		iii;
+int		sLen;
+char	*valuePtr;
+char	*quotePtr;
+
+	keyword[0]		=	0;
+	valueString[0]	=	0;
+	sLen			=	strlen(line);
+	iii				=	0;
+	while ((line[iii] > 0x20) && (line[iii] != '=') && (iii < sLen))
+	{
+		keyword[iii]	=	line[iii];
+		iii++;
+	}
+	keyword[iii]	=	0;
+
+	valuePtr	=	strchr(line, '=');
+	if (valuePtr != NULL)
+	{
+		valuePtr++;
+		while (*valuePtr == 0x20)
+		{
+			valuePtr++;
+		}
+		if (*valuePtr == '\'')
+		{
+			valuePtr++;
+		}
+
+		strcpy(valueString, valuePtr);
+		quotePtr	=	strchr(valueString, '\'');
+		if (quotePtr != NULL)
+		{
+			*quotePtr	=	0;
+		}
+	}
+}
+
+//*****************************************************************************
+static void	ReadImageHeader_PDS(TYPE_ImageFile *imageFileData)
+{
+PDS_header_data	pdsHeader;
+bool			readOK;
+int				iii;
+char			keyword[64];
+char			valueString[128];
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+//	memset(&pdsHeader, 0, sizeof(PDS_header_data));
+	readOK	=	PDS_ReadImage(imageFileData->FilePath, &pdsHeader, false);
+	if (readOK)
+	{
+//		CONSOLE_DEBUG_W_NUM("pdsHeader.HeaderLineCnt\t=", pdsHeader.HeaderLineCnt);
+		for (iii=0; iii < pdsHeader.HeaderLineCnt; iii++)
+		{
+//			printf("%s\r\n", pdsHeader.HeaderData[iii].headerLine);
+			ExtractKeywordValue(pdsHeader.HeaderData[iii].headerLine, keyword, valueString);
+
+			if (strcasecmp(keyword, "TARGET_NAME") == 0)
+			{
+				strcpy(imageFileData->Object, valueString);
+			}
+			else if (strcasecmp(keyword, "TARGET_BODY") == 0)
+			{
+				if (strlen(imageFileData->Object) < 2)
+				{
+					strcpy(imageFileData->Object, valueString);
+				}
+			}
+//			else if (strcasecmp(keyword, "FILTER_NAME") == 0)
+//			{
+//				strcpy(imageFileData->Filter, valueString);
+//			}
+//			else if (strcasecmp(keyword, "INSTRUMENT_NAME") == 0)
+//			{
+//				strcpy(imageFileData->Camera, valueString);
+//			}
+//			else if (strcasecmp(keyword, "EXPOSURE_DURATION") == 0)
+//			{
+//				imageFileData->Exposure_Secs	=	atof(valueString);
+//				spacePtr	=	strchr(valueString, 0x20);
+//				if (spacePtr != NULL)
+//				{
+//					*spacePtr	=	0;
+//				}
+//			}
+//			else if (strcasecmp(keyword, "IMAGE_TIME") == 0)
+//			{
+//				strcpy(imageFileData->Time_UTC, valueString);
+//			}
+//			else if (strcasecmp(keyword, "SPACECRAFT_NAME") == 0)
+//			{
+//				strcpy(imageFileData->Observatory, valueString);
+//			}
+			//--------------------------------------------------------------
+			//*	these are from GALILEO
+//			else if (strcasecmp(keyword, "MISSION") == 0)
+//			{
+//				strcpy(imageFileData->Observatory, valueString);
+//			}
+			else if (strcasecmp(keyword, "TARGET") == 0)
+			{
+				strcpy(imageFileData->Object, valueString);
+			}
+//			else if (strcasecmp(keyword, "DAT_TIM") == 0)
+//			{
+//				//*	if there is already a value, do not over-ride
+//				if (strlen(imageFileData->Time_UTC) < 10)
+//				{
+//					strcpy(imageFileData->Time_UTC, valueString);
+//				}
+//			}
+//			else if (strcasecmp(keyword, "EXP") == 0)
+//			{
+//				exposure_MilliSecs				=	atof(valueString);
+//				imageFileData->Exposure_Secs	=	exposure_MilliSecs / 1000.0;
+//				sprintf(statusString, "%2.5f", imageFileData->Exposure_Secs);
+//			}
+//			else if (strcasecmp(keyword, "SENSOR") == 0)
+//			{
+//				//	SENSOR='SSI'
+//				strcpy(imageFileData->Camera, valueString);
+//			}
+//			else if (strcasecmp(keyword, "FILTER") == 0)
+//			{
+//				//FILTER=3(VIO)             Filter position: 0(CLR), 1(GRN), 2(RED),
+//				//                            3(VLT), 4(756), 5(968), 6(727), 7(889)
+//				if (isdigit(valueString[0]))
+//				{
+//				int	filterNumber;
+//					filterNumber	=	atoi(valueString);
+//					switch(filterNumber)
+//					{
+//						case 0:	strcpy(valueString,	"0-CLR");	break;
+//						case 1:	strcpy(valueString,	"1-GRN");	break;
+//						case 2:	strcpy(valueString,	"2-RED");	break;
+//						case 3:	strcpy(valueString,	"3-VLT");	break;
+//						case 4:	strcpy(valueString,	"4-756");	break;
+//						case 5:	strcpy(valueString,	"5-968");	break;
+//						case 6:	strcpy(valueString,	"6-727");	break;
+//						case 7:	strcpy(valueString,	"7-889");	break;
+//					}
+//				}
+//				strcpy(imageFileData->Filter, valueString);
+//			}
+		}
+	}
+//	if (pdsHeader.imageData != NULL)
+//	{
+//		free(pdsHeader.imageData);
+//		pdsHeader.imageData	=	NULL;
+//	}
+
 }
 
 //*****************************************************************************
@@ -604,7 +850,7 @@ char				myDirectoryPath[256];
 			{
 				activeObjCnt++;
 				gControllerList[iii]->HandleWindow();
-				gControllerList[iii]->RunBackgroundTasks(__FUNCTION__, false);
+//				gControllerList[iii]->RunBackgroundTasks(__FUNCTION__, false);
 
 			#if (CV_MAJOR_VERSION >= 3)
 				keyPressed	=	cv::waitKeyEx(5);

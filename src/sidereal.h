@@ -13,10 +13,10 @@
 
 void	CalcSiderealTime(	struct tm	*utcTime,
 							struct tm	*siderealTime,
-							double		argLongitude);
+							double		argLongitude_degs);
 
 
-double	CalcSiderealTime_dbl(struct tm	*utcTime, double argLongitude);
+double	CalcSiderealTime_dbl(struct tm	*utcTime, double argLongitude_degs);
 
 #ifdef __cplusplus
 }

@@ -38,8 +38,10 @@
 //*	Nov 27,	2022	<MLS> Added ReportOneDevice() to clean up configureddevices code
 //*	Nov 30,	2022	<MLS> Peter Simpson relaxed conformu to allow non-standard devices
 //*	Dec 22,	2022	<MLS> Added timestamp to configured devices output
+//*	May 18,	2024	<MLS> Added _DEBUG_MANAGEMENT_
 //*****************************************************************************
 
+//#define	_DEBUG_MANAGEMENT_
 
 #include	<stdlib.h>
 #include	<stdio.h>
@@ -139,6 +141,10 @@ void	CreateManagementObject(void)
 ManagementDriver::ManagementDriver(const int argDevNum)
 	:AlpacaDriver(kDeviceType_Management)
 {
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_BOOL("cSendJSONresponse\t=", cSendJSONresponse);
+#endif
 	cDriverCmdTablePtr				=	gManagementCmdTable;
 	strcpy(cCommonProp.Name,		"ManagementDriver");
 	strcpy(cCommonProp.Description,	"AlpacaPi Management driver");
@@ -184,12 +190,14 @@ int					cmdType;
 char				alpacaErrMsg[256];
 int					mySocket;
 
-
-//	CONSOLE_DEBUG("------------------------------------------");
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG("------------------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
 //	DumpRequestStructure(__FUNCTION__, reqData);
+#endif // _DEBUG_MANAGEMENT_
 
+	cSendJSONresponse			=	true;
 	strcpy(alpacaErrMsg, "");
 
 	//*	make local copies of the data structure to make the code easier to read
@@ -220,14 +228,16 @@ int					mySocket;
 	//*	look up the command
 	cmdEnumValue	=	FindCmdFromTable(reqData->deviceCommand, gManagementCmdTable, &cmdType);
 
-//	CONSOLE_DEBUG_W_NUM("cmdEnumValue\t\t=", cmdEnumValue);
-//	if (cmdEnumValue == kCmd_Managment_configureddevices)
-//	{
-//		CONSOLE_DEBUG_W_STR("reqData->htmlData     \t=",	reqData->htmlData);
-//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
-//		CONSOLE_DEBUG_W_STR("reqData->cmdBuffer    \t=",	reqData->cmdBuffer);
-//		CONSOLE_DEBUG_W_STR("reqData->contentData  \t=",	reqData->contentData);
-//	}
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG_W_NUM("cmdEnumValue\t\t=", cmdEnumValue);
+	if (cmdEnumValue == kCmd_Managment_configureddevices)
+	{
+		CONSOLE_DEBUG_W_STR("reqData->htmlData     \t=",	reqData->htmlData);
+		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+		CONSOLE_DEBUG_W_STR("reqData->cmdBuffer    \t=",	reqData->cmdBuffer);
+		CONSOLE_DEBUG_W_STR("reqData->contentData  \t=",	reqData->contentData);
+	}
+#endif // _DEBUG_MANAGEMENT_
 
 	switch(cmdEnumValue)
 	{
@@ -271,6 +281,9 @@ int					mySocket;
 		//*	let anything undefined go to the common command processor
 		//----------------------------------------------------------------------------------------
 		default:
+		#ifdef _DEBUG_MANAGEMENT_
+			CONSOLE_DEBUG("We are doing the default operation");
+		#endif // _DEBUG_MANAGEMENT_
 			alpacaErrCode	=	ProcessCommand_Common(reqData, cmdEnumValue, alpacaErrMsg);
 			break;
 	}
@@ -281,39 +294,52 @@ int					mySocket;
 		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	reqData->alpacaErrCode);
 	}
 
-	//*	send the response information
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ClientTransactionID",
-							gClientTransactionID,
-							INCLUDE_COMMA);
+//	CONSOLE_DEBUG_W_BOOL("cSendJSONresponse\t=", cSendJSONresponse);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		JsonResponse_Add_Uint32(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ClientTransactionID",
+									reqData->ClientTransactionID,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ServerTransactionID",
-							gServerTransactionID,
-							INCLUDE_COMMA);
+		JsonResponse_Add_Uint32(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ServerTransactionID",
+									gServerTransactionID,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ErrorNumber",
-							alpacaErrCode,
-							INCLUDE_COMMA);
+		JsonResponse_Add_Int32(	mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ErrorNumber",
+								alpacaErrCode,
+								INCLUDE_COMMA);
 
-	JsonResponse_Add_String(mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ErrorMessage",
-							alpacaErrMsg,
-							NO_COMMA);
+		JsonResponse_Add_String(mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ErrorMessage",
+								alpacaErrMsg,
+								NO_COMMA);
 
-	JsonResponse_Add_Finish(mySocket,
-							reqData->jsonTextBuffer,
-							(cHttpHeaderSent == false));
-
+	#ifdef _DEBUG_MANAGEMENT_
+		CONSOLE_DEBUG("Calling JsonResponse_Add_Finish()");
+		CONSOLE_DEBUG_W_BOOL("cHttpHeaderSent\t=", cHttpHeaderSent);
+	#endif
+		JsonResponse_Add_Finish(mySocket,
+								reqData->httpRetCode,
+								reqData->jsonTextBuffer,
+								(cHttpHeaderSent == false));
+	}
+	else
+	{
+		CONSOLE_DEBUG("!!!!!!!!!! THIS SHOULD NEVER HAPPEN!!!!!!!!!!!!!!!!")
+		CONSOLE_DEBUG_W_BOOL("cSendJSONresponse\t=", cSendJSONresponse);
+	}
 	return(alpacaErrCode);
 }
 
@@ -323,8 +349,9 @@ TYPE_ASCOM_STATUS	ManagementDriver::Get_Apiversions(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS			alpacaErrCode	=	kASCOM_Err_Success;
 
+#ifdef _DEBUG_MANAGEMENT_
 	CONSOLE_DEBUG(__FUNCTION__);
-
+#endif
 	JsonResponse_Add_ArrayStart(reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
@@ -360,7 +387,9 @@ TYPE_ASCOM_STATUS	ManagementDriver::Get_Description(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS				alpacaErrCode	=	kASCOM_Err_Success;
 
+#ifdef _DEBUG_MANAGEMENT_
 	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 
 	JsonResponse_Add_RawText(	reqData->socket,
 								reqData->jsonTextBuffer,
@@ -409,7 +438,9 @@ void	ManagementDriver::ReportOneDevice(TYPE_GetPutRequestData *reqData, AlpacaDr
 char		deviceTypeString[32];
 char		uniqueIDstring[64];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 	GetDeviceTypeFromEnum(devicePtr->cDeviceType, deviceTypeString);
 
 	JsonResponse_Add_RawText(	reqData->socket,
@@ -490,7 +521,10 @@ int					displayedCnt;
 struct timeval		timeStamp;
 char				timeStampString[128];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM("gDeviceCnt\t=", gDeviceCnt);
+#endif
 
 	if (reqData != NULL)
 	{
@@ -547,10 +581,10 @@ char				timeStampString[128];
 		//*	to keep the new CONFORMU happy, we have to ONLY report standard devices
 		//*	calculate the the standard device count.
 		displayNonStandardDevices	=	true;
-//		if (reqData->clientIs_ConformU)
-//		{
-//			displayNonStandardDevices	=	false;
-//		}
+		if (reqData->clientIs_ConformU)
+		{
+			displayNonStandardDevices	=	false;
+		}
 
 		//*	determine the number of standard devices.
 		//*	the TOTAL number of devices is gDeviceCnt
@@ -634,6 +668,7 @@ char				timeStampString[128];
 	}
 	else
 	{
+		CONSOLE_DEBUG("MAJOR ERROR WE SHOULD NOT BE HERE!!!!!!!!!!!!!!!!!!!!");
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
 	return(alpacaErrCode);
@@ -648,7 +683,9 @@ int					iii;
 char				lineBuff1[32];
 char				lineBuff2[128];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 
 	for (iii=0; iii<gLibraryIndex; iii++)
 	{
@@ -679,6 +716,9 @@ TYPE_ASCOM_STATUS	ManagementDriver::Get_Readall(TYPE_GetPutRequestData *reqData,
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 int					mySocket;
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);

@@ -2610,6 +2610,7 @@ void	Controller::DrawWidgetImage(TYPE_WIDGET *theWidget, cv::Mat *theOpenCVimage
 int			delta;
 cv::Rect	widgetRoiRect;
 cv::Mat		image_roi;
+bool		imageIsOK;
 
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 //	if (theWidget->left == 272)
@@ -2627,14 +2628,23 @@ cv::Mat		image_roi;
 			widgetRoiRect.y			=	theWidget->top;
 			widgetRoiRect.width		=	theWidget->width;
 			widgetRoiRect.height	=	theWidget->height;
+			theWidget->roiRect		=	widgetRoiRect;
 
 			//*	check to see if the image is BIGGER than the widget rect
+			imageIsOK	=	true;
 			if (theOpenCVimage->cols > widgetRoiRect.width)
 			{
-				CONSOLE_DEBUG_W_NUM("Image is too big", theOpenCVimage->cols);
+				CONSOLE_DEBUG("Image is too big!!!!!!!!!!!!!!");
+				CONSOLE_DEBUG_W_NUM("theOpenCVimage->cols     \t=",	theOpenCVimage->cols);
+				CONSOLE_DEBUG_W_NUM("theOpenCVimage->rows     \t=",	theOpenCVimage->rows);
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.x     \t=",	theWidget->roiRect.x);
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.y     \t=",	theWidget->roiRect.y);
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.width \t=",	theWidget->roiRect.width);
+				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.height\t=",	theWidget->roiRect.height);
+//				CONSOLE_ABORT(__FUNCTION__);
+				imageIsOK	=	false;
 			}
 
-			theWidget->roiRect	=	widgetRoiRect;
 //	CONSOLE_DEBUG_W_NUM("theWidget->roiRect.x\t=",		theWidget->roiRect.x);
 //	CONSOLE_DEBUG_W_NUM("theWidget->roiRect.y\t=",		theWidget->roiRect.y);
 //	CONSOLE_DEBUG_W_NUM("theWidget->roiRect.width\t=",	theWidget->roiRect.width);
@@ -2658,35 +2668,43 @@ cv::Mat		image_roi;
 //			cvCopy(theWidget->openCVimagePtr, cOpenCV_matImage);
 //			cvResetImageROI(cOpenCV_matImage);
 
-			//---try------try------try------try------try------try---
-			try
+			if (imageIsOK)
 			{
-				image_roi		=	cv::Mat(*cOpenCV_matImage, theWidget->roiRect);
+				//---try------try------try------try------try------try---
+				try
+				{
+					image_roi		=	cv::Mat(*cOpenCV_matImage, theWidget->roiRect);
+				}
+				catch(cv::Exception& ex)
+				{
+					CONSOLE_DEBUG("=========================================================");
+					CONSOLE_DEBUG("cv::Mat() had an exception");
+					CONSOLE_DEBUG_W_NUM("openCV error code        \t=",	ex.code);
+					CONSOLE_DEBUG_W_NUM("theWidget->roiRect.x     \t=",	theWidget->roiRect.x);
+					CONSOLE_DEBUG_W_NUM("theWidget->roiRect.y     \t=",	theWidget->roiRect.y);
+					CONSOLE_DEBUG_W_NUM("theWidget->roiRect.width \t=",	theWidget->roiRect.width);
+					CONSOLE_DEBUG_W_NUM("theWidget->roiRect.height\t=",	theWidget->roiRect.height);
+				}
+				//---try------try------try------try------try------try---
+				try
+				{
+					//*	mostly working
+					theOpenCVimage->copyTo(image_roi);
+				}
+				catch(cv::Exception& ex)
+				{
+					//*	this catch prevents opencv from crashing
+					CONSOLE_DEBUG("=========================================================");
+					CONSOLE_DEBUG("copyTo() had an exception");
+					CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+				//	CONSOLE_ABORT(__FUNCTION__);
+				}
 			}
-			catch(cv::Exception& ex)
+			else
 			{
-				CONSOLE_DEBUG("=========================================================");
-				CONSOLE_DEBUG("cv::Mat() had an exception");
-				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
-
-				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.x\t=",		theWidget->roiRect.x);
-				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.y\t=",		theWidget->roiRect.y);
-				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.width\t=",	theWidget->roiRect.width);
-				CONSOLE_DEBUG_W_NUM("theWidget->roiRect.height\t=",	theWidget->roiRect.height);
-			}
-			//---try------try------try------try------try------try---
-			try
-			{
-				//*	mostly working
-				theOpenCVimage->copyTo(image_roi);
-			}
-			catch(cv::Exception& ex)
-			{
-				//*	this catch prevents opencv from crashing
-				CONSOLE_DEBUG("=========================================================");
-				CONSOLE_DEBUG("copyTo() had an exception");
-				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
-			//	CONSOLE_ABORT(__FUNCTION__);
+				CONSOLE_DEBUG("Image has issues!!!!!!!!!!!!!!!!!!!!!!!");
+//				DumpCVMatStruct(__FUNCTION__, cOpenCV_matImage,	"cOpenCV_matImage");
+				DumpCVMatStruct(__FUNCTION__, theOpenCVimage,	"theOpenCVimage");
 			}
 
 			//*	draw the border if enabled

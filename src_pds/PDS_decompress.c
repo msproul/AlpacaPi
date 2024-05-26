@@ -284,10 +284,10 @@ void decompress(char		*ibuf,  //* I		 Compressed data buffer
 	dcmprs(ibuf, obuf, nin, nout, gTree);
 }
 
-
-int		gFreeNodeCounter;
-int		gFreeNodeDepth;
-int		gFreeNodeMaxDepth;
+//*	debugging, added by MLS
+int		gFreeNodeCounter	=	0;
+int		gFreeNodeDepth		=	0;
+int		gFreeNodeMaxDepth	=	0;
 //**************************************************************************
 static void	FreeNode(NODE	*nodePtr)
 {

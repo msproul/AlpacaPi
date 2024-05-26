@@ -35,10 +35,9 @@
 //*	May 19,	2022	<RNS> Cleaned up unit _TEST_ of -Wall warnings
 //*	May 22,	2022	<RNS> Fixed some signed / unsigned math operators
 //*	May 22,	2022	<RNS> Changed main() back to be void, _TEST_ should never take args
-//*	May 31,	2022	<RNS> Removed the old hand coded RC messages and strings, obsolete 
+//*	May 31,	2022	<RNS> Removed the old hand coded RC messages and strings, obsolete
 //*	Jul  2,	2022	<RNS> Adding support for boolean types
 //*	Jul  3,	2022	<RNS> changed prefix on static global to gs*
-
 //*****************************************************************************
 
 #include <stdio.h>

@@ -17,6 +17,7 @@
 //*	Sep  5,	2021	<MLS> Added httpCmdString to TYPE_GetPutRequestData struct
 //*	Nov 29,	2022	<MLS> Added httpUserAgent to TYPE_GetPutRequestData struct
 //*	Nov 29,	2022	<MLS> Added clientIs_xxx  to TYPE_GetPutRequestData struct
+//*	May 17,	2024	<MLS> Added httpRetCode to TYPE_GetPutRequestData struct
 //*****************************************************************************
 //#include	"RequestData.h"
 
@@ -79,7 +80,11 @@ typedef struct	//	TYPE_GetPutRequestData
 	char				contentData[kContentDataLen];
 	TYPE_ASCOM_STATUS	alpacaErrCode;
 	char				alpacaErrMsg[256];
+	char				ClientTransactionIDstr[64];
+	int					ClientTransactionID;
+	//----------------------------------------------------
 	//*	outgoing data
+	int					httpRetCode;
 	char				jsonHdrBuffer[kMaxJsonHdrLen];
 	char				jsonTextBuffer[kMaxJsonBuffLen];
 } TYPE_GetPutRequestData;

@@ -66,7 +66,7 @@ class SwitchDriver: public AlpacaDriver
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 	protected:
-				int		GetSwitchID(				TYPE_GetPutRequestData *reqData);
+				TYPE_ASCOM_STATUS	GetSwitchID(				TYPE_GetPutRequestData *reqData, int *idNum, char *alpacaErrMsg);
 
 				TYPE_ASCOM_STATUS	Get_Maxswitch(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 				TYPE_ASCOM_STATUS	Get_Canwrite(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);

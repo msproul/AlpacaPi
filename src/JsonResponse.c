@@ -44,6 +44,9 @@
 //*	Sep  5,	2021	<MLS> Added enableDebug arg to JsonRespnse_XmitIfFull()
 //*	Jun  1,	2022	<MLS> Increased decimal places for double output from 6 to 12
 //*	Sep 30,	2023	<MLS> Added ";" to Content-type: as per Peter Simpson
+//*	May 15,	2024	<MLS> Added JsonResponse_Add_Uint32()
+//*	May 17,	2024	<MLS> Added httpRetCode to JsonResponse_FinishHeader()
+//*	May 17,	2024	<MLS> Added httpRetCode to JsonResponse_Add_Finish()
 //*****************************************************************************
 
 
@@ -98,7 +101,8 @@ void	JsonResponse_CreateHeader(char *jsonTextBuffer)
 }
 
 //*****************************************************************************
-void	JsonResponse_FinishHeader(	char *jsonHdrBUffer, const char *jsonTextBuffer)
+//void	JsonResponse_FinishHeader(	char *jsonHdrBUffer, const char *jsonTextBuffer)
+void	JsonResponse_FinishHeader(const int httpRetCode,	char *jsonHdrBUffer, const char *jsonTextBuffer)
 {
 int		contentLen;
 char	lineBuff[64];
@@ -108,7 +112,15 @@ char	lineBuff[64];
 		contentLen	=	strlen(jsonTextBuffer);
 #ifdef _INCLUDE_HTTP_HEADER_
 		jsonHdrBUffer[0]	=	0;
-		strcat(jsonHdrBUffer,	"HTTP/1.0 200 OK\r\n");
+		if (httpRetCode == 200)
+		{
+			strcpy(lineBuff,	"HTTP/1.0 200 OK\r\n");
+		}
+		else
+		{
+			sprintf(lineBuff, "HTTP/1.0 %d BadRequest\r\n", httpRetCode);
+		}
+		strcat(jsonHdrBUffer,	lineBuff);
 		if (contentLen > 0)
 		{
 			sprintf(lineBuff,		"Content-Length: %d\r\n", contentLen);
@@ -319,6 +331,51 @@ int		bytesWritten	=	0;
 	return(bytesWritten);
 }
 
+//*****************************************************************************
+int		JsonResponse_Add_Uint32(	const int		socketFD,
+									char			*jsonTextBuffer,
+									const int		maxLen,
+									const char		*itemName,
+									const uint32_t	uIntValue,
+									bool			includeTrailingComma)
+{
+int				payloadLen;
+char			numberString[64];
+int				bytesWritten	=	0;
+unsigned long	myUnsignedLongValue;
+
+	if (jsonTextBuffer != NULL)
+	{
+		myUnsignedLongValue	=	uIntValue;
+		sprintf(numberString,	"%ld", myUnsignedLongValue);
+		//*	calculate the length of what we are adding to the buffer
+		payloadLen	=	strlen(numberString);
+		if (itemName != NULL)
+		{
+			payloadLen	+=	strlen(itemName);
+		}
+
+		payloadLen	+=	20;
+
+		bytesWritten	=	JsonRespnse_XmitIfFull(socketFD, jsonTextBuffer, maxLen, payloadLen, false);
+
+	#ifdef _MAKE_JSON_PRETTY_
+		strcat(jsonTextBuffer,	"\t\t\"");
+	#else
+		strcat(jsonTextBuffer,	"\"");
+	#endif
+		strcat(jsonTextBuffer,	itemName);
+		strcat(jsonTextBuffer,	"\":");
+		strcat(jsonTextBuffer,	numberString);
+		if (includeTrailingComma)
+		{
+			strcat(jsonTextBuffer, ",");
+		}
+		strcat(jsonTextBuffer,	"\r\n");
+
+	}
+	return(bytesWritten);
+}
 
 //*****************************************************************************
 int		JsonResponse_Add_Double(const int		socketFD,
@@ -550,6 +607,7 @@ int		bytesWritten	=	0;
 //*	returns bytes written
 //*****************************************************************************
 int			JsonResponse_Add_Finish(const int		socketFD,
+									const int		httpRetCode,
 									char			*jsonTextBuffer,
 									bool			includeHeader)
 {
@@ -576,7 +634,7 @@ int		bytesWritten	=	0;
 		//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(jsonTextBuffer));
 		if (includeHeader)
 		{
-			JsonResponse_FinishHeader(	fullDataBuffer, jsonTextBuffer);
+			JsonResponse_FinishHeader(httpRetCode, fullDataBuffer, jsonTextBuffer);
 		}
 		else
 		{

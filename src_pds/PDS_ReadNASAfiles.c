@@ -33,10 +33,10 @@
 //*	Apr 19,	1992	Working on database window etc.
 //*	Apr 20,	1992	PDS database file working fantastically
 //*	Apr 21,	1992	Cleaning up and bullet proofing the database window stuff
-//*	Jun 22,	1992	Received 60 CD-ROMs from NASA
-//*						Vol	9-12 of Voyager
-//*						Vol 1-8  of Viking Orbiter of Mars
-//*						Vol 1-48 of MaMagellan Mission to Venus
+//*	Jun 22,	1992	Received Received 60 CD-ROMs from NASA
+//*	Jun 22,	1992	Received Vol	9-12 of Voyager
+//*	Jun 22,	1992	Received Vol 1-8  of Viking Orbiter of Mars
+//*	Jun 22,	1992	Received Vol 1-48 of MaMagellan Mission to Venus
 //*	Jun 22,	1992	Reading Viking Browse files (300 x 264)
 //*	Jun 22,	1992	Reading Magellan "F" files (uncompressed)
 //*	Jun 25,	1992	Working real good with Viking and Magellan CD-ROMs
@@ -48,15 +48,16 @@
 //*	Sep  7,	1992	Started implemented"Open PDS Database" menu,	auto dim working
 //*	Nov  6,	1992	Minor bugs fixed in voyager browse stuff
 //*	Apr 15,	1993	Received 47 CD-ROMs from NASA
-//*						Vol	49-67     of Magellan Mission to Venus
-//*						Vol	2001-2013 of Magellan Mission to Venus
-//*						Vol 2001-2013 of Viking Orbiter of Mars
+//*	Apr 15,	1993	Received Vol 49-67     of Magellan Mission to Venus
+//*	Apr 15,	1993	Received Vol 2001-2013 of Magellan Mission to Venus
+//*	Apr 15,	1993	Received Vol 2001-2013 of Viking Orbiter of Mars
 //*	Nov 17,	2022	<MLS> Resurrected  PDS file code to run on Linux
 //*	Nov 17,	2022	<MLS> Added PDS_ReadImage()
 //*	Nov 18,	2022	<MLS> Magellan MG_0xxx (.img) images working
 //*	Nov 18,	2022	<MLS> Viking VO_2xxx (.img) images working
 //*	Nov 19,	2022	<MLS> Voyager VG_00xx (.img) images working
 //*	Nov 20,	2022	<MLS> Galileo GO_00xx (.img) images working
+//*	May  5,	2024	<MLS> Added readImageData flag to PDS_ReadHeaderAndImage()
 //*****************************************************************************
 
 
@@ -304,7 +305,7 @@ static void	PDS_InitHeader(PDS_header_data *pdsHeaderPtr)
 }
 
 //*****************************************************************************
-static void	PDS_DumpHeader(PDS_header_data *pdsHeaderPtr)
+void	PDS_DumpHeader(PDS_header_data *pdsHeaderPtr)
 {
 	CONSOLE_DEBUG("--------------------------------------");
 
@@ -403,6 +404,22 @@ char		keyWord[80];
 		if (pdsHeaderPtr->imageOffset <= 0)
 		{
 			pdsHeaderPtr->imageOffset	=	pdsHeaderPtr->label_records;
+		}
+	}
+	else if (strcmp(keyWord,	"FORMAT") == 0)
+	{
+		if (strcmp(argString, "'BYTE'") == 0)
+		{
+			pdsHeaderPtr->format	=	8;
+		}
+		else if (strcmp(argString, "'HALF'") == 0)
+		{
+			pdsHeaderPtr->format	=	16;
+		}
+		else
+		{
+			CONSOLE_DEBUG(argString);
+			CONSOLE_ABORT(__FUNCTION__);
 		}
 	}
 	else if (strcmp(keyWord,	"SPACECRAFT_NAME") == 0)
@@ -632,7 +649,7 @@ char	theChar;
 				}
 				else if ((theChar != 0x20) || ((theChar == 0x20) && ((singleQuoteCtr % 2) == 1)))
 				{
-					if (ccc < 80)
+					if (ccc <= 80)
 					{
 						lineBuff[ccc]		=	theChar;
 						lineBuff[ccc + 1]	=	0;
@@ -640,7 +657,7 @@ char	theChar;
 					}
 					else
 					{
-						CONSOLE_DEBUG("Buffer overflow");
+						CONSOLE_DEBUG_W_STR("Buffer overflow:", lineBuff);
 						keepGoing	=	false;
 					}
 				}
@@ -783,7 +800,7 @@ char	dataBuffer[4096];
 	CONSOLE_DEBUG_W_NUM("recordCount\t=", recordCount);
 
 	currentOffset	=	fseek(filePointer, 0, SEEK_SET);
-	currentOffset		=	ftell(filePointer);
+	currentOffset	=	ftell(filePointer);
 	CONSOLE_DEBUG_W_LONG("currentOffset\t=", currentOffset);
 }
 
@@ -811,6 +828,7 @@ long	currentOffset;
 	}
 }
 
+static int	gDebugCounter	=	0;
 //*****************************************************************************
 static bool	PDS_ReadCompressedImage(FILE *filePointer, PDS_header_data *pdsHeaderPtr)
 {
@@ -823,7 +841,7 @@ int			out_bytes;
 uint8_t		*pdsPixelPtr;
 uint8_t		*encodingHistPtr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM(__FUNCTION__, gDebugCounter++);
 
 //	StepThroughAllVariableRecords(filePointer);
 
@@ -836,7 +854,7 @@ uint8_t		*encodingHistPtr;
 
 		if (pdsHeaderPtr->record_Bytes == 836)
 		{
-		//	CONSOLE_DEBUG("Reading compression histogram (836) 3 records");
+			CONSOLE_DEBUG("Reading compression histogram (836) 3 records");
 			encodingHistPtr	=	(uint8_t *)pdsHeaderPtr->encodingHistogram;
 			dataLength		=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr),			false);
 			dataLength		=	PDS_ReadVariableRecord(filePointer, (encodingHistPtr + 836),	false);
@@ -855,14 +873,16 @@ uint8_t		*encodingHistPtr;
 	}
 	else
 	{
-		CONSOLE_DEBUG("Did not read image incoding histogram");
+		CONSOLE_DEBUG("Did not read image encoding histogram");
 	}
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	decmpinit(pdsHeaderPtr->encodingHistogram);
 
 	//-----------------------------------------------------------------------------
 	//*	position to start of image
 	SetFilePositionVariableRec(filePointer, pdsHeaderPtr->imageOffset);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	pdsPixelPtr	=	pdsHeaderPtr->imageData;	//*	pointer to the image data
 	for (scanLineIdx=1; scanLineIdx < pdsHeaderPtr->scanLines; scanLineIdx++)
@@ -883,15 +903,18 @@ uint8_t		*encodingHistPtr;
 
 		pdsPixelPtr	+=	pdsHeaderPtr->lineSamples;
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 	DecompressFreeMemory();
+	CONSOLE_DEBUG(__FUNCTION__);
 	returnFlag	=	true;
+	CONSOLE_DEBUG(__FUNCTION__);
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(returnFlag);
 }
 
 //*****************************************************************************
-static bool	PDS_ReadHeaderAndImage(const char *filePath, PDS_header_data *pdsHeaderPtr)
+static bool	PDS_ReadHeaderAndImage(const char *filePath, PDS_header_data *pdsHeaderPtr, bool readImageData)
 {
 bool			returnFlag;
 FILE			*filePointer;
@@ -906,8 +929,8 @@ int				histogramBytesRead;
 int				imageBytesRead;
 int				charsRead;
 
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
-//	CONSOLE_DEBUG_W_NUM("cdROMtype\t=", pdsHeaderPtr->cdROMtype);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, filePath);
+	CONSOLE_DEBUG_W_NUM("cdROMtype\t=", pdsHeaderPtr->cdROMtype);
 	returnFlag	=	false;
 	filePointer	=	fopen(filePath, "r");
 	if (filePointer != NULL)
@@ -983,41 +1006,49 @@ int				charsRead;
 ////				printf("%3d\t%6d\r\n", iii, pdsHeaderPtr->histogram[iii]);
 ////			}
 //		}
-
-
 //		PDS_DumpHeader(pdsHeaderPtr);
 
 		//--------------------------------------------------------
-		//*	see if we have enough data to describe the image
-		if ((pdsHeaderPtr->record_Bytes > 0) &&
-			(pdsHeaderPtr->scanLines > 0) &&
-			(pdsHeaderPtr->lineSamples > 0) &&
-			(pdsHeaderPtr->imageOffset > 0))
-
+		//*	are we supposed to read the image
+		if (readImageData)
 		{
-			pdsHeaderPtr->imageData	=	calloc(pdsHeaderPtr->scanLines, pdsHeaderPtr->lineSamples);
-			if (pdsHeaderPtr->imageData != NULL)
+			CONSOLE_DEBUG_W_NUM("pdsHeaderPtr->record_Bytes\t=",	pdsHeaderPtr->record_Bytes);
+			CONSOLE_DEBUG_W_NUM("pdsHeaderPtr->lineSamples \t=",	pdsHeaderPtr->lineSamples);
+			CONSOLE_DEBUG_W_NUM("pdsHeaderPtr->scanLines   \t=",	pdsHeaderPtr->scanLines);
+			//*	see if we have enough data to describe the image
+			if ((pdsHeaderPtr->record_Bytes > 0) &&
+				(pdsHeaderPtr->scanLines > 0) &&
+				(pdsHeaderPtr->lineSamples > 0) &&
+				(pdsHeaderPtr->imageOffset > 0))
 			{
-				if (pdsHeaderPtr->imageIsCompressed)
+				pdsHeaderPtr->imageData	=	calloc(pdsHeaderPtr->scanLines, pdsHeaderPtr->lineSamples);
+				if (pdsHeaderPtr->imageData != NULL)
 				{
-					returnFlag	=	PDS_ReadCompressedImage(filePointer, pdsHeaderPtr);
+					if (pdsHeaderPtr->imageIsCompressed)
+					{
+						returnFlag	=	PDS_ReadCompressedImage(filePointer, pdsHeaderPtr);
+					}
+					else
+					{
+						returnFlag	=	PDS_ReadUncompressedImage(filePointer, pdsHeaderPtr);
+					}
 				}
 				else
 				{
-					returnFlag	=	PDS_ReadUncompressedImage(filePointer, pdsHeaderPtr);
+					CONSOLE_DEBUG_W_STR("Not enough info to open image:", filePath);
 				}
 			}
-			else
-			{
-				CONSOLE_DEBUG_W_STR("Not enough info to open image:", filePath);
-			}
+	//		totalBytesRead	=	headerBytesRead + histogramBytesRead + imageBytesRead;
+	//		CONSOLE_DEBUG_W_NUM("header bytes read   \t=", headerBytesRead);
+	//		CONSOLE_DEBUG_W_NUM("histogram bytes read\t=", histogramBytesRead);
+	//		CONSOLE_DEBUG_W_NUM("image bytes read    \t=", imageBytesRead);
+	//		CONSOLE_DEBUG_W_NUM("total bytes read    \t=", totalBytesRead);
+		}
+		else
+		{
+			returnFlag	=	true;
 		}
 		fclose(filePointer);
-//		totalBytesRead	=	headerBytesRead + histogramBytesRead + imageBytesRead;
-//		CONSOLE_DEBUG_W_NUM("header bytes read   \t=", headerBytesRead);
-//		CONSOLE_DEBUG_W_NUM("histogram bytes read\t=", histogramBytesRead);
-//		CONSOLE_DEBUG_W_NUM("image bytes read    \t=", imageBytesRead);
-//		CONSOLE_DEBUG_W_NUM("total bytes read    \t=", totalBytesRead);
 	}
 	else
 	{
@@ -1030,11 +1061,12 @@ int				charsRead;
 }
 
 //*****************************************************************************
-bool	PDS_ReadImage(const char *filePath, PDS_header_data	*pdsHeaderPtr)
+bool	PDS_ReadImage(const char *filePath, PDS_header_data	*pdsHeaderPtr,  bool readImageData)
 {
 bool		returnFlag;
 char		volumeName[32];
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	PDS_InitHeader(pdsHeaderPtr);
 
 	pdsHeaderPtr->cdROMtype	=	PDS_GetCDROMtype(filePath, volumeName);
@@ -1045,7 +1077,7 @@ char		volumeName[32];
 //	CONSOLE_DEBUG_W_NUM("cdROMtype \t=", pdsHeaderPtr->cdROMtype);
 //	CONSOLE_DEBUG_W_NUM("dBaseType \t=", dBaseType);
 
-	returnFlag	=	PDS_ReadHeaderAndImage(filePath, pdsHeaderPtr);
+	returnFlag	=	PDS_ReadHeaderAndImage(filePath, pdsHeaderPtr, readImageData);
 
 	return(returnFlag);
 }

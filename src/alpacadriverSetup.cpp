@@ -29,6 +29,7 @@
 //*	Dec  4,	2022	<MLS> Added Setup_SaveInit()
 //*	Dec  5,	2022	<MLS> Added Setup_OutputCheckBox() & Setup_OutputRadioBtn()
 //*	Dec  5,	2022	<MLS> Added Setup_SaveFinish()
+//*	May 19,	2024	<MLS> Added Setup_OutputNumberBox()
 //*****************************************************************************
 
 
@@ -159,19 +160,20 @@ int		mySocketFD;
 //*****************************************************************************
 bool	AlpacaDriver::Setup_ProcessCommand(TYPE_GetPutRequestData *reqData)
 {
-char				formActionString[128];
-
+char		formActionString[128];
+bool		commandOK;
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	//*	build the form action string,
 	//*	this MUST be used by each form so that the processing can be handled properly
-
+	commandOK	=	true;
 	//*******************************************
 	if (strcmp(reqData->deviceCommand, "save") == 0)
 	{
 		Setup_Save(reqData);
 	}
-	else if (strcmp(reqData->deviceCommand, "setup") == 0)
+	else
+//	else if (strcmp(reqData->deviceCommand, "setup") == 0)
 	{
 		//*		/setup/v1/{device_type}/{device_number}/setup
 		sprintf(formActionString,	"/setup/v1/%s/%d/save",
@@ -180,12 +182,13 @@ char				formActionString[128];
 		tolowerStr(formActionString);
 		Setup_OutputForm(reqData, formActionString);
 	}
-	else
-	{
-		CONSOLE_DEBUG_W_STR("Unrecognized setup command", reqData->deviceCommand);
-	}
+//	else
+//	{
+//		CONSOLE_DEBUG_W_STR("Unrecognized setup command", reqData->deviceCommand);
+//		commandOK	=	true;
+//	}
 
-	return(false);
+	return(commandOK);
 }
 
 //*****************************************************************************
@@ -196,7 +199,7 @@ char				formActionString[128];
 //*****************************************************************************
 void	AlpacaDriver::Setup_SaveInit(void)
 {
-//*	this should be overridden if setup is supported
+	//*	this should be overridden if setup is supported
 	CONSOLE_DEBUG(__FUNCTION__);
 
 }
@@ -209,11 +212,10 @@ void	AlpacaDriver::Setup_SaveInit(void)
 //*****************************************************************************
 void	AlpacaDriver::Setup_SaveFinish(void)
 {
-//*	this should be overridden if setup is supported
+	//*	this should be overridden if setup is supported
 	CONSOLE_DEBUG(__FUNCTION__);
 
 }
-
 
 //*****************************************************************************
 //*	this should be overridden if setup is supported
@@ -233,7 +235,7 @@ void	AlpacaDriver::Setup_OutputCheckBox(	const int	socketFD,
 											const char	*displayedName,
 											const bool	checked)
 {
-char	htmlOutputString[128];
+char	htmlOutputString[512]	=	"";
 
 	strcpy(htmlOutputString,	"<input type=\"checkbox\" name=\"");
 	strcat(htmlOutputString,	name);
@@ -255,7 +257,7 @@ void	AlpacaDriver::Setup_OutputRadioBtn(	const int	socketFD,
 											const char	*displayedName,
 											const bool	checked)
 {
-char	htmlOutputString[128];
+char	htmlOutputString[512]	=	"";
 
 //sprintf(lineBuff,	"<input type=\"radio\" id=\"%s\" name=\"target\" value=\"%s\">%s<BR>\r\n",
 //										gTargetNames[iii].name,
@@ -277,3 +279,102 @@ char	htmlOutputString[128];
 	SocketWriteData(socketFD,	htmlOutputString);
 }
 
+////*****************************************************************************
+//void	AlpacaDriver::Setup_OutputTextBox(	const int	socketFD,
+//											const char	*name,
+//											const char	*displayedName,
+//											const char	*textString)
+//{
+//char	htmlOutputString[512]	=	"";
+//
+////sprintf(lineBuff,	"<input type=\"radio\" id=\"%s\" name=\"target\" value=\"%s\">%s<BR>\r\n",
+////										gTargetNames[iii].name,
+////										gTargetNames[iii].prefix,
+////										gTargetNames[iii].name);
+////
+//	strcpy(htmlOutputString,	"<input type=\"radio\" name=\"");
+//	strcat(htmlOutputString,	groupName);
+//	strcat(htmlOutputString,	"\" value=\"");
+//	strcat(htmlOutputString,	name);
+//	strcat(htmlOutputString,	"\"");
+//	if (checked)
+//	{
+//		strcat(htmlOutputString,	" checked=\"checked\"");
+//	}
+//	strcat(htmlOutputString,	">");
+//	strcat(htmlOutputString,	displayedName);
+//	strcat(htmlOutputString,	"<BR>\r\n");
+//	SocketWriteData(socketFD,	htmlOutputString);
+//}
+
+//*****************************************************************************
+//*	Formats
+//*		0,		box  TEXT
+//*		1,		TEXT
+//*				box
+//*****************************************************************************
+void	AlpacaDriver::Setup_OutputNumberBox(	const int	socketFD,
+												const char	*name,
+												const char	*displayedName,
+												const int	value,
+												const int	format)
+{
+char	htmlOutputString[512]	=	"";
+char	numberString[32];
+//SocketWriteData(mySocketFD,	"<label for=\"wifichan\">WiFi Channel:</label><br>\r\n");
+//sprintf(lineBuff,	"<input type=\"number\" id=\"wifichan\" name=\"wifichan\" value=\"%d\"><br>\r\n", cPMC8.WifiChannel);
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+	strcpy(htmlOutputString, "");
+
+	switch(format)
+	{
+		case 0:
+			strcat(htmlOutputString,	"<input type=\"number\" id=\"");
+			strcat(htmlOutputString,	name);
+			strcat(htmlOutputString,	"\" name=\"");
+			strcat(htmlOutputString,	name);
+			strcat(htmlOutputString,	"\" value=\"");
+			sprintf(numberString, "%d", value);
+			strcat(htmlOutputString,	numberString);
+			strcat(htmlOutputString,	"\">\r\n");
+
+
+			strcat(htmlOutputString,	"<label for=\"");
+			strcat(htmlOutputString,	name);
+			strcat(htmlOutputString,	"\">");
+			strcat(htmlOutputString,	displayedName);
+		//	strcat(htmlOutputString,	"</label><br>\r\n");
+			strcat(htmlOutputString,	"</label>\r\n");
+			strcat(htmlOutputString,	"<BR>\r\n");
+			break;
+
+		case 1:
+			strcat(htmlOutputString,	"<label for=\"");
+			strcat(htmlOutputString,	name);
+			strcat(htmlOutputString,	"\">");
+			strcat(htmlOutputString,	displayedName);
+		//	strcat(htmlOutputString,	"</label><br>\r\n");
+			strcat(htmlOutputString,	"</label>\r\n");
+			strcat(htmlOutputString,	"<BR>\r\n");
+
+
+			strcat(htmlOutputString,	"<input type=\"number\" id=\"");
+			strcat(htmlOutputString,	name);
+			strcat(htmlOutputString,	"\" name=\"");
+			strcat(htmlOutputString,	name);
+			strcat(htmlOutputString,	"\" value=\"");
+			sprintf(numberString, "%d", value);
+			strcat(htmlOutputString,	numberString);
+			strcat(htmlOutputString,	"\">\r\n");
+
+
+			break;
+	}
+
+//	CONSOLE_DEBUG(htmlOutputString);
+//	CONSOLE_DEBUG_W_SIZE("strlen(htmlOutputString)\t=", strlen(htmlOutputString));
+
+	SocketWriteData(socketFD,	htmlOutputString);
+
+}

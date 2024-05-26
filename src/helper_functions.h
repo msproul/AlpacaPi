@@ -49,6 +49,8 @@ void		FormatTimeStringISO8601_tm(	struct tm *linuxTime,	char *timeString);
 void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 int			GetMinutesSinceMidnight(void);
 time_t		GetSecondsSinceEpoch(void);
+bool		IsValidNumericString(const char *theString);
+bool		IsValidTrueFalseString(const char *theString);
 bool		IsTrueFalseArgValid(const char *trueFalseString);
 bool		IsTrueFalse(		const char *trueFalseString);
 uint64_t	MSecTimer_getNanoSecs(void);

@@ -31,6 +31,7 @@
 //*	Sep  2,	2021	<MLS> Added _ENABLE_BANDWIDTH_LOGGING_
 //*	Nov 28,	2022	<MLS> Added cLastDeviceErrMsg
 //*	Sep 20,	2023	<MLS> Moved camera read thread to base class
+//*	Apr 29,	2024	<MLS> Added cSendJSONresponse to handle setupdialog
 //*****************************************************************************
 //#include	"alpacadriver.h"
 
@@ -245,6 +246,7 @@ class AlpacaDriver
 				TYPE_CommonProperties	cCommonProp;
 				const TYPE_CmdEntry		*cDriverCmdTablePtr;
 
+				bool				cSendJSONresponse;		//*	False for setupdialog and camera binary data
 				bool				cHttpHeaderSent;
 				bool				cRunStartupOperations;
 				bool				cVerboseDebug;
@@ -287,7 +289,6 @@ class AlpacaDriver
 				int					cTotalCmdErrors;
 				void				RecordCmdStats(int cmdNum, char getput, TYPE_ASCOM_STATUS alpacaErrCode);
 
-//				bool				cDeviceConnected;		//*	normally always true
 				TYPE_CMD_STATS		cCommonCmdStats[kCmd_Common_last];
 				TYPE_CMD_STATS		cDeviceCmdStats[kDeviceCmdCnt];
 
@@ -373,6 +374,11 @@ class AlpacaDriver
 																const char	*name,
 																const char	*displayedName,
 																const bool	checked);
+				void					Setup_OutputNumberBox(	const int	socketFD,
+																const char	*name,
+																const char	*displayedName,
+																const int	value,
+																const int	format=0);
 
 
 		//-------------------------------------------------------------------------
@@ -414,7 +420,6 @@ extern	const char		gValueString[];
 extern	bool			gImageDownloadInProgress;
 extern	bool			gIMUisOnLine;
 
-extern	uint32_t		gClientTransactionID;
 extern	uint32_t		gServerTransactionID;
 extern	char			gDefaultTelescopeRefID[kDefaultRefIdMaxLen];
 

@@ -10,7 +10,7 @@
 #endif
 
 
-bool	PDS_ReadImage(const char *filePath, PDS_header_data	*pdsHeaderPtr);
+bool	PDS_ReadImage(const char *filePath, PDS_header_data	*pdsHeaderPtr, bool readImageData);
 
 
 #ifdef __cplusplus

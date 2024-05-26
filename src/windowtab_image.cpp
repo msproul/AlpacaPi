@@ -51,7 +51,9 @@
 
 #include	"controller.h"
 #include	"controller_image.h"
-#include	"controller_skyimage.h"
+#ifdef _ENABLE_SKYIMAGE_
+	#include	"controller_skyimage.h"
+#endif
 #include	"helper_functions.h"
 
 #include	"windowtab.h"
@@ -442,24 +444,34 @@ void	WindowTabImage::RunWindowBackgroundTasks(void)
 	uint32_t		deltaMs;
 	bool			newImageOK;
 
-
 		deltaMs	=	millis() - cLastImageChange_ms;
 		if (deltaMs > 150)
 		{
-			newImageOK	=	LoadNextImageFromList((ControllerImage *)cParentObjPtr);
-			if (newImageOK)
+
+			if (gCurrentImageIndex < (gImageCount -1))
 			{
-				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(0, 200, 0));
+				newImageOK	=	LoadNextImageFromList((ControllerImage *)cParentObjPtr);
+				if (newImageOK)
+				{
+					SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(0, 200, 0));
+				}
+				else
+				{
+					SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(255, 0, 0));
+					cRunMode				=	false;
+					SetWidgetText(kImageDisplay_Btn_Run,	"Run");
+	//				cOpenCVdownLoadedImage	=	NULL;
+	//				cOpenCVdisplayedImage	=	NULL;
+					ForceWindowUpdate();
+				}
+				cLastImageChange_ms	=	millis();
+				cv::waitKey(200);
 			}
 			else
 			{
-				SetWidgetBGColor(kImageDisplay_LiveOrDownLoad, CV_RGB(255, 0, 0));
 				cRunMode				=	false;
-				cOpenCVdownLoadedImage	=	NULL;
-				cOpenCVdisplayedImage	=	NULL;
+				SetWidgetText(kImageDisplay_Btn_Run,	"Run");
 			}
-			cLastImageChange_ms	=	millis();
-			cv::waitKey(200);
 		}
 	}
 #endif // _ENABLE_SKYIMAGE_
@@ -475,7 +487,8 @@ void	WindowTabImage::SetImageFilePath(const char *imageFilePath)
 //*****************************************************************************
 void	WindowTabImage::HandleKeyDown(const int keyPressed)
 {
-bool	updateFlag;
+//bool	updateFlag;
+bool	resetImage;
 #ifdef _ENABLE_SKYIMAGE_
 	bool	newImageOK;
 #endif // _ENABLE_SKYIMAGE_
@@ -483,7 +496,8 @@ bool	updateFlag;
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
 
-	updateFlag	=	true;
+//	updateFlag	=	true;
+	resetImage	=	true;
 	switch(keyPressed & 0x0ffff)
 	{
 		case '.':
@@ -492,13 +506,15 @@ bool	updateFlag;
 			{
 				cHistogramPenSize	=	1;
 			}
-			updateFlag	=	false;
+//			updateFlag	=	false;
+			resetImage	=	false;
 			break;
 
 		case '0':
 		case 0x00FFB0:
 			ResetImage();
-			updateFlag	=	false;
+//			updateFlag	=	false;
+			resetImage	=	false;
 			break;
 
 		case '4':
@@ -567,7 +583,8 @@ bool	updateFlag;
 			{
 //				CONSOLE_DEBUG("ResetImage");
 				ResetImage();
-				updateFlag	=	false;
+//				updateFlag	=	false;
+				resetImage	=	false;
 			}
 			break;
 
@@ -591,21 +608,24 @@ bool	updateFlag;
 			{
 //				CONSOLE_DEBUG("ResetImage");
 				ResetImage();
-				updateFlag	=	false;
+//				updateFlag	=	false;
+				resetImage	=	false;
 			}
 			break;
 #endif // _ENABLE_SKYIMAGE_
 
 		default:
 			CONSOLE_DEBUG_W_HEX("keyPressed\t",	keyPressed);
-			updateFlag	=	false;
+//			updateFlag	=	false;
+			resetImage	=	false;
 			break;
 	}
-	if (updateFlag)
+	if (resetImage)
 	{
 //		CONSOLE_DEBUG(__FUNCTION__);
 		DrawFullScaleIamge(cImageCenterX, cImageCenterY);
 	}
+	ForceWindowUpdate();
 }
 
 //*****************************************************************************
@@ -685,7 +705,15 @@ ControllerImage	*myParentContolerImage;
 #ifdef _ENABLE_SKYIMAGE_
 		case kImageDisplay_Btn_Run:
 			cRunMode	=	!cRunMode;
+			if (cRunMode)
+			{
+				if (gCurrentImageIndex >= (gImageCount -1))
+				{
+					gCurrentImageIndex	=	-1;
+				}
+			}
 			SetRunFastBackgroundMode(cRunMode);
+			SetWidgetText(kImageDisplay_Btn_Run,	(cRunMode ? "Stop" : "Run"));
 			break;
 #endif // _ENABLE_SKYIMAGE_
 
@@ -905,7 +933,7 @@ void	WindowTabImage::DrawWidgetCustomGraphic(cv::Mat *openCV_Image, TYPE_WIDGET 
 int				yDivideFactor;
 ControllerImage	*myParentContolerImage;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	cOpenCV_Image	=	openCV_Image;		//*	set the image data ptr so the window tabs can use it
 
@@ -915,13 +943,24 @@ ControllerImage	*myParentContolerImage;
 			myParentContolerImage	=	(ControllerImage *)cParentObjPtr;
 			if (myParentContolerImage != NULL)
 			{
-				yDivideFactor	=	myParentContolerImage->cMaxHistogramPixCnt / theWidget->height;
-				yDivideFactor	+=	1;
+				if (myParentContolerImage->cMaxHistogramPixCnt > 1000)
+				{
+					yDivideFactor	=	myParentContolerImage->cMaxHistogramPixCnt / theWidget->height;
+					yDivideFactor	+=	1;
 
-				DrawHistogram(theWidget,	myParentContolerImage->cHistogramLum, 256, yDivideFactor, CV_RGB(255, 255, 255));
-				DrawHistogram(theWidget,	myParentContolerImage->cHistogramRed, 256, yDivideFactor, CV_RGB(255, 000, 000));
-				DrawHistogram(theWidget,	myParentContolerImage->cHistogramGrn, 256, yDivideFactor, CV_RGB(000, 255, 000));
-				DrawHistogram(theWidget,	myParentContolerImage->cHistogramBlu, 256, yDivideFactor, CV_RGB(0x64, 0x8c, 0xff));
+					CONSOLE_DEBUG_W_NUM("cMaxHistogramPixCnt\t=", myParentContolerImage->cMaxHistogramPixCnt);
+					CONSOLE_DEBUG_W_NUM("yDivideFactor      \t=", yDivideFactor);
+
+					DrawHistogram(theWidget,	myParentContolerImage->cHistogramLum, 256, yDivideFactor, CV_RGB(255, 255, 255));
+					DrawHistogram(theWidget,	myParentContolerImage->cHistogramRed, 256, yDivideFactor, CV_RGB(255, 000, 000));
+					DrawHistogram(theWidget,	myParentContolerImage->cHistogramGrn, 256, yDivideFactor, CV_RGB(000, 255, 000));
+					DrawHistogram(theWidget,	myParentContolerImage->cHistogramBlu, 256, yDivideFactor, CV_RGB(0x64, 0x8c, 0xff));
+				}
+				else
+				{
+					CONSOLE_DEBUG("I do not know how we got here, cMaxHistogramPixCnt is too loo");
+					CONSOLE_DEBUG_W_NUM("cMaxHistogramPixCnt\t=", myParentContolerImage->cMaxHistogramPixCnt);
+				}
 			}
 			else
 			{
@@ -951,7 +990,7 @@ void	WindowTabImage::DrawWidgetCustomGraphic(IplImage *openCV_Image, const int w
 //*****************************************************************************
 void	WindowTabImage::SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImage)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	cOpenCVdownLoadedImage	=	originalImage;
 	cOpenCVdisplayedImage	=	displayedImage;
 }
@@ -959,6 +998,7 @@ void	WindowTabImage::SetImagePtrs(cv::Mat *originalImage, cv::Mat *displayedImag
 //*****************************************************************************
 void	WindowTabImage::SetImagePtrs(IplImage *originalImage, IplImage *displayedImage)
 {
+	CONSOLE_DEBUG(__FUNCTION__);
 	cOpenCVdownLoadedImage	=	originalImage;
 	cOpenCVdisplayedImage	=	displayedImage;
 }
@@ -1112,7 +1152,8 @@ char		imageInfoText[80];
 	SetWidgetText(	kImageDisplay_ImageDisplayInfo,	imageInfoText);
 
 
-	if ((cOpenCVdownLoadedImage != NULL) && (cOpenCVdisplayedImage != NULL))
+	if (IsOpenCVimageValid(__FUNCTION__, cOpenCVdownLoadedImage) &&
+		IsOpenCVimageValid(__FUNCTION__, cOpenCVdisplayedImage))
 	{
 	#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 
@@ -1188,19 +1229,23 @@ char		imageInfoText[80];
 //			cvCopy(theWidget->openCVimagePtr, cOpenCVdownLoadedImage);
 //			cvResetImageROI(cOpenCVdownLoadedImage);
 
-			//---try------try------try------try------try------try---
-			try
+			if (IsOpenCVimageValid(__FUNCTION__, cOpenCVdisplayedImage))
 			{
-				image_roi.copyTo(*cOpenCVdisplayedImage);
-//				cv::waitKey(100);
-			}
-			catch(cv::Exception& ex)
-			{
-				//*	this catch prevents opencv from crashing
-				CONSOLE_DEBUG("????????????????????????????????????????????????????");
-				CONSOLE_DEBUG("copyTo() had an exception");
-				CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
-			//	CONSOLE_ABORT(__FUNCTION__);
+				//---try------try------try------try------try------try---
+				try
+				{
+					CONSOLE_DEBUG(__FUNCTION__);
+					image_roi.copyTo(*cOpenCVdisplayedImage);
+	//				cv::waitKey(100);
+				}
+				catch(cv::Exception& ex)
+				{
+					//*	this catch prevents opencv from crashing
+					CONSOLE_DEBUG("????????????????????????????????????????????????????");
+					CONSOLE_DEBUG("copyTo() had an exception");
+					CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
+				//	CONSOLE_ABORT(__FUNCTION__);
+				}
 			}
 
 		#else
@@ -1223,8 +1268,7 @@ char		imageInfoText[80];
 	}
 	else
 	{
-		CONSOLE_DEBUG("Not finished");
-//		CONSOLE_ABORT(__FUNCTION__);
+		CONSOLE_DEBUG("One image structure is invalid");
 	}
 }
 

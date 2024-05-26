@@ -103,6 +103,7 @@ class TelescopeDriverComm: public TelescopeDriver
 				//*	command queue
 				TYPE_TelescopeCmdQue	cCmdQueue[kMaxTelescopeCmds];
 				int						cQueuedCmdCnt;
+				int						cThreadLoopDelay_usec;	//*	thread loop delay in micro-seconds
 		//-----------------------------------------------------------------------
 
 };

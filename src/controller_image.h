@@ -59,7 +59,7 @@ typedef struct
 	char	Telescope[64];
 	char	Website[128];
 
-} TYPE_FitsHeaderData;
+} TYPE_ImageHeaderData;
 
 //**************************************************************************************
 class ControllerImage: public Controller
@@ -86,6 +86,7 @@ class ControllerImage: public Controller
 
 		virtual	void	SetupWindowControls(void);
 		virtual	void	RunBackgroundTasks(const char *callingFunction=NULL, bool enableDebug=false);
+		virtual	bool	RunFastBackgroundTasks(void);
 		virtual	void	RefreshWindow(void);
 
 		virtual	void	DrawWidgetImage(TYPE_WIDGET *theWidget);
@@ -124,10 +125,10 @@ class ControllerImage: public Controller
 				void	ProcessFitsHeader(const char *imageFilePath);
 				void	DrawTextString2(const int xxLoc1, const int xxLoc2, const int yyLoc, const char *textString1, const char *textString2);
 				void	DrawTitleBlock(void);
+				void	DrawTitleBlock_ImageHeader(int xxLoc1, int xxLoc2, int yyLoc);
+//				void	DrawTitleBlock_PDS(int xxLoc1, int xxLoc2, int yyLoc);
 				void	DrawSignature(void);
 
-				void	DrawTitleBlock_FITS(int xxLoc1, int xxLoc2, int yyLoc);
-				void	DrawTitleBlock_PDS(int xxLoc1, int xxLoc2, int yyLoc);
 
 				void	SaveImage(void);
 
@@ -149,7 +150,7 @@ class ControllerImage: public Controller
 				bool					cImageIsPDS;	//*	Planetary Data System
 				char					cFileExtension[16];
 //				TYPE_IMAGE_ROI_Info		cROIinfo;
-				TYPE_FitsHeaderData		cFitsHeaderData;
+				TYPE_ImageHeaderData	cImageHeaderData;
 
 #ifdef _ENABLE_NASA_PDS_
 				void		ProcessPdsHeader(PDS_header_data *pdsHeaderPtr);

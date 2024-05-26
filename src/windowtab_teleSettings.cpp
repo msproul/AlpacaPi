@@ -80,6 +80,8 @@ int			myBtnWidth;
 int			leftColmX;
 char		notAvailableStr[]	=	"---N/A---";
 int			yLoc_2ndColumn;
+int			groupBoxWidth;
+
 	xLoc	=	5;
 	yLoc	=   cTabVertOffset;
 	yLoc	=	SetTitleBox(kTeleSettings_Title, -1, yLoc, "Telescope settings");
@@ -110,25 +112,42 @@ int			yLoc_2ndColumn;
 	iii			=   kTeleSettings_AtHome_Lbl;
 	while (iii < kTeleSettings_HomePark_Outline)
 	{
+		xLoc		=	5;
 		//*	label
-		SetWidget(		iii,	cClm1_offset + 2,		yLoc,	myBtnWidth,	cSmallBtnHt);
-		SetWidgetType(	iii,	kWidgetType_TextBox);
-		SetWidgetFont(	iii,	kFont_Medium);
+		SetWidget(			iii,	xLoc,	yLoc,	myBtnWidth,	cSmallBtnHt);
+		SetWidgetType(		iii,	kWidgetType_TextBox);
+		SetWidgetFont(		iii,	kFont_Medium);
+		xLoc	+=	myBtnWidth;
+		xLoc	+=	2;
 		iii++;
 
 		//*	Value
-		SetWidget(		iii,	cClm2_offset + 4,		yLoc,	myBtnWidth,	cSmallBtnHt);
-		SetWidgetType(	iii,	kWidgetType_TextBox);
-		SetWidgetFont(	iii,	kFont_Medium);
-		SetWidgetText(	iii,	notAvailableStr);
+		SetWidget(			iii,	xLoc,	yLoc,	myBtnWidth,	cSmallBtnHt);
+		SetWidgetType(		iii,	kWidgetType_TextBox);
+		SetWidgetFont(		iii,	kFont_Medium);
+		SetWidgetText(		iii,	notAvailableStr);
+		xLoc	+=	myBtnWidth;
+		xLoc	+=	2;
 		iii++;
 
-		//*	button
-		SetWidget(			iii,	cClm3_offset + 7,	yLoc,	myBtnWidth,	cSmallBtnHt);
+		//*	GO button
+		SetWidget(			iii,	xLoc,	yLoc,	myBtnWidth,	cSmallBtnHt);
 		SetWidgetType(		iii,	kWidgetType_Button);
 		SetWidgetFont(		iii,	kFont_Medium);
 		SetWidgetBGColor(	iii,	CV_RGB(255,	255,	255));
 		SetWidgetTextColor(	iii,	CV_RGB(0,	0,		0));
+		xLoc	+=	myBtnWidth;
+		xLoc	+=	2;
+		iii++;
+
+		//*	Set button
+		SetWidget(			iii,	xLoc,	yLoc,	myBtnWidth,	cSmallBtnHt);
+		SetWidgetType(		iii,	kWidgetType_Button);
+		SetWidgetFont(		iii,	kFont_Medium);
+		SetWidgetBGColor(	iii,	CV_RGB(255,	255,	255));
+		SetWidgetTextColor(	iii,	CV_RGB(0,	0,		0));
+		xLoc	+=	myBtnWidth;
+		xLoc	+=	2;
 		iii++;
 
 		yLoc			+=	cSmallBtnHt;
@@ -141,6 +160,22 @@ int			yLoc_2ndColumn;
 	SetWidgetText(		kTeleSettings_AtHome_Btn,			"Go Home");
 	SetWidgetText(		kTeleSettings_AtPark_Btn,			"Go Park");
 	SetWidgetText(		kTeleSettings_Refraction_Btn,		"On/Off");
+
+
+	SetWidgetText(		kTeleSettings_AtHome_Set,			"Set Home");
+	SetWidgetText(		kTeleSettings_AtPark_Set,			"Set Park");
+	SetWidgetValid(		kTeleSettings_Refraction_Set,		false);
+
+	SetWidgetHelpText(kTeleSettings_AtHome_Btn,	"Move mount to home position (mechanical 0,0)");
+	SetWidgetHelpText(kTeleSettings_AtHome_Set,	"Sets current location to home (mechanical 0,0)");
+
+	SetWidgetHelpText(kTeleSettings_AtPark_Btn,	"Move mount to pre-set PARK location");
+	SetWidgetHelpText(kTeleSettings_AtPark_Set,	"Sets current location to the PARK position");
+
+	SetWidgetHelpText(kTeleSettings_Refraction_Btn,	"Enable/Disable refraction compensation in mount");
+
+
+
 	SetWidgetOutlineBox(	kTeleSettings_HomePark_Outline,
 							kTeleSettings_AtHome_Lbl,
 							(kTeleSettings_HomePark_Outline - 1));
@@ -150,7 +185,9 @@ int			yLoc_2ndColumn;
 	yLoc			+=	2;
 
 	//---------------------------------------------------------------------------------------
-	SetWidget(		kTeleSettings_Rates_Title,	cClm1_offset + 2,		yLoc,	((cBtnWidth * 3) -4),	cSmallBtnHt);
+	groupBoxWidth	=	((cBtnWidth * 4) - 2);
+	xLoc			=	cClm1_offset + 2;
+	SetWidget(		kTeleSettings_Rates_Title,	xLoc,		yLoc,	groupBoxWidth,	cSmallBtnHt);
 	SetWidgetType(	kTeleSettings_Rates_Title,	kWidgetType_TextBox);
 	SetWidgetFont(	kTeleSettings_Rates_Title,	kFont_Medium);
 	SetWidgetText(	kTeleSettings_Rates_Title,	"Movement rates");
@@ -160,26 +197,33 @@ int			yLoc_2ndColumn;
 	iii			=   kTeleSettings_RateRA_Lbl;
 	while (iii < kTeleSettings_GuideRateDec_Val)
 	{
+		xLoc			=	cClm1_offset + 2;
 		//*	label
-		SetWidget(		iii,	cClm1_offset + 2,	yLoc,	myBtnWidth,	cSmallBtnHt);
+		SetWidget(		iii,	xLoc,	yLoc,	myBtnWidth,	cSmallBtnHt);
 		SetWidgetType(	iii,	kWidgetType_TextBox);
 		SetWidgetFont(	iii,	kFont_TextList);
+		xLoc	+=	myBtnWidth;
+		xLoc	+=	2;
 		iii++;
 
 		//*	Value
-		SetWidget(		iii,	cClm2_offset + 4,	yLoc,	myBtnWidth,	cSmallBtnHt);
+		SetWidget(		iii,	xLoc,	yLoc,	myBtnWidth,	cSmallBtnHt);
 		SetWidgetType(	iii,	kWidgetType_TextBox);
 		SetWidgetFont(	iii,	kFont_TextList);
 		SetWidgetText(	iii,	notAvailableStr);
+		xLoc	+=	myBtnWidth;
+		xLoc	+=	2;
 		iii++;
 
 		//*	Units
-		SetWidget(		iii,	cClm3_offset + 7,	yLoc,	myBtnWidth,	cSmallBtnHt);
-		SetWidgetType(	iii,	kWidgetType_TextBox);
-		SetWidgetFont(	iii,	kFont_TextList);
-		SetWidgetBorder(iii,	false);
-
-		SetWidgetText(	iii,	"units");
+		SetWidget(				iii,	xLoc,	yLoc,	myBtnWidth,	cSmallBtnHt);
+		SetWidgetType(			iii,	kWidgetType_TextBox);
+		SetWidgetFont(			iii,	kFont_TextList);
+		SetWidgetJustification(	iii, kJustification_Left);
+		SetWidgetBorder(		iii,	false);
+		SetWidgetText(			iii,	"units");
+		xLoc	+=	myBtnWidth;
+		xLoc	+=	2;
 		iii++;
 
 
@@ -188,20 +232,23 @@ int			yLoc_2ndColumn;
 	}
 	SetWidgetText(		kTeleSettings_RateRA_Lbl,			"RA");
 	SetWidgetText(		kTeleSettings_RateDec_Lbl,			"Dec");
+	SetWidgetText(		kTeleSettings_RateRA_Units,			"secs/sidereal sec");
+	SetWidgetText(		kTeleSettings_RateDec_Units,		"arcsecs/sec");
 
 	SetWidgetText(		kTeleSettings_GuideRateRA_Lbl,		"Guide-RA");
 	SetWidgetText(		kTeleSettings_GuideRateDec_Lbl,		"Guide-Dec");
-
-	SetWidgetText(		kTeleSettings_RateRA_Units,			"arcsecs/sec");
-	SetWidgetText(		kTeleSettings_RateDec_Units,		"arcsecs/sec");
 	SetWidgetText(		kTeleSettings_GuideRateRA_Units,	"degrees/sec");
 	SetWidgetText(		kTeleSettings_GuideRateDec_Units,	"degrees/sec");
+
+	SetWidgetHelpText(kTeleSettings_RateRA_Lbl,			"RA rate OFFSET (seconds of RA per sidereal second.)");
+	SetWidgetHelpText(kTeleSettings_RateDec_Lbl,		"DEC rate OFFSET (seconds of DEC per atomic second.)");
+
+	SetWidgetHelpText(kTeleSettings_GuideRateRA_Lbl,	"RA rate used in pulse guiding");
+	SetWidgetHelpText(kTeleSettings_GuideRateDec_Lbl,	"DEC rate used in pulse guiding");
 
 	SetWidgetOutlineBox(kTeleSettings_GuideRate_Outline,
 						kTeleSettings_Rates_Title,
 						(kTeleSettings_GuideRate_Outline - 1));
-
-
 
 	yLocSave	=	yLoc;
 	leftColmX	=	cClm4_offset + 10;
@@ -252,8 +299,10 @@ int			yLoc_2ndColumn;
 	}
 	yLoc			+=	2;
 	yLoc			+=	2;
-	SetWidget(		kTeleSettings_ErrorMsg,	0,		yLoc,		cWidth - 100,		cBtnHeight);
-	SetWidgetFont(	kTeleSettings_ErrorMsg,	kFont_Medium);
+	SetWidget(		kTeleSettings_HelpMsg,	0,		yLoc,		cWidth,		cBtnHeight);
+	SetWidgetType(	kTeleSettings_HelpMsg,	kWidgetType_TextBox);
+	SetWidgetFont(	kTeleSettings_HelpMsg,	kFont_Medium);
+	SetHelpTextBoxNumber(kTeleSettings_HelpMsg);
 
 	//=======================================================
 	//*	set up all the bottom stuff so that it is the same on all windowtabs
@@ -264,6 +313,11 @@ int			yLoc_2ndColumn;
 							kTeleSettings_LastCmdString,
 							kTeleSettings_AlpacaLogo,
 							-1);
+
+	//*	debugging
+//	SetWidgetText(kTeleSettings_HelpMsg,		"kTeleSettings_HelpMsg");
+//	SetWidgetText(kTeleSettings_AlpacaErrorMsg,	"kTeleSettings_AlpacaErrorMsg");
+//	DumpWidgetList(0, kTeleSettings_last, __FILE__);
 
 }
 
@@ -278,7 +332,6 @@ bool	update;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	ClearLastAlpacaCommand();
-	SetWidgetText(kTeleSettings_ErrorMsg,		"");
 	SetWidgetText(kTeleSettings_AlpacaErrorMsg,	"");
 
 	update		=	true;
@@ -301,6 +354,12 @@ bool	update;
 			ForceAlpacaUpdate();
 			break;
 
+		case kTeleSettings_AtHome_Set:
+		case kTeleSettings_AtPark_Set:
+			CONSOLE_DEBUG("Sending setpark command");
+			validData	=	AlpacaSendPutCmd(	"telescope", "setpark",	NULL);
+			break;
+
 		case kTeleSettings_AtPark_Btn:
 			if (cAtPark)
 			{
@@ -319,6 +378,8 @@ bool	update;
 			}
 			ForceAlpacaUpdate();
 			break;
+
+
 
 		case kTeleSettings_Refraction_Btn:
 			sprintf(dataString, "DoesRefraction=%s", cDoesRefraction ? "false" : "true");
@@ -341,6 +402,7 @@ bool	update;
 		DisplayLastAlpacaCommand();
 		ForceWindowUpdate();
 	}
+//	DumpWidgetList(0, kTeleSettings_last, __FILE__);
 }
 
 //*****************************************************************************
@@ -397,17 +459,21 @@ char		notAvailableStr[]	=	"---N/A---";
 	if (telescopeProp->CanFindHome)
 	{
 		SetWidgetValid(kTeleSettings_AtHome_Btn, true);
+		SetWidgetValid(kTeleSettings_AtHome_Set, true);
+
 		SetWidgetText(kTeleSettings_AtHome_Val,			(telescopeProp->AtHome ? "Yes" : "No"));
 	}
 	else
 	{
 		SetWidgetValid(kTeleSettings_AtHome_Btn, false);
+		SetWidgetValid(kTeleSettings_AtHome_Set, false);
 	}
 	//------------------------------------------
 	//*	deal with Park
 	if (telescopeProp->CanPark)
 	{
 		SetWidgetValid(kTeleSettings_AtPark_Btn, true);
+		SetWidgetValid(kTeleSettings_AtPark_Set, true);
 		SetWidgetText(kTeleSettings_AtPark_Val,			(telescopeProp->AtPark ? "Yes" : "No"));
 		//*	save the parked state
 		cAtPark	=	telescopeProp->AtPark;
@@ -423,6 +489,7 @@ char		notAvailableStr[]	=	"---N/A---";
 	else
 	{
 		SetWidgetValid(kTeleSettings_AtPark_Btn, false);
+		SetWidgetValid(kTeleSettings_AtPark_Set, false);
 	}
 
 	cTracking	=	telescopeProp->Tracking;

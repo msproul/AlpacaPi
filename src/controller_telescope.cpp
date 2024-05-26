@@ -374,6 +374,7 @@ void	ControllerTelescope::AlpacaGetCapabilities(void)
 	ReadOneTelescopeCapability("cansync",				"CanSync",				&cTelescopeProp.CanSync);
 	ReadOneTelescopeCapability("cansyncaltaz",			"CanSyncAltAz",			&cTelescopeProp.CanSyncAltAz);
 	ReadOneTelescopeCapability("canunpark",				"CanUnpark",			&cTelescopeProp.CanUnpark);
+	CONSOLE_DEBUG("Sending cmd: doesrefraction");
 	ReadOneTelescopeCapability("doesrefraction",		"DoesRefraction",		&cTelescopeProp.DoesRefraction);
 }
 
@@ -412,8 +413,6 @@ void	ControllerTelescope::AlpacaProcessSupportedActions(	const char	*deviceType,
 //*****************************************************************************
 void	ControllerTelescope::GetStatus_SubClass(void)
 {
-bool	validData;
-bool	previousOnLineState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 

@@ -21,12 +21,12 @@ typedef struct leaf
 } NODE;
 
 
-NODE *new_node(short  value);
-void sort_freq(LONG *freq_list, NODE **node_list, LONG num_freq);
-NODE *huff_tree(LONG  *hist);
-void decmpinit(LONG *hist);
-void dcmprs(char *ibuf, char *obuf, LONG *nin, LONG *nout, NODE *root);
-void decompress(char *ibuf, char *obuf, LONG  *nin, LONG  *nout);
+NODE	*new_node(short value);
+void	sort_freq(LONG *freq_list, NODE **node_list, LONG num_freq);
+NODE	*huff_tree(LONG  *hist);
+void	decmpinit(LONG *hist);
+void	dcmprs(char *ibuf, char *obuf, LONG *nin, LONG *nout, NODE *root);
+void	decompress(char *ibuf, char *obuf, LONG  *nin, LONG  *nout);
 
 
 void	DecompressFreeMemory(void);

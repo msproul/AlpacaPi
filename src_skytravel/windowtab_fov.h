@@ -34,6 +34,7 @@ enum
 	kFOVbox_ClmTitle7,
 	kFOVbox_ClmTitle8,
 	kFOVbox_ClmTitle9,
+	kFOVbox_ClmTitle10,
 
 
 	kFOVbox_CamChkBox1,
@@ -132,6 +133,9 @@ class WindowTabFOV: public WindowTab
 											const int	xxx,
 											const int	yyy,
 											const int	flags);
+		virtual void	ProcessMouseEvent(const int widgetIdx, const int event, const int xxx, const int yyy, const int flags);
+		virtual	void	ProcessLineSelect(int widgetIdx);
+				void	SetNewSelectedDevice(int deviceIndex);
 		virtual	void	UpdateOnScreenWidgetList(void);
 
 				void	ClearRemoteDeviceList(void);

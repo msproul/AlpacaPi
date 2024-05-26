@@ -241,7 +241,7 @@ uint32_t			deltaTime_ms;
 	deltaTime_ms	=	currentTime_ms - cLastThreadUpdate_ms;
 	if ((deltaTime_ms > 2000) || cForceUpdate)
 	{
-		CONSOLE_DEBUG_W_BOOL("Updating.......... cForceUpdate\t=", cForceUpdate);
+//		CONSOLE_DEBUG_W_BOOL("Updating.......... cForceUpdate\t=", cForceUpdate);
 		Alnitak_Cover_GetStatus(alpacaErrMsg);
 		Alnitak_GetBrightness(alpacaErrMsg);
 		cLastThreadUpdate_ms	=	millis();

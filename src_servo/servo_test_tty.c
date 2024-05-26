@@ -24,7 +24,7 @@
 //*	May 15,	2022	<RNS> Initial port of Goddard test program for servo mount system
 //*	May 19,	2022	<RNS> Change all refs of 'scope' to 'mount', including filenames
 //*	May 20,	2022	<RNS> Removed globals that should be limited only to servo_mount.c
-//*	May 20,	2022	<RNS> Added park state support 
+//*	May 20,	2022	<RNS> Added park state support
 //*****************************************************************************
 // Notes:   M1 *MUST BE* connected to RA or Azimuth axis, M2 to Dec or Altitude
 //*****************************************************************************
@@ -73,11 +73,11 @@ int main(void)
 	double tempDec;
 	char inStr[256];
 	char inChar;
-	char *strPtr; 
+	char *strPtr;
 	int done;
 	int standbyMode;
-	int status; 
-	TYPE_MOVE state; 
+	int status;
+	TYPE_MOVE state;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -117,13 +117,13 @@ int main(void)
 	while (!done)
 	{
 		Servo_get_pos(&ra, &dec);
-		state = Servo_state(); 
+		state = Servo_state();
 		printf("\n");
 		printf("=======================================================\n");
 		printf("Current RA = %lf   Dec = %lf", ra, dec);
 		printf("Park = %s   ", strPtr = Servo_get_park_state() ? "true" : "false");
 
-		state = Servo_state(); 
+		state = Servo_state();
 
 		switch (state)
 		{
@@ -141,7 +141,7 @@ int main(void)
 				break;
 			case TRACKING:
 				printf("  Mount is TRACKING\n");
-				break; 
+				break;
 		}
 		// Display the current LST
 		jd = Time_systime_to_jd();
@@ -159,14 +159,14 @@ int main(void)
 		printf("  Go to standby mode\n");
 //		printf("  Sync the mount to sensor positions\n");
 		printf("  Joystick slew\n");
-		printf("  LST\n"); 
+		printf("  LST\n");
 		printf("  Quit and park the mount\n");
 		printf("\n");
 		printf("Enter a command -> ");
 		fgets(inStr, 256, stdin);
 		printf("\n");
 
-		// Grab the first char in the str 
+		// Grab the first char in the str
 		inChar = inStr[0];
 
 		switch (inChar)
@@ -368,9 +368,9 @@ int main(void)
 	while (Servo_state() != STOPPED)
 	{
 		// Sleep for one sec
-		sleep(1); 
+		sleep(1);
 	}
-	Servo_stop_all(); 
+	Servo_stop_all();
 	return (0);
 
 } // of main

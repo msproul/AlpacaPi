@@ -29,6 +29,7 @@
 //*	Jun 10,	2023	<MLS> Added USB_GetPathFromID()
 //*	Jun 14,	2023	<MLS> Added event logging if errors with usbquerry.sh
 //*	Sep 20,	2023	<MLS> Added USB_DumpTable()
+//*	May  9,	2024	<MLS> Added auto init to USB_GetPathFromID()
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -66,9 +67,7 @@ static void	RunUSBprofile(void);
 //*****************************************************************************
 int	USB_InitTable(void)
 {
-//int		iii;
-
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (gUSBcount <= 0)
 	{
@@ -196,6 +195,13 @@ bool	USB_GetPathFromID(const char *idString, char *usbPath)
 int		iii;
 bool	foundIt;
 
+	//*	auto init
+	if (gUSBcount <= 0)
+	{
+		USB_InitTable();
+	}
+
+
 	foundIt	=	false;
 	iii		=	0;
 	while ((foundIt == false) && (iii < gUSBcount))
@@ -265,7 +271,7 @@ char		usbIDfileName[]	=	"usb_id.txt";
 		returnCode	=	stat(usbIDfileName, &fileStatus);		//*	fstat - check for existence of file
 		if (returnCode == 0)
 		{
-			CONSOLE_DEBUG_W_NUM("fileStatus.st_size\t=", fileStatus.st_size);
+			CONSOLE_DEBUG_W_SIZE("fileStatus.st_size\t=", fileStatus.st_size);
 			if (fileStatus.st_size > 10)
 			{
 				//------------------------------------------------

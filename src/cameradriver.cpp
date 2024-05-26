@@ -1,7 +1,7 @@
 //*****************************************************************************
 //*	Name:			cameradriver.cpp
 //*
-//*	Author:			Mark Sproul (C) 2019, 2020
+//*	Author:			Mark Sproul (C) 2019-2024
 //*
 //*	Description:	C++ Driver for Alpaca protocol
 //*
@@ -208,6 +208,7 @@
 //*	Sep  9,	2023	<MLS> Added _USE_CAMERA_READ_THREAD_
 //*	Mar 25,	2024	<MLS> Read NASA Moon Phase on creation of camera objects
 //*	Apr 19,	2024	<MLS> Added check for flip enabled to Put_Flip()
+//*	May 17,	2024	<MLS> Started adding http error 400 to camera methods
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -437,7 +438,7 @@ int	mkdirErrCode;
 
 	//======================================================
 	//*	Start with the ASCOM properties
-	strcpy(cCommonProp.Name,		"CameraDriver");
+	strcpy(cCommonProp.Name,		"CameraDriver");		//*	set DeviceName
 	strcpy(cCommonProp.Description,	"Camera");
 	cCommonProp.InterfaceVersion	=	3;
 
@@ -828,7 +829,7 @@ char				httpHeader[500];
 
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	cResponseIsJSON	=	true;
+	cSendJSONresponse	=	true;
 
 	if (cVerboseDebug)
 	{
@@ -1093,7 +1094,7 @@ char				httpHeader[500];
 		case kCmd_Camera_imagearrayvariant:		//*	Returns an array of int containing the exposure pixel values
 			if (reqData->get_putIndicator == 'G')
 			{
-//				JsonResponse_FinishHeader(httpHeader, "");
+//				JsonResponse_FinishHeader(200, httpHeader, "");
 //				JsonResponse_SendTextBuffer(mySocket, httpHeader);
 				cHttpHeaderSent	=	true;
 				alpacaErrCode	=	Get_Imagearray(reqData, alpacaErrMsg);
@@ -1496,7 +1497,7 @@ char				httpHeader[500];
 			break;
 
 		case kCmd_Camera_filelist:
-			JsonResponse_FinishHeader(httpHeader, "");
+			JsonResponse_FinishHeader(200, httpHeader, "");
 			JsonResponse_SendTextBuffer(mySocket, httpHeader);
 			cHttpHeaderSent	=	true;
 			alpacaErrCode	=	Get_Filelist(reqData, alpacaErrMsg);
@@ -1562,7 +1563,7 @@ char				httpHeader[500];
 		case kCmd_Camera_rgbarray:
 			if (reqData->get_putIndicator == 'G')
 			{
-				JsonResponse_FinishHeader(httpHeader, "");
+				JsonResponse_FinishHeader(200, httpHeader, "");
 				JsonResponse_SendTextBuffer(mySocket, httpHeader);
 //				CONSOLE_DEBUG_W_STR("httpHeader\t=", httpHeader);
 				cHttpHeaderSent	=	true;
@@ -1591,17 +1592,17 @@ char				httpHeader[500];
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
 	//*	the ONLY way this will be false is if we sent the imageBytes binary response for the imageArray command
-	if (cResponseIsJSON)
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
 	{
 		//*	send the response information
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(		mySocket,
 											reqData->jsonTextBuffer,
 											kMaxJsonBuffLen,
 											"ClientTransactionID",
-											gClientTransactionID,
+											reqData->ClientTransactionID,
 											INCLUDE_COMMA);
 
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(		mySocket,
 											reqData->jsonTextBuffer,
 											kMaxJsonBuffLen,
 											"ServerTransactionID",
@@ -1624,6 +1625,7 @@ char				httpHeader[500];
 
 		//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+																reqData->httpRetCode,
 																reqData->jsonTextBuffer,
 																(cHttpHeaderSent == false));
 	}
@@ -1877,34 +1879,45 @@ int					newBinValue;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-//			CONSOLE_DEBUG_W_STR("argumentString\t=", argumentString);
-			newBinValue	=	atoi(argumentString);
-			if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinX))
+			if (IsValidNumericString(argumentString))
 			{
-			//	alpacaErrCode		=	kASCOM_Err_Success;
-				alpacaErrCode		=	Write_BinX(newBinValue);
-				if (alpacaErrCode == kASCOM_Err_Success)
+				newBinValue	=	atoi(argumentString);
+				if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinX))
 				{
-					cCameraProp.BinX	=	newBinValue;
+				//	alpacaErrCode		=	kASCOM_Err_Success;
+					alpacaErrCode		=	Write_BinX(newBinValue);
+					if (alpacaErrCode == kASCOM_Err_Success)
+					{
+						cCameraProp.BinX	=	newBinValue;
+					}
+					else
+					{
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+						CONSOLE_DEBUG_W_STR("cLastCameraErrMsg\t=", cLastCameraErrMsg);
+						CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
+					}
 				}
 				else
 				{
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
-					CONSOLE_DEBUG_W_STR("cLastCameraErrMsg\t=", cLastCameraErrMsg);
-					CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinX out of range");
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
 			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinX is non-numeric");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'BinX' not found");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
@@ -1931,30 +1944,41 @@ int					newBinValue;
 												(sizeof(argumentString) -1));
 		if (foundKeyWord)
 		{
-			newBinValue	=	atoi(argumentString);
-			if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinY))
+			if (IsValidNumericString(argumentString))
 			{
-			//	alpacaErrCode		=	kASCOM_Err_Success;
-				alpacaErrCode		=	Write_BinY(newBinValue);
-				if (alpacaErrCode == kASCOM_Err_Success)
+				newBinValue	=	atoi(argumentString);
+				if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinY))
 				{
-					cCameraProp.BinY	=	newBinValue;
+				//	alpacaErrCode		=	kASCOM_Err_Success;
+					alpacaErrCode		=	Write_BinY(newBinValue);
+					if (alpacaErrCode == kASCOM_Err_Success)
+					{
+						cCameraProp.BinY	=	newBinValue;
+					}
+					else
+					{
+						strcpy(alpacaErrMsg, cLastCameraErrMsg);
+					}
 				}
 				else
 				{
-					strcpy(alpacaErrMsg, cLastCameraErrMsg);
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinY out of range");
 				}
 			}
 			else
 			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinY is non-numeric");
 			}
-		}
+	}
 		else
 		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'BinY' not found");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		}
 	}
 	else
@@ -2461,26 +2485,38 @@ char				gainString[32];
 												(sizeof(gainString) -1));
 		if (gainFound)
 		{
-			newGainValue	=	atoi(gainString);
-			if ((newGainValue >= cCameraProp.GainMin) && (newGainValue <= cCameraProp.GainMax))
+			if (IsValidNumericString(gainString))
 			{
-				alpacaErrCode	=	Write_Gain(newGainValue);
-				if (alpacaErrCode == kASCOM_Err_Success)
+				newGainValue	=	atoi(gainString);
+				if ((newGainValue >= cCameraProp.GainMin) && (newGainValue <= cCameraProp.GainMax))
 				{
-					cCameraProp.Gain	=	newGainValue;
+					alpacaErrCode	=	Write_Gain(newGainValue);
+					if (alpacaErrCode == kASCOM_Err_Success)
+					{
+						cCameraProp.Gain	=	newGainValue;
+					}
+				}
+				else
+				{
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain value outside of min/max");
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
 			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain value outside of min/max");
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain value is non-numeric");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
@@ -2688,17 +2724,16 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
-char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"NumX",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"NumX",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		if (IsValidNumericString(argumentString))
 		{
 			newValue	=	atoi(argumentString);
 			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
@@ -2710,20 +2745,25 @@ char				errorString[64];
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				sprintf(errorString, "Value out of range: NumX=%d", newValue);
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "NumX out of range");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "NumX is non-numeric");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "NumX argument not found");
 	}
 	return(alpacaErrCode);
 }
@@ -2735,21 +2775,20 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
-char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"NumY",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"NumY",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		if (IsValidNumericString(argumentString))
 		{
 			newValue	=	atoi(argumentString);
 			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
-//			if ((newValue >= 1) && (newValue <= cCameraYsize))
+	//		if ((newValue >= 1) && (newValue <= cCameraYsize))
 			if (1)
 			{
 				cCameraProp.NumY	=	newValue;
@@ -2757,20 +2796,25 @@ char				errorString[64];
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				sprintf(errorString, "Value out of range: NumY=%d", newValue);
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "NumY is out of range");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "NumY is non-numeric");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "NumY argument not found");
 	}
 	return(alpacaErrCode);
 }
@@ -2812,61 +2856,65 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
+bool				validData;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"offset",
+											argumentString,
+											(sizeof(argumentString) -1));
+	validData	=	false;
+	if (foundKeyWord)
+	{
+		if (IsValidNumericString(argumentString))
+		{
+			newValue	=	atoi(argumentString);
+			validData	=	true;
+		}
+		else
+		{
+			//*	the keyword "offset" is missing
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "offset is non-numeric");
+			CONSOLE_DEBUG(alpacaErrMsg);
+		}
+	}
+	else
+	{
+		//*	the keyword "offset" is missing
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'offset' not found");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+
 	if (cOffsetSupported)
 	{
-		if (reqData != NULL)
+		if (validData)
 		{
-			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-													"offset",
-													argumentString,
-													(sizeof(argumentString) -1));
-			if (foundKeyWord)
+			if ((newValue >= cCameraProp.OffsetMin) && (newValue <= cCameraProp.OffsetMax))
 			{
-				newValue		=	atoi(argumentString);
-				if ((newValue >= cCameraProp.OffsetMin) && (newValue <= cCameraProp.OffsetMax))
+				//*	we have a valid offset
+				alpacaErrCode	=	Write_Offset(newValue);
+				if (alpacaErrCode == kASCOM_Err_Success)
 				{
-					//*	we have a valid offset
-					alpacaErrCode	=	Write_Offset(newValue);
-					if (alpacaErrCode == kASCOM_Err_Success)
-					{
-						//*	save the new value
-						cCameraProp.Offset	=	newValue;
-					}
-					else
-					{
-						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
-						CONSOLE_DEBUG(alpacaErrMsg);
-					}
-
-				//*	debugging
-				//	if (1)
-				//	{
-				//	int	newOffsetValue;
-				//		alpacaErrCode	=	Read_Offset(&newOffsetValue);
-				//		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
-				//		CONSOLE_DEBUG_W_NUM("newOffsetValue\t=",	newOffsetValue);
-				//	}
+					//*	save the new value
+					cCameraProp.Offset	=	newValue;
 				}
 				else
 				{
-					alpacaErrCode	=	kASCOM_Err_InvalidValue;
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset value out of range");
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
 					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
 			{
-				//*	the keyword "offset" is missing
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'offset' not found");
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset value out of range");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
 		}
 	}
 	else
@@ -2885,20 +2933,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cOffsetSupported)
 	{
-		if (reqData != NULL)
-		{
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											responseString,		//gValueString,
-											cCameraProp.OffsetMax,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
-		}
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.OffsetMax,
+										INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
@@ -2917,20 +2958,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (cOffsetSupported)
 	{
-		if (reqData != NULL)
-		{
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											responseString,		//gValueString,
-											cCameraProp.OffsetMin,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
-		}
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.OffsetMin,
+										INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
@@ -3009,20 +3043,20 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
-char				errorString[64];
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"StartX",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"StartX",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		if (IsValidNumericString(argumentString))
 		{
 			newValue	=	atoi(argumentString);
 			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
-//			if ((newValue >= 0) && (newValue < cCameraProp.CameraXsize))
+	//		if ((newValue >= 0) && (newValue < cCameraProp.CameraXsize))
 			if (1)
 			{
 				cCameraProp.StartX	=	newValue;
@@ -3030,22 +3064,26 @@ char				errorString[64];
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				sprintf(errorString, "Value out of range: StartX=%d", newValue);
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "StartX value is out of range");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'StartX' not found");
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "StartX value is non-numeric");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'StartX' not found");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -3061,40 +3099,34 @@ char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"StartY",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"StartY",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
-		{
-			newValue	=	atoi(argumentString);
-			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
+		newValue	=	atoi(argumentString);
+		//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
 //			if ((newValue >= 0) && (newValue < cCameraYsize))
-			if (1)
-			{
-				cCameraProp.StartY	=	newValue;
-				alpacaErrCode		=	kASCOM_Err_Success;
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				sprintf(errorString, "Value out of range: StartY=%d", newValue);
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
+		if (1)
+		{
+			cCameraProp.StartY	=	newValue;
+			alpacaErrCode		=	kASCOM_Err_Success;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'StartY' not found");
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			sprintf(errorString, "Value out of range: StartY=%d", newValue);
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'StartY' not found");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -3169,20 +3201,13 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_PixelSizeX(TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString,
-										cCameraProp.PixelSizeX,
-										INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString,
+									cCameraProp.PixelSizeX,
+									INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -3192,20 +3217,13 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_PixelSizeY(TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCameraProp.PixelSizeY,
-								INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cCameraProp.PixelSizeY,
+							INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -3218,37 +3236,52 @@ bool				directionFound;
 bool				durationFound;
 char				directionString[32];
 char				durationString[32];
+bool				validData;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	//*	"Direction=1&Duration=2&ClientID=34&ClientTransactionID=56"
+	directionFound	=	GetKeyWordArgument(	reqData->contentData,
+											"Direction",
+											directionString,
+											(sizeof(directionString) -1));
+
+	durationFound	=	GetKeyWordArgument(	reqData->contentData,
+											"Duration",
+											durationString,
+											(sizeof(durationString) -1),
+											kArgumentIsNumeric);
+
+	validData	=	false;
+	if (directionFound && durationFound)
+	{
+		if (IsValidNumericString(directionString) && IsValidNumericString(durationString))
+		{
+			validData	=	true;
+		}
+		else
+		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument non-numeric");
+			CONSOLE_DEBUG(alpacaErrMsg);
+		}
+	}
+	else
+	{
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keywords missing");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
 	if (cCameraProp.CanPulseGuide)
 	{
-		if (reqData != NULL)
+		if (validData)
 		{
 			if (cSt4Port)
 			{
-				//*	"Direction=1&Duration=2&ClientID=34&ClientTransactionID=56"
-				directionFound	=	GetKeyWordArgument(	reqData->contentData,
-														"Direction",
-														directionString,
-														(sizeof(directionString) -1));
-
-				durationFound	=	GetKeyWordArgument(	reqData->contentData,
-														"Duration",
-														durationString,
-														(sizeof(durationString) -1),
-														kArgumentIsNumeric);
-				if (directionFound && durationFound)
-				{
-					alpacaErrCode				=	kASCOM_Err_Success;
-					cCameraProp.IsPulseGuiding	=	true;
-					gettimeofday(&cPulseGuideStartTime, NULL);
-				}
-				else
-				{
-					alpacaErrCode	=	kASCOM_Err_InvalidValue;
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keywords missing");
-					CONSOLE_DEBUG(alpacaErrMsg);
-				}
+				alpacaErrCode				=	kASCOM_Err_Success;
+				cCameraProp.IsPulseGuiding	=	true;
+				gettimeofday(&cPulseGuideStartTime, NULL);
 			}
 			else
 			{
@@ -3259,7 +3292,9 @@ char				durationString[32];
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
+			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Arguments not valid");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -3447,7 +3482,8 @@ TYPE_IMAGE_TYPE		newImageType;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
@@ -3467,7 +3503,8 @@ TYPE_IMAGE_TYPE		newImageType;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Mode not specified");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
@@ -3577,17 +3614,16 @@ double				newSetCCDvalue;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-
-				CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CCD Setpoint Temperature out of bounds");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "New temperature not specified");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
@@ -3762,7 +3798,8 @@ bool				lightFrame;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid exposure time");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
@@ -4422,10 +4459,11 @@ char				lineBuff[128];
 size_t				httpHeaderSize;
 int					returnedDataLen;
 //char				dataTypeString[32];
+bool				xmit16BitAs32Bit	=	false;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	cResponseIsJSON	=	false;
+	cSendJSONresponse	=	false;
 
 	memset((void *)&binaryImageHdr, 0, sizeof(TYPE_BinaryImageHdr));
 
@@ -4448,7 +4486,6 @@ int					returnedDataLen;
 	totalPixels		=	cLastExposure_ROIinfo.currentROIwidth * cLastExposure_ROIinfo.currentROIheight;
 	bytesPerPixel	=	6;
 
-bool	xmit16BitAs32Bit	=	false;
 	switch(cLastExposure_ROIinfo.currentROIimageType)
 	{
 		case kImageType_RAW8:
@@ -4714,7 +4751,7 @@ char				httpHeader[500];
 
 	mySocket	=	reqData->socket;
 
-	JsonResponse_FinishHeader(httpHeader, "");
+	JsonResponse_FinishHeader(200, httpHeader, "");
 	JsonResponse_SendTextBuffer(mySocket, httpHeader);
 
 	gImageDownloadInProgress	=	true;
@@ -7474,7 +7511,7 @@ int	CameraDriver::RunStateMachine_TakingPicture(void)
 int					exposureState;
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	exposureState	=	Check_Exposure(true);
 	if (cVerboseDebug)
@@ -7536,13 +7573,15 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 					}
 					cFrameRate	=	(cFramesRead * 1.0) / secondsOfExposure;
 				}
-			#ifdef _USE_OPENCV_
+		#ifdef _USE_OPENCV_
 				CreateOpenCVImage(cCameraDataBuffer);
+			#ifdef _IMAGE_OVERLAY_
 				if (cOverlayMode)
 				{
 					DrawOverlayOntoImage();
 				}
 			#endif
+		#endif
 
 				if (cSaveNextImage || cSaveAllImages)
 				{

@@ -72,16 +72,16 @@ char		theChar;
 char		nmeaLineBuff[256];
 struct stat	fileStatus;
 int			returnCode;
-uint32_t	lastGrapicsSave_ms;
-uint32_t	current_ms;
-uint32_t	delta_ms;
+//uint32_t	lastGrapicsSave_ms;
+//uint32_t	current_ms;
+//uint32_t	delta_ms;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gSerialPortPath);
 	CONSOLE_DEBUG(__FUNCTION__);
 
 	ParseNMEA_init(&gNMEAdata);
-	lastGrapicsSave_ms	=	0;
+//	lastGrapicsSave_ms	=	0;
 	//---------------------------------------------------
 	//*	check to make sure the devices is present
 	returnCode	=	stat(gSerialPortPath, &fileStatus);		//*	fstat - check for existence of file
@@ -165,6 +165,7 @@ uint32_t	delta_ms;
 				}
 			}
 		}
+//*	this was moved to alpacadriver_gps.cpp so that the images are only created when needed
 //	#ifdef _ENABLE_GPS_GRAPHS_
 //		current_ms	=	millis();
 //		delta_ms	=	current_ms - lastGrapicsSave_ms;
@@ -245,7 +246,8 @@ void	CreateGPSgraphics(void)
 #endif
 
 #ifdef _ENABLE_LAT_LON_TRACKING_
-	CreateLatLonHistoryPlot(NULL, kGPSimageDirectory,		"latlonGraph.jpg");
+	CreateLatLonHistoryPlot(	NULL, kGPSimageDirectory,		"latlonGraph.jpg");
+	CreateLatDetailHistoryPlot(	NULL, kGPSimageDirectory,		"latitudeDetail.jpg");
 #endif
 
 #ifdef _ENABLE_ALTITUDE_TRACKING_

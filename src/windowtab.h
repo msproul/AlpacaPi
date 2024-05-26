@@ -199,6 +199,7 @@ class WindowTab
 			#else
 				void	SetWidgetImage(			const int widgetIdx, IplImage *argImagePtr);
 			#endif // _USE_OPENCV_CPP_
+				void	ClearWidgetImage(const int widgetIdx);
 
 				void	SetWidgetOutlineBox(	const int widgetIdx, const int firstItem, const int lastItem);
 				void	SetWidgetProgress(		const int widgetIdx, const int currPosition, const int totalValue);

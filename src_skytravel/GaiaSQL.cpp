@@ -395,7 +395,10 @@ char	sqlErrorString[256];
 												NULL,
 												0);
 		DEBUG_TIMING("Time for mysql_real_connect() to complete: (millissecs)");
-
+		if (retrunedSQLConn == NULL)
+		{
+			CONSOLE_DEBUG("mysql_real_connect retrned NULL");
+		}
 		//----------------------------------------------------------
 		//*	Debugging only
 		CONSOLE_DEBUG_W_HEX("mySQLConnection\t", mySQLConnection);
@@ -1484,12 +1487,7 @@ bool			successFlag;
 static void	*GaiaSQL_Thead(void *arg)
 {
 int				iii;
-TYPE_CelestData	*gaiaData;
-long			gaiaDataCount;
-unsigned int	startMilliSecs;
-unsigned int	endMilliSecs;
 bool			requestCount;
-bool			successFlag;
 
 	gSQL_ThreadIsRunning	=	true;
 	while (gSQL_KeepRunning)

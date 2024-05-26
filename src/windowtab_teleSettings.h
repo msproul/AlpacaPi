@@ -29,27 +29,33 @@ enum
 	kTeleSettings_AtHome_Lbl,
 	kTeleSettings_AtHome_Val,
 	kTeleSettings_AtHome_Btn,
+	kTeleSettings_AtHome_Set,
 
 	kTeleSettings_AtPark_Lbl,
 	kTeleSettings_AtPark_Val,
 	kTeleSettings_AtPark_Btn,
+	kTeleSettings_AtPark_Set,
 
 //	kTeleSettings_IsPulseGuiding_Lbl,
 //	kTeleSettings_IsPulseGuiding_Val,
 //	kTeleSettings_IsPulseGuiding_Btn,
+//	kTeleSettings_IsPulseGuiding_Set,
 
 	kTeleSettings_Refraction_Lbl,
 	kTeleSettings_Refraction_Val,
 	kTeleSettings_Refraction_Btn,
+	kTeleSettings_Refraction_Set,
 
 
 	kTeleSettings_HomePark_Outline,
 
 	//---------------------------------
 	kTeleSettings_Rates_Title,
+
 	kTeleSettings_RateRA_Lbl,
 	kTeleSettings_RateRA_Val,
 	kTeleSettings_RateRA_Units,
+
 	kTeleSettings_RateDec_Lbl,
 	kTeleSettings_RateDec_Val,
 	kTeleSettings_RateDec_Units,
@@ -58,6 +64,7 @@ enum
 	kTeleSettings_GuideRateRA_Lbl,
 	kTeleSettings_GuideRateRA_Val,
 	kTeleSettings_GuideRateRA_Units,
+
 	kTeleSettings_GuideRateDec_Lbl,
 	kTeleSettings_GuideRateDec_Val,
 	kTeleSettings_GuideRateDec_Units,
@@ -74,7 +81,7 @@ enum
 	kTeleSettings_ObsSettingsText,
 
 
-	kTeleSettings_ErrorMsg,
+	kTeleSettings_HelpMsg,
 	kTeleSettings_LastCmdString,
 	kTeleSettings_AlpacaLogo,
 

@@ -274,11 +274,11 @@ void	DumpGPSdata(TYPE_NMEAInfoStruct	*theNmeaInfo)
 ////**************************************************************************************
 //static void	DumpNMEAargs(TYPE_NMEAargs *nmeaArgs)
 //{
-//int	ii;
+//int	iii;
 //
-//	for (ii=0; ii<kMaxNumNmeaArgs; ii++)
+//	for (iii=0; iii<kMaxNumNmeaArgs; iii++)
 //	{
-//		printf("arg[%2d]         = %s\n",		ii, nmeaArgs[ii].argString);
+//		printf("arg[%2d]         = %s\n",		iii, nmeaArgs[iii].argString);
 //	}
 //}
 
@@ -318,34 +318,37 @@ int	GetMaxSatSignalStrength(void)
 //**************************************************************************************
 //*	returns number of args
 //**************************************************************************************
-static short	SeparateNMEAline(char *theLine, TYPE_NMEAargs	*nmeaArgs)
+static int	SeparateNMEAline(char *theLine, TYPE_NMEAargs	*nmeaArgs)
 {
-short			ii,jj,kk,theLen;
+int		iii;
+int		jjj;
+int		kk;
+int		theLen;
 
 	//*	clear out all of the old values
-	for (ii=0; ii<kMaxNumNmeaArgs; ii++)
+	for (iii=0; iii<kMaxNumNmeaArgs; iii++)
 	{
-		memset(nmeaArgs[ii].argString, 0, kNMEAargLen);
+		memset(nmeaArgs[iii].argString, 0, kNMEAargLen);
 	}
 
-	ii	=	0;
-	jj	=	0;
+	iii	=	0;
+	jjj	=	0;
 	theLen	=	strlen(theLine);
-	while ((ii < theLen) && (jj<kMaxNumNmeaArgs))
+	while ((iii < theLen) && (jjj<kMaxNumNmeaArgs))
 	{
 		kk	=	0;
-		while  ((theLine[ii] != ',') &&
-				(theLine[ii] != '*') &&
-				(theLine[ii] != 0x0d) &&
-				(theLine[ii] != 0x0a) &&
-				(theLine[ii] != 0x00) && (kk < kNMEAargLen))
+		while  ((theLine[iii] != ',') &&
+				(theLine[iii] != '*') &&
+				(theLine[iii] != 0x0d) &&
+				(theLine[iii] != 0x0a) &&
+				(theLine[iii] != 0x00) && (kk < kNMEAargLen))
 		{
-			nmeaArgs[jj].argString[kk++]	=	theLine[ii++];
+			nmeaArgs[jjj].argString[kk++]	=	theLine[iii++];
 		}
-		ii++;	//	Skip delimiter
-		jj++;	//	Next argument
+		iii++;	//	Skip delimiter
+		jjj++;	//	Next argument
 	}
-	return(jj);
+	return(jjj);
 }
 
 //**************************************************************************************
@@ -526,7 +529,7 @@ bool			localValidFlag;
 }
 
 #define	kKMeterToMiles	(0.62137119223733)
-#define	kKnotsToMiles	(1.1507771827)		/*	6080 ft in Knot	*/
+#define	kKnotsToMiles	(1.1507771827)		//*	6080 ft in Knot
 #define	kMetersToFeet	(3.2808398950131)
 
 //**************************************************************************************
@@ -687,8 +690,7 @@ int	jj;
 //**************************************************************************************
 static void	SaveSatelliteTrails(unsigned long gpsTime, TYPE_SatStatsStruct *theSatData)
 {
-int	ii;
-int	jj;
+int	jjj;
 int	satTrailsIndex;
 
 	if (gSatTrailsNeedsInit)
@@ -701,26 +703,27 @@ int	satTrailsIndex;
 	gSatTrailsLastIdx	=	satTrailsIndex;
 
 	//*	now save the current values into the current time slot
-	for (jj=0; jj< kMaxNumOfSatallites; jj++)
+	for (jjj=0; jjj< kMaxNumOfSatallites; jjj++)
 	{
-		gSatTrails[jj].satellitePRN					=	theSatData[jj].satellitePRN;
-		gSatTrails[jj].elvevation[satTrailsIndex]	=	theSatData[jj].elvevation;
-		gSatTrails[jj].azimuth[satTrailsIndex]		=	theSatData[jj].azimuth;
-		gSatTrails[jj].signal2Noise[satTrailsIndex]	=	theSatData[jj].signal2Noise;
+		gSatTrails[jjj].satellitePRN					=	theSatData[jjj].satellitePRN;
+		gSatTrails[jjj].elvevation[satTrailsIndex]		=	theSatData[jjj].elvevation;
+		gSatTrails[jjj].azimuth[satTrailsIndex]			=	theSatData[jjj].azimuth;
+		gSatTrails[jjj].signal2Noise[satTrailsIndex]	=	theSatData[jjj].signal2Noise;
 	}
 #if 0
+int	iii;
 	//*	now lets set the next 10 values to 0
 	satTrailsIndex++;
-	ii	=	0;
-	while ((satTrailsIndex < kSatTrails_ArraySize) && (ii < 50))
+	iii	=	0;
+	while ((satTrailsIndex < kSatTrails_ArraySize) && (iii < 50))
 	{
-		for (jj=0; jj< kMaxNumOfSatallites; jj++)
+		for (jjj=0; jjj< kMaxNumOfSatallites; jjj++)
 		{
-			gSatTrails[jj].elvevation[satTrailsIndex]	=	0;
-		//	gSatTrails[jj].azimuth[satTrailsIndex]		=	0;
-		//	gSatTrails[jj].signal2Noise[satTrailsIndex]	=	0;
+			gSatTrails[jjj].elvevation[satTrailsIndex]	=	0;
+		//	gSatTrails[jjj].azimuth[satTrailsIndex]		=	0;
+		//	gSatTrails[jjj].signal2Noise[satTrailsIndex]	=	0;
 		}
-		ii++;
+		iii++;
 		satTrailsIndex++;
 	}
 #endif
@@ -2074,7 +2077,7 @@ char			newDateTimeString[64];
 			gps_tv.tv_sec	=	gpsSecsValue;
 			gps_tv.tv_usec	=	0;
 			tz.tz_dsttime	=	1;
-	      	timeRetVal		=	settimeofday(&gps_tv, &tz);
+			timeRetVal		=	settimeofday(&gps_tv, &tz);
 			if (timeRetVal == 0)
 			{
 				sprintf(newDateTimeString, "%02d/%02d/%04d %02d:%02d:%02d",
@@ -2142,11 +2145,10 @@ short			validTime;
 short			calculatedChecksum;
 short			nmeaChecksum;
 int				lineLen;
-int				ii;
+int				iii;
 char			theDateString[16];
 char			theTimeString[16];
 bool			allDigitsFlag;
-bool			timeStringValid;
 //TYPE_timeHHMMSS	timeHHMMSS;
 int				commaCntr;
 int				slen;
@@ -2172,21 +2174,21 @@ int				slen;
 					slen	=	strlen(theNMEAstring);
 					//*	go through and find the commas
 					commaCntr	=	0;
-					for (ii=0; ii<slen; ii++)
+					for (iii=0; iii<slen; iii++)
 					{
 						//	$GPRMC,105211,A,4056.1873,N,07434.4805,W,0.015,324.3,120517,14.2,W*42
-						if (theNMEAstring[ii] == ',')
+						if (theNMEAstring[iii] == ',')
 						{
 							commaCntr++;
 							switch(commaCntr)
 							{
 								case 1:	//*	arg 1 is the time
-									strncpy(theTimeString, &theNMEAstring[ii + 1], 6);
+									strncpy(theTimeString, &theNMEAstring[iii + 1], 6);
 									theTimeString[6]	=	0;
 									break;
 
 								case 9:	//*	arg 9 is the date
-									strncpy(theDateString, &theNMEAstring[ii + 1], 6);
+									strncpy(theDateString, &theNMEAstring[iii + 1], 6);
 									theDateString[6]	=	0;
 									break;
 							}
@@ -2194,15 +2196,14 @@ int				slen;
 					}
 					//*	make sure they are all digits
 					allDigitsFlag	=	true;
-					timeStringValid	=	true;
-					for (ii=0; ii<6; ii++)
+					for (iii=0; iii<6; iii++)
 					{
-						if (isdigit(theDateString[ii]) == false)
+						if (isdigit(theDateString[iii]) == false)
 						{
 							allDigitsFlag	=	false;
 							break;
 						}
-						if (isdigit(theTimeString[ii]) == false)
+						if (isdigit(theTimeString[iii]) == false)
 						{
 							allDigitsFlag	=	false;
 							break;
@@ -2211,7 +2212,6 @@ int				slen;
 					//*	check for all 0's
 					if (strcmp(theTimeString, "000000") == 0)
 					{
-						timeStringValid	=	false;
 						nmeaData->invalidTimeCount++;	//*	keep track of the number of invalid time records
 					}
 					//*	do we have all valid data
@@ -2348,7 +2348,7 @@ TYPE_NMEAsentance	*rec1, *rec2;
 //**************************************************************************************
 static void	NMEAtrack_Update(const unsigned long nmeaCode, const char *nmeaID, const char *fullString)
 {
-int		ii;
+int		iii;
 bool	keepLooking;
 
 //	CONSOLE_DEBUG_W_HEX("nmeaCode", nmeaCode);
@@ -2359,9 +2359,9 @@ bool	keepLooking;
 	//*	if the table is blank, zero it.
 	if (gNMEAsentanceCnt < 0)
 	{
-		for (ii=0; ii<kMaxNMEAsentances; ii++)
+		for (iii=0; iii<kMaxNMEAsentances; iii++)
 		{
-			memset(&gNMEAsentances[ii], 0, sizeof(TYPE_NMEAsentance));
+			memset(&gNMEAsentances[iii], 0, sizeof(TYPE_NMEAsentance));
 		}
 		gNMEAsentanceCnt	=	0;
 	}
@@ -2369,23 +2369,23 @@ bool	keepLooking;
 	if ((nmeaCode > 0) && (strlen(nmeaID) > 0))
 	{
 		//*	now see if we can find it in the table
-		ii			=	0;
+		iii			=	0;
 		keepLooking	=	true;
-		while (keepLooking && (ii < gNMEAsentanceCnt))
+		while (keepLooking && (iii < gNMEAsentanceCnt))
 		{
-			if (nmeaCode == gNMEAsentances[ii].nmea4LetterCode)
+			if (nmeaCode == gNMEAsentances[iii].nmea4LetterCode)
 			{
 				//*	this looks promising
-				if (strcmp(nmeaID, gNMEAsentances[ii].nmeaID) == 0)
+				if (strcmp(nmeaID, gNMEAsentances[iii].nmeaID) == 0)
 				{
 					//*	OK, its a match
-					gNMEAsentances[ii].count			+=	1;
-					strcpy(gNMEAsentances[ii].lastData,	fullString);
+					gNMEAsentances[iii].count			+=	1;
+					strcpy(gNMEAsentances[iii].lastData,	fullString);
 
 					keepLooking	=	false;
 				}
 			}
-			ii++;
+			iii++;
 		}
 
 		if (keepLooking)

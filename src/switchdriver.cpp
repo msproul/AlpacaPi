@@ -44,6 +44,9 @@
 //*	Jun 19,	2023	<MLS> Added DeviceState_Add_Content() to switch driver
 //*	Sep 12,	2023	<MLS> Changed routine names to CamelCase
 //*	Sep 30,	2023	<MLS> Adding debugging code in verbose mode
+//*	May 17,	2023	<MLS> Updated GetSwitchID() to generate http errors
+//*	May 17,	2023	<MLS> CONFORUMU -> Found 0 errors, 3 issues and 3 information messages.
+//*	May 17,	2024	<MLS> Started on http 400 error support for switch driver
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -65,9 +68,9 @@
 #include	"alpaca_defs.h"
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
-#include	"helper_functions.h"
-
 #include	"switchdriver.h"
+
+#include	"helper_functions.h"
 #ifdef __arm__
 	#include	"switchdriver_rpi.h"
 #endif
@@ -257,39 +260,42 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-														reqData->jsonTextBuffer,
-														kMaxJsonBuffLen,
-														"ClientTransactionID",
-														gClientTransactionID,
-														INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ClientTransactionID",
+															reqData->ClientTransactionID,
+															INCLUDE_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-														reqData->jsonTextBuffer,
-														kMaxJsonBuffLen,
-														"ServerTransactionID",
-														gServerTransactionID,
-														INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ServerTransactionID",
+															gServerTransactionID,
+															INCLUDE_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
-														reqData->jsonTextBuffer,
-														kMaxJsonBuffLen,
-														"ErrorNumber",
-														alpacaErrCode,
-														INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ErrorNumber",
+															alpacaErrCode,
+															INCLUDE_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
-														reqData->jsonTextBuffer,
-														kMaxJsonBuffLen,
-														"ErrorMessage",
-														alpacaErrMsg,
-														NO_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(mySocket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"ErrorMessage",
+															alpacaErrMsg,
+															NO_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
-														reqData->jsonTextBuffer,
-														(cHttpHeaderSent == false));
-
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+																reqData->httpRetCode,
+																reqData->jsonTextBuffer,
+																(cHttpHeaderSent == false));
+	}
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 	return(alpacaErrCode);
@@ -298,27 +304,59 @@ int					mySocket;
 //*****************************************************************************
 //*	returns -1 if not found
 //*****************************************************************************
-int	SwitchDriver::GetSwitchID(TYPE_GetPutRequestData *reqData)
+TYPE_ASCOM_STATUS	SwitchDriver::GetSwitchID(TYPE_GetPutRequestData *reqData, int *idNum, char *alpacaErrMsg)
 {
-bool	foundId;
-char	idString[32];
-int		switchNum;
+TYPE_ASCOM_STATUS	alpacaErrCode;
+bool				foundId;
+char				idString[32];
+int					switchNum;
 
 	switchNum	=	-1;
-	foundId	=	GetKeyWordArgument(	reqData->contentData,
-									"Id",
-									idString,
-									31);
+	foundId		=	GetKeyWordArgument(	reqData->contentData,
+										"Id",
+										idString,
+										sizeof(idString)-1);
+	if (foundId == false)
+	{
+		foundId		=	GetKeyWordArgument(	reqData->contentData,
+											"iD",
+											idString,
+											sizeof(idString)-1);
+	}
 	if (foundId)
 	{
-		switchNum	=	atoi(idString);
+		if (IsValidNumericString(idString))
+		{
+			switchNum		=	atoi(idString);
+			if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
+			{
+				*idNum			=	switchNum;
+				alpacaErrCode	=	kASCOM_Err_Success;
+			}
+			else
+			{
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
+		}
+		else
+		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ID is non-numeric");
+			CONSOLE_DEBUG(alpacaErrMsg);
+		}
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
-		CONSOLE_DEBUG_W_STR("htmlData\t=", reqData->htmlData);
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "ID not found");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	return(switchNum);
+	return(alpacaErrCode);
 }
 
 //*****************************************************************************
@@ -351,7 +389,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	SwitchDriver::Get_Canwrite(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InvalidValue;
 int					switchNum;
 bool				canWriteSwitch;
 #ifdef _DEBUG_CONFORM_
@@ -359,35 +397,22 @@ bool				canWriteSwitch;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
+		canWriteSwitch	=	true;
+		if (cSwitchTable[switchNum].switchType == kSwitchType_Status)
 		{
-			canWriteSwitch	=	true;
-			if (cSwitchTable[switchNum].switchType == kSwitchType_Status)
-			{
-				canWriteSwitch	=	false;
-			}
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									canWriteSwitch,
-									INCLUDE_COMMA);
+			canWriteSwitch	=	false;
 		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("Switch number out of range\t=", switchNum);
-			CONSOLE_DEBUG_W_NUM("Max switch number is\t=", cSwitchProp.MaxSwitch);
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-		}
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								canWriteSwitch,
+								INCLUDE_COMMA);
 	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -405,40 +430,28 @@ bool				switchState;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			JsonResponse_Add_Int32(		reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"Switchnum",
-										switchNum,
-										INCLUDE_COMMA);
-
-			switchState	=	GetSwitchState(switchNum);
-			JsonResponse_Add_Bool(	reqData->socket,
+		JsonResponse_Add_Int32(		reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
-									gValueString,
-									switchState,
+									"Switchnum",
+									switchNum,
 									INCLUDE_COMMA);
 
+		switchState	=	GetSwitchState(switchNum);
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								gValueString,
+								switchState,
+								INCLUDE_COMMA);
 
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("Switch number out of range\t=", switchNum);
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-		}
+
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -456,32 +469,20 @@ int					switchNum;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			JsonResponse_Add_String(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										gValueString,
-										cSwitchTable[switchNum].switchDescription,
-										INCLUDE_COMMA);
+		JsonResponse_Add_String(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									gValueString,
+									cSwitchTable[switchNum].switchDescription,
+									INCLUDE_COMMA);
 
 
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			CONSOLE_DEBUG_W_NUM("Switch number out of range\t=", switchNum);
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-		}
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -498,31 +499,24 @@ int					switchNum;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			JsonResponse_Add_String(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										gValueString,
-										cSwitchTable[switchNum].switchName,
-										INCLUDE_COMMA);
+		JsonResponse_Add_String(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									gValueString,
+									cSwitchTable[switchNum].switchName,
+									INCLUDE_COMMA);
 
 
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-		}
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -539,33 +533,18 @@ int					switchNum;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-//		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
-//		CONSOLE_DEBUG_W_DBL("cCurSwitchValue\t=",	cCurSwitchValue[switchNum]);
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			JsonResponse_Add_Double(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cCurSwitchValue[switchNum],
-									INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-			CONSOLE_DEBUG(alpacaErrMsg);
-		}
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								gValueString,
+								cCurSwitchValue[switchNum],
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
-	else
-	{
-		CONSOLE_DEBUG("kASCOM_Err_InternalError");
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -582,30 +561,22 @@ int					switchNum;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			JsonResponse_Add_Double(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cMinSwitchValue[switchNum],
-									INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-		}
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								gValueString,
+								cMinSwitchValue[switchNum],
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -622,32 +593,22 @@ int					switchNum;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-//		CONSOLE_DEBUG_W_NUM("switchNum\t\t=",		switchNum);
-//		CONSOLE_DEBUG_W_DBL("cMaxSwitchValue\t=",	cMaxSwitchValue[switchNum]);
-
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			JsonResponse_Add_Double(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									gValueString,
-									cMaxSwitchValue[switchNum],
-									INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-		}
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								gValueString,
+								cMaxSwitchValue[switchNum],
+								INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -673,64 +634,59 @@ bool				newSwitchState;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	foundState		=	GetKeyWordArgument(	reqData->contentData,
+											"State",
+											stateString,
+											sizeof(stateString)-1);
+	if ((alpacaErrCode == kASCOM_Err_Success) && foundState)
 	{
-		switchNum	=	GetSwitchID(reqData);
-		CONSOLE_DEBUG_W_NUM("switchNum\t\t=", switchNum);
-
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
+		//*	make sure it is a switch and not a status
+		if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
 		{
-			//*	make sure it is a switch and not a status
-			if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
+			if (IsValidTrueFalseString(stateString))
 			{
-				foundState	=	GetKeyWordArgument(	reqData->contentData,
-													"State",
-													stateString,
-													sizeof(stateString)-1);
-				if (foundState)
+				newSwitchState	=	IsTrueFalse(stateString);
+				SetSwitchState(switchNum, newSwitchState);
+
+				CONSOLE_DEBUG_W_STR(	"stateString   \t=", stateString);
+				CONSOLE_DEBUG_W_BOOL(	"newSwitchState\t=", newSwitchState);
+
+				if (newSwitchState)
 				{
-					newSwitchState	=	IsTrueFalse(stateString);
-					SetSwitchState(switchNum, newSwitchState);
-
-					CONSOLE_DEBUG_W_STR(	"stateString   \t=", stateString);
-					CONSOLE_DEBUG_W_BOOL(	"newSwitchState\t=", newSwitchState);
-
-					if (newSwitchState)
-					{
-						cCurSwitchValue[switchNum]	=	cMaxSwitchValue[switchNum];
-					}
-					else
-					{
-						cCurSwitchValue[switchNum]	=	cMinSwitchValue[switchNum];
-					}
-					alpacaErrCode	=	kASCOM_Err_Success;
+					cCurSwitchValue[switchNum]	=	cMaxSwitchValue[switchNum];
 				}
 				else
 				{
-					alpacaErrCode	=	kASCOM_Err_InvalidValue;
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "State not specified");
-					CONSOLE_DEBUG(alpacaErrMsg);
+					cCurSwitchValue[switchNum]	=	cMinSwitchValue[switchNum];
 				}
+				alpacaErrCode	=	kASCOM_Err_Success;
 			}
 			else
 			{
-				CONSOLE_DEBUG("Trying to write to a read-only switch");
-				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanWrite is false");
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "State is not boolean");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number (Id) not specified");
+			CONSOLE_DEBUG("Trying to write to a read-only switch");
+			alpacaErrCode			=	kASCOM_Err_MethodNotImplemented;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanWrite is false");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "parameters missing");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -749,45 +705,32 @@ int					switchNum;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	foundName		=	GetKeyWordArgument(	reqData->contentData,
+											"Name",
+											nameString,
+											(kMaxSwitchNameLen - 1));
+	if ((alpacaErrCode == kASCOM_Err_Success) && foundName)
 	{
-		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			foundName	=	GetKeyWordArgument(	reqData->contentData,
-												"Name",
-												nameString,
-												(kMaxSwitchNameLen - 1));
-			if (foundName)
-			{
-				strcpy(cSwitchTable[switchNum].switchName, nameString);
+		strcpy(cSwitchTable[switchNum].switchName, nameString);
 
-				JsonResponse_Add_String(	reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											gValueString,
-											cSwitchTable[switchNum].switchName,
-											INCLUDE_COMMA);
+		JsonResponse_Add_String(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									gValueString,
+									cSwitchTable[switchNum].switchName,
+									INCLUDE_COMMA);
 
-				WriteSwitchDataFile();
-				alpacaErrCode	=	kASCOM_Err_Success;
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Name not specified");
-			}
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number (Id) not specified");
-		}
+		WriteSwitchDataFile();
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "parameters missing");
 	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -807,52 +750,59 @@ double				newSwitchValue;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	foundValue		=	GetKeyWordArgument(	reqData->contentData,
+											"Value",
+											valueString,
+											(sizeof(valueString) - 1));
+	if ((alpacaErrCode == kASCOM_Err_Success) && foundValue)
 	{
-		switchNum	=	GetSwitchID(reqData);
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
+		//*	make sure it is a switch and not a status
+		if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
 		{
-			//*	make sure it is a switch and not a status
-			if (cSwitchTable[switchNum].switchType != kSwitchType_Status)
+			if (IsValidNumericString(valueString))
 			{
-				foundValue	=	GetKeyWordArgument(	reqData->contentData,
-													"Value",
-													valueString,
-													(sizeof(valueString) - 1));
-				if (foundValue)
+				newSwitchValue				=	AsciiToDouble(valueString);
+				if ((newSwitchValue >= cMinSwitchValue[switchNum]) &&
+					(newSwitchValue <= cMaxSwitchValue[switchNum]))
 				{
-					newSwitchValue				=	AsciiToDouble(valueString);
-					if ((newSwitchValue >= cMinSwitchValue[switchNum]) &&
-						(newSwitchValue <= cMaxSwitchValue[switchNum]))
-					{
-						SetSwitchValue(switchNum, newSwitchValue);
-						cCurSwitchValue[switchNum]	=	AsciiToDouble(valueString);
-						alpacaErrCode				=	kASCOM_Err_Success;
-					}
-					else
-					{
-						alpacaErrCode	=	kASCOM_Err_InvalidValue;
-						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
-					}
+					SetSwitchValue(switchNum, newSwitchValue);
+					cCurSwitchValue[switchNum]	=	AsciiToDouble(valueString);
+					alpacaErrCode				=	kASCOM_Err_Success;
+				}
+				else
+				{
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value out of range");
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanWrite is false");
+				alpacaErrCode			=	kASCOM_Err_MethodNotImplemented;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value is non-numeric");
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number (Id) not specified");
+			alpacaErrCode			=	kASCOM_Err_MethodNotImplemented;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CanWrite is false");
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		if (foundValue == false)
+		{
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value is missing");
+		}
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-//	CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -864,29 +814,17 @@ TYPE_ASCOM_STATUS	SwitchDriver::Get_SwitchStep(TYPE_GetPutRequestData *reqData, 
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 int					switchNum;
 
-	if (reqData != NULL)
+	alpacaErrCode	=	GetSwitchID(reqData, &switchNum, alpacaErrMsg);
+	if (alpacaErrCode == kASCOM_Err_Success)
 	{
-		switchNum	=	GetSwitchID(reqData);
-
-		if ((switchNum >= 0) && (switchNum < cSwitchProp.MaxSwitch))
-		{
-			JsonResponse_Add_Double(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									1.0,
-									INCLUDE_COMMA);
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Switch number out of range");
-		}
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								1.0,
+								INCLUDE_COMMA);
 	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 

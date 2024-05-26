@@ -93,7 +93,7 @@ char				httpHeader[500];
 	mySocket		=	reqData->socket;
 
 
-	JsonResponse_FinishHeader(httpHeader, "");
+	JsonResponse_FinishHeader(200, httpHeader, "");
 	JsonResponse_SendTextBuffer(mySocket, httpHeader);
 	cHttpHeaderSent	=	true;
 

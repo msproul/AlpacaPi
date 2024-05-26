@@ -27,6 +27,7 @@
 //*	Apr  4,	2024	<MLS> Added NASA_DownloadMoonPhaseData()
 //*	Apr  5,	2024	<MLS> Added NASA_StartMoonImageDownloadThread()
 //*	Apr  6,	2024	<MLS> Fixed moon image number bug (was off by 1)
+//*	May 11,	2024	<MLS> Added CalculateDeclinationAvg()
 //*****************************************************************************
 //    # https://skyandtelescope.org/astronomy-resources/native-american-full-moon-names/
 //    JAN = "wolf"
@@ -41,6 +42,9 @@
 //    OCT = "hunters"
 //    NOV = "beaver"
 //    DEC = "cold"
+//*****************************************************************************
+//*	Link of interest on moon movement
+//*	https://astronomy.stackexchange.com/questions/29932/how-to-calculate-declination-of-moon
 //*****************************************************************************
 
 #include	<ctype.h>
@@ -327,23 +331,23 @@ double	angle;
 			break;
 
 		case kMoonPhase_Dec:
-			moonPhaseInfo->Dec	=	atof(argBuff);
+			moonPhaseInfo->Dec		=	atof(argBuff);
 			break;
 
 		case kMoonPhase_Slon:
-			moonPhaseInfo->SLon	=	atof(argBuff);
+			moonPhaseInfo->SLon		=	atof(argBuff);
 			break;
 
 		case kMoonPhase_Slat:
-			moonPhaseInfo->SLat	=	atof(argBuff);
+			moonPhaseInfo->SLat		=	atof(argBuff);
 			break;
 
 		case kMoonPhase_Elon:
-			moonPhaseInfo->ELon	=	atof(argBuff);
+			moonPhaseInfo->ELon		=	atof(argBuff);
 			break;
 
 		case kMoonPhase_Elat:
-			moonPhaseInfo->ELat	=	atof(argBuff);
+			moonPhaseInfo->ELat		=	atof(argBuff);
 			break;
 
 		case kMoonPhase_AxisA:
@@ -671,12 +675,11 @@ TYPE_ValuesOfInterest	valuesOfInterest[kMaxVOIcnt];
 		}
 	}
 
-
 //	CONSOLE_DEBUG_W_NUM("newMoonCnt \t=",	newMoonCnt);
 //	CONSOLE_DEBUG_W_NUM("fullMoonCnt\t=",	fullMoonCnt);
-
 }
 
+#if 0
 //*****************************************************************************
 static void	CalculatePhaseNames(void)
 {
@@ -719,6 +722,40 @@ double	previousPhase;
 		}
 		previousPhase	=	gMoonPhaseInfo[iii].Phase;
 	}
+}
+#endif // 0
+
+//*****************************************************************************
+static void	CalculateDeclinationAvg(void)
+{
+int		iii;
+double	decDelta;
+double	decDetlta_Min;
+double	decDetlta_Max;
+double	decDetlta_Avg;
+double	decDeltaTotal;
+
+	decDetlta_Min	=	99.0;
+	decDetlta_Max	=	0.0;
+	decDeltaTotal	=	0.0;
+
+	for (iii=1; iii<gMoonPhaseCnt; iii++)
+	{
+		decDelta	=	fabs(gMoonPhaseInfo[iii].Dec - gMoonPhaseInfo[iii-1].Dec);
+		if (decDelta > decDetlta_Max)
+		{
+			decDetlta_Max	=	decDelta;
+		}
+		if (decDelta < decDetlta_Min)
+		{
+			decDetlta_Min	=	decDelta;
+		}
+		decDeltaTotal	+=	decDelta;
+	}
+	decDetlta_Avg	=	decDeltaTotal / (gMoonPhaseCnt -1);
+	CONSOLE_DEBUG_W_DBL("decDetlta_Min\t=",	decDetlta_Min);
+	CONSOLE_DEBUG_W_DBL("decDetlta_Max\t=",	decDetlta_Max);
+	CONSOLE_DEBUG_W_DBL("decDetlta_Avg\t=",	decDetlta_Avg);
 }
 
 
@@ -763,7 +800,7 @@ int				ignoredCount;
 		gMoonPhaseCnt	=	recordCount;
 //		CalculatePhaseNames();
 		CalculatePhaseNamesWholeDay();
-
+		CalculateDeclinationAvg();
 	}
 	return(gMoonPhaseCnt);
 }
@@ -861,7 +898,7 @@ DIR				*directory;
 struct dirent	*dir;
 bool			keepGoing;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	imageCount	=	0;
 	if (year < 2011)
@@ -870,7 +907,7 @@ bool			keepGoing;
 	}
 	sprintf(imageDirPath, "%smoon%04d/", kNASAmoonPhaseDir, myYear);
 
-	CONSOLE_DEBUG(imageDirPath);
+//	CONSOLE_DEBUG(imageDirPath);
 
 	directory	=	opendir(imageDirPath);
 	if (directory != NULL)
@@ -893,7 +930,7 @@ bool			keepGoing;
 		}
 		closedir(directory);
 	}
-	CONSOLE_DEBUG_W_NUM("imageCount\t=", imageCount);
+//	CONSOLE_DEBUG_W_NUM("imageCount\t=", imageCount);
 
 	return(imageCount);
 }
@@ -940,8 +977,8 @@ int			returnCode;
 mode_t		dirPermissions	=	0755;
 char		subDirString[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("year\t=", year);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("year\t=", year);
 	//*	check to make sure the directory is there
 	returnCode	=	stat(kNASAmoonPhaseDir, &fileStatus);		//*	fstat - check for existence of file
 	if (returnCode == 0)
@@ -952,10 +989,10 @@ char		subDirString[64];
 	{
 		returnCode	=	mkdir(kNASAmoonPhaseDir, dirPermissions);
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (year > 2000)
 	{
-		CONSOLE_DEBUG("Creating sub directory");
+//		CONSOLE_DEBUG("Creating sub directory");
 
 		//*	now check for the sub directory for the current year
 		sprintf(subDirString, "%smoon%04d", kNASAmoonPhaseDir, year);

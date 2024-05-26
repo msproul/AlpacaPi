@@ -1,7 +1,7 @@
 //**************************************************************************
 //*	Name:			rotatordriver.cpp
 //*
-//*	Author:			Mark Sproul (C) 2019, 2020
+//*	Author:			Mark Sproul (C) 2019-2024
 //*
 //*	Description:	C++ Driver for Alpaca protocol
 //*
@@ -43,7 +43,8 @@
 //*	Mar  1,	2023	<MLS> Added DumpRotatorProperties()
 //*	Mar  1,	2023	<MLS> Working on Reverse property to pass CONFORMU
 //*	Mar  2,	2023	<MLS> Working on Sync method to pass CONFORMU
-//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to rotor driver
+//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to rotator driver
+//*	May 18,	2024	<MLS> Started on http 400 error support for rotator driver
 //*****************************************************************************
 
 #ifdef _ENABLE_ROTATOR_
@@ -309,39 +310,42 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ClientTransactionID",
-								gClientTransactionID,
-								INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ClientTransactionID",
+										reqData->ClientTransactionID,
+										INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ServerTransactionID",
-								gServerTransactionID,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ServerTransactionID",
+										gServerTransactionID,
+										INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorNumber",
-								alpacaErrCode,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ErrorNumber",
+										alpacaErrCode,
+										INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorMessage",
-								alpacaErrMsg,
-								NO_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"ErrorMessage",
+										alpacaErrMsg,
+										NO_COMMA);
 
-	JsonResponse_Add_Finish(	mySocket,
-								reqData->jsonTextBuffer,
-								(cHttpHeaderSent == false));
-
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+																reqData->httpRetCode,
+																reqData->jsonTextBuffer,
+																(cHttpHeaderSent == false));
+	}
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 	return(alpacaErrCode);
@@ -354,21 +358,14 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_Canreverse(TYPE_GetPutRequestData *reqData,
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cRotatorProp.CanReverse,
-								INCLUDE_COMMA);
+	JsonResponse_Add_Bool(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cRotatorProp.CanReverse,
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -378,22 +375,15 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_Ismoving(TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cRotatorProp.IsMoving	=	IsRotatorMoving();
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cRotatorProp.IsMoving,
-								INCLUDE_COMMA);
+	cRotatorProp.IsMoving	=	IsRotatorMoving();
+	JsonResponse_Add_Bool(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cRotatorProp.IsMoving,
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -403,23 +393,16 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_MechanicalPosition(TYPE_GetPutRequestData *
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		UpdateRotorPosition(false);
+	UpdateRotorPosition(false);
 
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cRotatorProp.Position,
-									INCLUDE_COMMA);
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cRotatorProp.Position,
+								INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -428,31 +411,24 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_Position(TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		UpdateRotorPosition(false);
+	UpdateRotorPosition(false);
 
-		while (cRotatorProp.Position < 0.0)
-		{
-			cRotatorProp.Position	+=	360.0;
-		}
-		while (cRotatorProp.Position >= 360.0)
-		{
-			cRotatorProp.Position	-=	360.0;
-		}
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cRotatorProp.Position,
-									INCLUDE_COMMA);
-
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
+	while (cRotatorProp.Position < 0.0)
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		cRotatorProp.Position	+=	360.0;
 	}
+	while (cRotatorProp.Position >= 360.0)
+	{
+		cRotatorProp.Position	-=	360.0;
+	}
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cRotatorProp.Position,
+								INCLUDE_COMMA);
+
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -461,21 +437,14 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_Targetposition(TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cRotatorProp.TargetPosition,
-									INCLUDE_COMMA);
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cRotatorProp.TargetPosition,
+								INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -484,28 +453,21 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_Reverse(TYPE_GetPutRequestData *reqData, ch
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
+	if (cRotatorProp.CanReverse || (cCommonProp.InterfaceVersion >= 3))
 	{
-		if (cRotatorProp.CanReverse || (cCommonProp.InterfaceVersion >= 3))
-		{
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cRotatorProp.Reverse,
-									INCLUDE_COMMA);
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cRotatorProp.Reverse,
+								INCLUDE_COMMA);
 
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Reverse not implemented");
-		}
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Reverse not implemented");
 	}
 	return(alpacaErrCode);
 }
@@ -517,37 +479,31 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 bool				foundKeyWord;
 char				argumentString[32];
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Reverse",
+											argumentString,
+											(sizeof(argumentString) -1),
+											false);
+
+	if (cRotatorProp.CanReverse || (cCommonProp.InterfaceVersion >= 3))
 	{
-		if (cRotatorProp.CanReverse || (cCommonProp.InterfaceVersion >= 3))
+		if (foundKeyWord)
 		{
-			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-													"Reverse",
-													argumentString,
-													(sizeof(argumentString) -1),
-													false);
-			if (foundKeyWord)
-			{
-				cRotatorProp.Reverse	=	IsTrueFalse(argumentString);
-				alpacaErrCode			=	kASCOM_Err_Success;
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Reverse' not specified");
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
+			cRotatorProp.Reverse	=	IsTrueFalse(argumentString);
+			alpacaErrCode			=	kASCOM_Err_Success;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Reverse not implemented");
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Reverse' not specified");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Internal Error");
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Reverse not implemented");
 	}
 	return(alpacaErrCode);
 }
@@ -558,28 +514,21 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_Stepsize(TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cRotatorProp.StepSize,
-									INCLUDE_COMMA);
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cRotatorProp.StepSize,
+								INCLUDE_COMMA);
 
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"Comment",
-									"Stepsize in degrees",
-									INCLUDE_COMMA);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Comment",
+								"Stepsize in degrees",
+								INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -613,39 +562,32 @@ double				newPositionOffset_deg;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Position",
+											argumentString,
+											(sizeof(argumentString) -1),
+											kArgumentIsNumeric);
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Position",
-												argumentString,
-												(sizeof(argumentString) -1),
-												kArgumentIsNumeric);
-		if (foundKeyWord)
-		{
-			newPositionOffset_deg		=	atof(argumentString);
+		newPositionOffset_deg		=	atof(argumentString);
 
-			CONSOLE_DEBUG_W_DBL("newPositionOffset_deg\t=", newPositionOffset_deg);
+		CONSOLE_DEBUG_W_DBL("newPositionOffset_deg\t=", newPositionOffset_deg);
 
-			cRotatorProp.TargetPosition	+=	newPositionOffset_deg;
-			cRotatorProp.TargetPosition	=	AdjustDegrees0_360(cRotatorProp.TargetPosition);
-			alpacaErrCode				=	SetCurrentPoisiton_degs(cRotatorProp.TargetPosition);
+		cRotatorProp.TargetPosition	+=	newPositionOffset_deg;
+		cRotatorProp.TargetPosition	=	AdjustDegrees0_360(cRotatorProp.TargetPosition);
+		alpacaErrCode				=	SetCurrentPoisiton_degs(cRotatorProp.TargetPosition);
 
-			LogEvent(	"rotator",
-						__FUNCTION__,
-						NULL,
-						kASCOM_Err_Success,
-						argumentString);
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
-			CONSOLE_DEBUG(alpacaErrMsg);
-		}
+		LogEvent(	"rotator",
+					__FUNCTION__,
+					NULL,
+					kASCOM_Err_Success,
+					argumentString);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -660,49 +602,42 @@ double	newPosition_degs;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Position",
+											argumentString,
+											(sizeof(argumentString) -1),
+											kArgumentIsNumeric);
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Position",
-												argumentString,
-												(sizeof(argumentString) -1),
-												kArgumentIsNumeric);
-		if (foundKeyWord)
+		newPosition_degs		=	atof(argumentString);
+		if ((newPosition_degs >= 0.0) && (newPosition_degs < 360.0))
 		{
-			newPosition_degs		=	atof(argumentString);
-			if ((newPosition_degs >= 0.0) && (newPosition_degs < 360.0))
-			{
-				alpacaErrCode				=	SetCurrentPoisiton_degs(newPosition_degs);
-				cRotatorProp.TargetPosition	=	newPosition_degs;
+			alpacaErrCode				=	SetCurrentPoisiton_degs(newPosition_degs);
+			cRotatorProp.TargetPosition	=	newPosition_degs;
 
-				LogEvent(	"rotator",
-							__FUNCTION__,
-							NULL,
-							kASCOM_Err_Success,
-							argumentString);
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value is out of range");
-				CONSOLE_DEBUG(alpacaErrMsg);
-				LogEvent(	"rotator",
-							alpacaErrMsg,
-							NULL,
-							kASCOM_Err_Success,
-							argumentString);
-			}
+			LogEvent(	"rotator",
+						__FUNCTION__,
+						NULL,
+						kASCOM_Err_Success,
+						argumentString);
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Value is out of range");
 			CONSOLE_DEBUG(alpacaErrMsg);
+			LogEvent(	"rotator",
+						alpacaErrMsg,
+						NULL,
+						kASCOM_Err_Success,
+						argumentString);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -734,38 +669,31 @@ double				newPositionDelta;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Position",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Position",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		newPosition			=	atoi(argumentString);
+		CONSOLE_DEBUG_W_DBL("newPosition\t=", newPosition);
+		if ((newPosition >= 0.0) && (newPosition < 360.0))
 		{
-			newPosition			=	atoi(argumentString);
-			CONSOLE_DEBUG_W_DBL("newPosition\t=", newPosition);
-			if ((newPosition >= 0.0) && (newPosition < 360.0))
-			{
-				newPositionDelta	=	newPosition - cRotatorProp.Position;
-				alpacaErrCode		=	kASCOM_Err_Success;
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Position' out of range");
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
+			newPositionDelta	=	newPosition - cRotatorProp.Position;
+			alpacaErrCode		=	kASCOM_Err_Success;
 		}
 		else
 		{
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Position' out of range");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -779,32 +707,25 @@ char				argumentString[32];
 int32_t				newPositionOffset;
 int32_t				newPosition;
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Position",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Position",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
-		{
-			//*	its a relative move so get the current position and add
-			cRotatorPosition_steps	=	ReadCurrentPoisiton_steps();
-			cRotatorProp.Position	=	ReadCurrentPoisiton_degs();
+		//*	its a relative move so get the current position and add
+		cRotatorPosition_steps	=	ReadCurrentPoisiton_steps();
+		cRotatorProp.Position	=	ReadCurrentPoisiton_degs();
 
-			newPositionOffset	=	atoi(argumentString);
-			newPosition			=	cRotatorPosition_steps + newPositionOffset;
-			alpacaErrCode		=	SetCurrentPoisiton_steps(newPosition);
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
-			CONSOLE_DEBUG(alpacaErrMsg);
-		}
+		newPositionOffset	=	atoi(argumentString);
+		newPosition			=	cRotatorPosition_steps + newPositionOffset;
+		alpacaErrCode		=	SetCurrentPoisiton_steps(newPosition);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -820,27 +741,20 @@ int32_t				newPosition;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Position",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Position",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
-		{
-			newPosition		=	atoi(argumentString);
-			alpacaErrCode	=	SetCurrentPoisiton_steps(newPosition);
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
-			CONSOLE_DEBUG(alpacaErrMsg);
-		}
+		newPosition		=	atoi(argumentString);
+		alpacaErrCode	=	SetCurrentPoisiton_steps(newPosition);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -865,25 +779,18 @@ TYPE_ASCOM_STATUS	RotatorDriver::Get_Readall(TYPE_GetPutRequestData *reqData, ch
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData, alpacaErrMsg);
+	//*	do the common ones first
+	Get_Readall_Common(	reqData, alpacaErrMsg);
 
-		Get_Canreverse(			reqData, alpacaErrMsg, "canreverse");
-		Get_Ismoving(			reqData, alpacaErrMsg, "ismoving");
-		Get_MechanicalPosition(	reqData, alpacaErrMsg, "mechanicalposition");
-		Get_Position(			reqData, alpacaErrMsg, "position");
-		Get_Reverse(			reqData, alpacaErrMsg, "reverse");
-		Get_Stepsize(			reqData, alpacaErrMsg, "stepsize");
-		Get_Targetposition(		reqData, alpacaErrMsg, "targetposition");
+	Get_Canreverse(			reqData, alpacaErrMsg, "canreverse");
+	Get_Ismoving(			reqData, alpacaErrMsg, "ismoving");
+	Get_MechanicalPosition(	reqData, alpacaErrMsg, "mechanicalposition");
+	Get_Position(			reqData, alpacaErrMsg, "position");
+	Get_Reverse(			reqData, alpacaErrMsg, "reverse");
+	Get_Stepsize(			reqData, alpacaErrMsg, "stepsize");
+	Get_Targetposition(		reqData, alpacaErrMsg, "targetposition");
 
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 
@@ -930,29 +837,26 @@ char		lineBuffer[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
-	{
-		mySocketFD		=	reqData->socket;
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Rotator</H2>\r\n");
-		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	mySocketFD		=	reqData->socket;
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>AlpacaPi Rotator</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
-		OutputHTMLrowData(mySocketFD,	"Rotator",		cCommonProp.Name);
-		OutputHTMLrowData(mySocketFD,	"Model",		cRotatorModel);
+	OutputHTMLrowData(mySocketFD,	"Rotator",		cCommonProp.Name);
+	OutputHTMLrowData(mySocketFD,	"Model",		cRotatorModel);
 
-		//*	rotator position
-		cRotatorPosition_steps	=	ReadCurrentPoisiton_steps();
-		cRotatorProp.Position	=	ReadCurrentPoisiton_degs();
-		sprintf(lineBuffer, "%d steps", cRotatorPosition_steps);
-		OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
+	//*	rotator position
+	cRotatorPosition_steps	=	ReadCurrentPoisiton_steps();
+	cRotatorProp.Position	=	ReadCurrentPoisiton_degs();
+	sprintf(lineBuffer, "%d steps", cRotatorPosition_steps);
+	OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
 
-		sprintf(lineBuffer, "%2.1f&deg;", cRotatorProp.Position);
-		OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
+	sprintf(lineBuffer, "%2.1f&deg;", cRotatorProp.Position);
+	OutputHTMLrowData(mySocketFD,	"Rotator position",	lineBuffer);
 
-		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<P>\r\n");
-	}
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
 }
 
 //*****************************************************************************

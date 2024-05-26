@@ -4,6 +4,11 @@
 #ifndef _PDS_TYPEDEFS_H_
 #define _PDS_TYPEDEFS_H_
 
+#ifdef __cplusplus
+	extern "C" {
+#endif
+
+
 #define		MaxVolCount	16
 
 //***************************************
@@ -117,6 +122,7 @@ typedef struct
 	char		imageFileName[512];		//*	file name if the image is a separate file
 	int			record_Type;			//*	type of record	: Variable, ?
 	int			record_Bytes;			//*	number of bytes per record (after un-compressing)
+	int			format;					//*	number of bits per pixel
 	int			file_records;			//*	total number of records in file
 	int			label_records;			//*	number of records in label (header)
 	char		spaceCraft_name[64];	//*	name of space craft
@@ -146,18 +152,16 @@ typedef struct
 
 } PDS_header_data;
 
+void	PDS_DumpHeader(PDS_header_data *pdsHeaderPtr);
+
 //./src_pds/PDS_ReadNASAfiles.c           : 770 [PDS_ReadHeaderAndImage] OBJECT                           = ENCODING_HISTOGRAM
 //./src_pds/PDS_ReadNASAfiles.c           : 770 [PDS_ReadHeaderAndImage]  ITEMS                           = 511
 //./src_pds/PDS_ReadNASAfiles.c           : 770 [PDS_ReadHeaderAndImage]  ITEM_TYPE                       = VAX_INTEGER
 //./src_pds/PDS_ReadNASAfiles.c           : 770 [PDS_ReadHeaderAndImage]  ITEM_BITS                       = 32
 //./src_pds/PDS_ReadNASAfiles.c           : 770 [PDS_ReadHeaderAndImage] END_OBJECT
 
-
-//#ifndef	MAIN
-//	#define	EXTERN	extern
-//#else
-//	#define	EXTERN
-//#endif
-//EXTERN	short	PDS_readingFileType;
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _PDS_TYPEDEFS_H_

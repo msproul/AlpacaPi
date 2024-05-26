@@ -637,7 +637,6 @@ protected:
 	//*	ASCOM camera properties
 	TYPE_CameraProperties	cCameraProp;
 
-	bool					cResponseIsJSON;		//*	this is for the binary option in imageArray
 
 	//*****************************************************************************
 	TYPE_IMAGE_ROI_Info		cLastExposure_ROIinfo;

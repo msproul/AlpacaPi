@@ -10,9 +10,12 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 
-#include "opencv/highgui.h"
-#include "opencv2/highgui/highgui_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
+//#include	<opencv2/opencv.hpp>
+#include	"opencv2/highgui/highgui_c.h"
+
+//#include "opencv/highgui.h"
+//#include "opencv2/highgui/highgui_c.h"
+//#include "opencv2/imgproc/imgproc_c.h"
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
@@ -218,7 +221,7 @@ uint32_t	resultColor;
 	//	return (red: red, green: green, blue: blue)
 
 	}
-	else if (x == 255
+	else if (x == 255)
 	{
 		// Special case: black is last.
 		red		=	0;
@@ -281,8 +284,8 @@ int	iii;
 
 	for (iii=0; iii<kMaxItterations; iii++)
 	{
-//		gColorTable[ii]	=	GetMacCLUT(iii & 0x00ff);
-		gColorTable[ii]	=	clut8ColorComponents(iii & 0x00ff);
+//		gColorTable[iii]	=	GetMacCLUT(iii & 0x00ff);
+		gColorTable[iii]	=	clut8ColorComponents(iii & 0x00ff);
 	}
 	gColorTable[kMaxItterations - 1]	=	0;
 

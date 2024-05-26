@@ -33,8 +33,7 @@ enum
 	kCmd_Common_interfaceversion,			//*	The ASCOM Device interface version number that this device supports.
 	kCmd_Common_name,						//*	Device name
 	kCmd_Common_supportedactions,			//*	Returns the list of action names supported by this driver.
-
-
+	kCmd_Common_SetupDialog,
 
 #ifdef _INCLUDE_EXIT_COMMAND_
 	//*	Added by MLS 7/20/2020

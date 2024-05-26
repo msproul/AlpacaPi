@@ -371,18 +371,28 @@ int				opnCVPixIdx;
 int				opnCVlineNum;
 uint8_t			pixelValue;
 
-//	CONSOLE_DEBUG("***************************************************************");
+	CONSOLE_DEBUG("***************************************************************");
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	openCvImgPtr	=	NULL;
-	validPDSimage	=	PDS_ReadImage(imageFileName, &pdsHeader);
+	validPDSimage	=	PDS_ReadImage(imageFileName, &pdsHeader, true);
 	if (validPDSimage)
 	{
+		//*	this is a safety net
+		if ((pdsHeader.lineSamples > 3000) || (pdsHeader.scanLines > 3000) ||
+			(pdsHeader.lineSamples < 0) || (pdsHeader.scanLines < 0))
+		{
+			PDS_DumpHeader(&pdsHeader);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
+
 		if (pdsHeader.imageData != NULL)
 		{
 			width			=	pdsHeader.lineSamples;
 			height			=	pdsHeader.scanLines;
-
 			divideFactor	=	1;
+			CONSOLE_DEBUG_W_NUM("PDS image width \t=",	width);
+			CONSOLE_DEBUG_W_NUM("PDS image height\t=",	height);
 //			while ((width > 1200) || (height > 900))
 //			{
 //				divideFactor++;
@@ -393,9 +403,11 @@ uint8_t			pixelValue;
 			openCvImgPtr	=	new cv::Mat(height, width, CV_8UC1);
 			if (openCvImgPtr != NULL)
 			{
-//				CONSOLE_DEBUG(__FUNCTION__);
-//				CONSOLE_DEBUG_W_NUM("width \t=", width);
-//				CONSOLE_DEBUG_W_NUM("height\t=", height);
+				CONSOLE_DEBUG(__FUNCTION__);
+				CONSOLE_DEBUG_W_NUM("width             \t=",	width);
+				CONSOLE_DEBUG_W_NUM("height            \t=",	height);
+				CONSOLE_DEBUG_W_NUM("openCvImgPtr->cols\t=",	openCvImgPtr->cols);
+				CONSOLE_DEBUG_W_NUM("openCvImgPtr->rows\t=",	openCvImgPtr->rows);
 				pixelPtr	=	openCvImgPtr->data;
 				pixelCount	=	width * height;
 				if (divideFactor == 1)
@@ -437,6 +449,7 @@ uint8_t			pixelValue;
 				}
 			}
 			free(pdsHeader.imageData);
+			pdsHeader.imageData	=	NULL;
 		}
 		else
 		{
@@ -488,19 +501,6 @@ char		extension[8];
 		{
 	//		openCvImgPtr	=	ReadAlpacaBinaryIntoOpenCVimage(imageFileName);
 		}
-	#ifdef _ENABLE_NASA_PDS_
-		else if (	(strcasecmp(extension, ".img") == 0) ||
-					(strcasecmp(extension, ".imq") == 0) ||
-					(strcasecmp(extension, ".lbl") == 0) ||
-					(strcasecmp(extension, ".red") == 0) ||
-					(strcasecmp(extension, ".grn") == 0) ||
-					(strcasecmp(extension, ".sgr") == 0) ||
-					(strcasecmp(extension, ".vio") == 0)
-					)
-		{
-			openCvImgPtr	=	ReadPDSimageIntoOpenCVimage(imageFileName);
-		}
-	#endif // _ENABLE_NASA_PDS_
 		else if ((strcasecmp(extension, ".jpg") == 0) ||
 				(strcasecmp(extension, ".png") == 0) ||
 				(strcasecmp(extension, ".gif") == 0))
@@ -514,6 +514,19 @@ char		extension[8];
 			openCvImgPtr	=	cvLoadImage(imageFileName, CV_LOAD_IMAGE_COLOR);
 		#endif
 		}
+	#ifdef _ENABLE_NASA_PDS_
+		else if (	(strcasecmp(extension, ".img") == 0) ||
+					(strcasecmp(extension, ".imq") == 0) ||
+					(strcasecmp(extension, ".lbl") == 0) ||
+					(strcasecmp(extension, ".red") == 0) ||
+					(strcasecmp(extension, ".grn") == 0) ||
+					(strcasecmp(extension, ".sgr") == 0) ||
+					(strcasecmp(extension, ".vio") == 0)
+					)
+		{
+			openCvImgPtr	=	ReadPDSimageIntoOpenCVimage(imageFileName);
+		}
+	#endif // _ENABLE_NASA_PDS_
 	//	CONSOLE_DEBUG_W_HEX("openCvImgPtr\t=", openCvImgPtr);
 	}
 	else

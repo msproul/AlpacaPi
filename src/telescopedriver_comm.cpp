@@ -89,6 +89,8 @@ char	*colonPtr;
 	//*	set default conditions
 	strcpy(cDeviceIPaddress,	"0.0.0.0-Not set");
 	cIPaddrValid			=	false;
+	cBaudRate				=	B9600;
+	cDeviceConnFileDesc		=	-1;
 
 	//*	set the parameters
 	strcpy(cCommonProp.Name,		"Telescope-Comm");
@@ -96,7 +98,7 @@ char	*colonPtr;
 	cDeviceConnType			=	connectionType;
 	strcpy(cDeviceConnPath,		devicePath);
 
-	if (connectionType == kDevCon_Ethernet)
+	if (cDeviceConnType == kDevCon_Ethernet)
 	{
 		strcpy(cDeviceIPaddress, cDeviceConnPath);
 		colonPtr	=	strchr(cDeviceIPaddress, ':');
@@ -117,6 +119,7 @@ char	*colonPtr;
 	cTelescopeProp.CanSlewAsync		=	true;
 	cTelescopeProp.CanSync			=	true;
 	cTelescopeProp.CanSetTracking	=	true;
+	cThreadLoopDelay_usec			=	500000;
 
 
 	cQueuedCmdCnt	=	0;
@@ -192,7 +195,14 @@ bool	connectionOKflag;
 
 		case kDevCon_USB:
 			CONSOLE_DEBUG("kDevCon_USB");
-			connectionOKflag	=	false;
+			if (strlen(cDeviceConnPath) > 0)
+			{
+				connectionOKflag	=	true;
+			}
+			else
+			{
+				connectionOKflag	=	false;
+			}
 			break;
 
 		case kDevCon_Serial:
@@ -243,6 +253,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 //*****************************************************************************
 //*	needs to be over-ridden
+//*****************************************************************************
 TYPE_ASCOM_STATUS	TelescopeDriverComm::Telescope_MoveAxis(const int axisNum, const double moveRate_degPerSec, char *alpacaErrMsg)
 {
 	TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
@@ -381,7 +392,7 @@ int					socket_desc;
 //*****************************************************************************
 void	TelescopeDriverComm::AddCmdToQueue(const char *cmdString)
 {
-	CONSOLE_DEBUG_W_STR("cmdString\t\t=", cmdString);
+//	CONSOLE_DEBUG_W_STR("cmdString\t\t=", cmdString);
 	if (cQueuedCmdCnt < kMaxTelescopeCmds)
 	{
 		strcpy(cCmdQueue[cQueuedCmdCnt].cmdString, cmdString);
@@ -411,8 +422,6 @@ void	TelescopeDriverComm::RunThread_Startup(void)
 {
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_STR("cDeviceIPaddress\t=",	cDeviceIPaddress);
-	CONSOLE_DEBUG_W_NUM("cTCPportNum\t=",	cTCPportNum);
 
 	//--------------------------------------------------------
 	//*	open the connection
@@ -421,6 +430,8 @@ void	TelescopeDriverComm::RunThread_Startup(void)
 	switch(cDeviceConnType)
 	{
 		case kDevCon_Ethernet:
+			CONSOLE_DEBUG_W_STR("cDeviceIPaddress\t=",	cDeviceIPaddress);
+			CONSOLE_DEBUG_W_NUM("cTCPportNum     \t=",	cTCPportNum);
 			CONSOLE_DEBUG("Calling OpenSocket()");
 			cSocket_desc	=	OpenSocket(cDeviceIPaddress, cTCPportNum);
 			CONSOLE_DEBUG("Returned from OpenSocket()");
@@ -437,16 +448,14 @@ void	TelescopeDriverComm::RunThread_Startup(void)
 			break;
 
 		case kDevCon_USB:
-			cTelescopeConnectionOpen		=	false;
-			break;
-
+			//*	fall through to serial
 		case kDevCon_Serial:
 			cDeviceConnFileDesc	=	open(cDeviceConnPath, O_RDWR);	//* connect to port
 			if (cDeviceConnFileDesc >= 0)
 			{
 				CONSOLE_DEBUG_W_STR("Serial port opened OK", cDeviceConnPath);
 
-				Serial_Set_Attribs(cDeviceConnFileDesc, B9600, 0);	//*	set the baud rate
+				Serial_Set_Attribs(cDeviceConnFileDesc, cBaudRate, 0);	//*	set the baud rate
 				Serial_Set_Blocking (cDeviceConnFileDesc, false);
 
 				cTelescopeConnectionOpen	=	true;
@@ -462,8 +471,9 @@ void	TelescopeDriverComm::RunThread_Startup(void)
 			break;
 	}
 
-	CONSOLE_DEBUG_W_BOOL("cTelescopeConnectionOpen  \t=", cTelescopeConnectionOpen);
+	CONSOLE_DEBUG_W_BOOL("cTelescopeConnectionOpen\t=", cTelescopeConnectionOpen);
 	CONSOLE_DEBUG_W_BOOL("cDriverThreadKeepRunning\t=", cDriverThreadKeepRunning);
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -476,6 +486,7 @@ int			shutDownRetCode;
 int			closeRetCode;
 bool		sendOK;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//--------------------------------------------------------
 	//*	this is inside of the while loop so that we can re-open the connection if it drops.
 
@@ -495,6 +506,7 @@ bool		sendOK;
 			sendOK	=	SendCmdsFromQueue();
 			if (sendOK == false)
 			{
+				CONSOLE_DEBUG("SendCmdsFromQueue() returned false");
 				cTelescopeCommErrCnt++;
 			}
 		}
@@ -504,10 +516,11 @@ bool		sendOK;
 			sendOK	=	SendCmdsPeriodic();
 			if (sendOK == false)
 			{
+				CONSOLE_DEBUG("SendCmdsPeriodic() returned false");
 				cTelescopeCommErrCnt++;
 			}
 		}
-		usleep(500000);
+		usleep(cThreadLoopDelay_usec);
 
 		//*	if the error count gets too big, shut down and re-open the connection
 		if (cTelescopeCommErrCnt > 20)
@@ -536,6 +549,18 @@ bool		sendOK;
 					break;
 
 				case kDevCon_USB:
+					CONSOLE_DEBUG_W_STR("Time to close port\t=", cDeviceConnPath);
+					if (cDeviceConnFileDesc >= 0)
+					{
+						closeRetCode	=	close(cDeviceConnFileDesc);
+						if (closeRetCode != 0)
+						{
+							CONSOLE_DEBUG_W_NUM("closeRetCode\t=", closeRetCode);
+							CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+						}
+						cDeviceConnFileDesc	=	-1;
+					}
+					cTelescopeConnectionOpen	=	false;
 					break;
 
 				case kDevCon_Serial:

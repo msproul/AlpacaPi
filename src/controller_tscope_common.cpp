@@ -369,6 +369,7 @@ bool			argBoolean;
 
 	//========================================================
 	//*	we have to look at DoesRefraction again, to see if it is supported
+	CONSOLE_DEBUG("Sending cmd: doesrefraction");
 	validData	=	AlpacaGetBooleanValue(	"telescope", "doesrefraction",	NULL,	&argBoolean);
 	if (validData)
 	{
@@ -377,7 +378,7 @@ bool			argBoolean;
 			cTelescopeProp.driverSupportsRefraction	=	true;
 		}
 	}
-	AlpacaGetCapabilities();
+//	AlpacaGetCapabilities();
 
 	myFailureCount	=	0;
 	//*	There are supposed to be 3 axis, but we only use 2 and the simulator only reports 2
@@ -527,6 +528,7 @@ int				argInt;
 	}
 
 	//========================================================
+	CONSOLE_DEBUG("Sending cmd: doesrefraction");
 	validData	=	AlpacaGetBooleanValue(	"telescope", "doesrefraction",	NULL,	&argBoolean);
 	if (validData)
 	{

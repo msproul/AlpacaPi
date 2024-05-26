@@ -13,6 +13,7 @@
 
 cv::Mat *ConvertImageToRGB(cv::Mat *openCVImage);
 void	DumpCVMatStruct(const char *calledFrom, cv::Mat *theImageMat, const char *message= NULL);
+bool	IsOpenCVimageValid(const char *calledFrom, cv::Mat *theImageMat, bool verbose=false);
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 

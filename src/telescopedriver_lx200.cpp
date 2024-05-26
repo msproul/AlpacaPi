@@ -127,7 +127,7 @@ int		returnByteCNt;
 char	returnBuffer[500];
 int		iii;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	while (cQueuedCmdCnt > 0)
 	{
 		CONSOLE_DEBUG_W_STR("Sending", cCmdQueue[0].cmdString);

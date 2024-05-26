@@ -115,7 +115,7 @@ int		iii;
 char	legendText[32];
 int		previousSNR;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _T6963_GRAPHICS_
 	LCD.createCircle(xCenter, yCenter, circleRadius);
@@ -264,7 +264,7 @@ void	DisplayGPSalmanac(TYPE_SatStatsStruct *theSatData, bool showSatNum)
 {
 int			xCenter, yCenter;
 int			circleRadius;
-int			circleDiameter;
+//int			circleDiameter;
 int			iii;
 double		dhy;	//	Hypotenuse
 double		daj;	//	Adjacent
@@ -272,18 +272,18 @@ double		dop;	//	Oposite
 int			azm;
 int			azimuth;
 int			elevation;
-int			signal2Noise;
+//int			signal2Noise;
 double		azm_radians;
 double		elv_radians;
-int			satCenterX, satCenterY;
+//int			satCenterX, satCenterY;
 cv::Scalar	snrColor;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	xCenter			=	kScreen_Width / 2;
 	yCenter			=	kScreen_Height / 2;
 	circleRadius	=	(kScreen_Height / 2) - 10;
-	circleDiameter	=	circleRadius * 2;
+//	circleDiameter	=	circleRadius * 2;
 
 //	iii	=	9;
 	for (iii=0; iii<kMaxNumOfSatallites; iii++)
@@ -293,7 +293,7 @@ cv::Scalar	snrColor;
 		if (elevation > 0)
 		{
 			azimuth			=	theSatData[iii].azimuth;
-			signal2Noise	=	theSatData[iii].signal2Noise;
+//			signal2Noise	=	theSatData[iii].signal2Noise;
 
 			azm				=	ReturnCompAngFromMapAng(azimuth);
 
@@ -305,10 +305,11 @@ cv::Scalar	snrColor;
 			daj			=	cos(azm_radians) * dhy;
 			dop			=	sin(azm_radians) * dhy;
 
-			satCenterX	=	xCenter + daj;
-			satCenterY	=	yCenter + dop;
+//			satCenterX	=	xCenter + daj;
+//			satCenterY	=	yCenter + dop;
 
 		#if defined(_GENERATE_GRAPHICS_)
+		#error foo
 			snrColor	=	GetColorFromSNRvalue(signal2Noise);
 
 			if (iii > 32)
@@ -381,17 +382,16 @@ double		labelStepY;
 double		hourValues[kSatsInUseTracking_ArraySize];
 double		satsInUse[kSatsInUseTracking_ArraySize];
 double		satMode[kSatsInUseTracking_ArraySize];
-int			satsInUseIdx;
 int			iii;
 int			maxSatsInUse;
 int			currentPtOnGraph;
 double		scaleFactorX;
 double		scaleFactorY;
+int			saveImgRetCode;
 //char		legendText[32];
 
 	WebGraph_CreateImage(800, 400);
 
-	satsInUseIdx	=	0;
 	maxSatsInUse	=	0;
 	for (iii=0; iii<kSatsInUseTracking_ArraySize; iii++)
 	{
@@ -437,8 +437,11 @@ double		scaleFactorY;
 	WebGraph_DrawLegend(0, kGraphPointMode_RedLine,		"Sats in use",				300);
 	WebGraph_DrawLegend(1, kGraphPointMode_DkGreenLine,	"Mode, 1=none,2=2D,3=3D",	300);
 
-	WebGraph_SaveImage(imageFolderName, satsInUseGraphFileName);
-
+	saveImgRetCode	=	WebGraph_SaveImage(imageFolderName, satsInUseGraphFileName);
+	if (saveImgRetCode)
+	{
+		CONSOLE_DEBUG("Saving image failed");
+	}
 	if (htmlFile != NULL)
 	{
 		fprintf(htmlFile, "<CENTER>\n");
@@ -459,7 +462,6 @@ void	CreateSatelliteTrailsGraph(FILE *htmlFile, const char *imageFolderName, con
 {
 int			xCenter, yCenter;
 int			circleRadius;
-int			circleDiameter;
 int			iii;
 int			jjj;
 double		dhy;	//	Hypotenuse
@@ -482,7 +484,6 @@ cv::Scalar	snrColor;
 	xCenter			=	kScreen_Width / 2;
 	yCenter			=	kScreen_Height / 2;
 	circleRadius	=	(kScreen_Height / 2) - 10;
-	circleDiameter	=	circleRadius * 2;
 
 	WebGraph_CreateImage(kScreen_Width, kScreen_Height);
 	_xCenter	=	0;
@@ -842,7 +843,7 @@ int			currentPtOnGraph;
 double		scaleFactorX;
 double		scaleFactorY;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	WebGraph_CreateImage(800, 400);
 
 	maxLatitude		=	0;
@@ -976,6 +977,123 @@ double		scaleFactorY;
 	}
 #endif // _NOT_SURE_YET_
 }
+
+
+//**************************************************************************************
+void	CreateLatDetailHistoryPlot(FILE *htmlFile, const char *imageFolderName, const char *latlonGraphFileName)
+{
+double		startX;
+double		endX;
+double		labelStepX;
+double		startY;
+double		endY;
+double		labelStepY;
+double		hourValues[kLatLonTacking_ArraySize];
+double		validLatValues[kLatLonTacking_ArraySize];
+double		validLonValues[kLatLonTacking_ArraySize];
+int			validLatLonIdx;
+double		maxLatitude;
+double		minLatitude;
+double		minLongitude;
+double		maxLongitude;
+int			iii;
+int			ccc;
+char		legendText[32];
+int			currentPtOnGraph;
+double		scaleFactorX;
+double		scaleFactorY;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	WebGraph_CreateImage(800, 400);
+
+	maxLatitude		=	0;
+	minLatitude		=	0;
+	minLongitude	=	0;
+	maxLongitude	=	0;
+	validLatLonIdx	=	0;
+	for (iii=0; iii<kLatLonTacking_ArraySize; iii++)
+	{
+		hourValues[iii]		=	(iii * kLatLonTacking_deltaTime) / 3600.0;
+		if (gNMEAdata.latitudeHistory[iii] > maxLatitude)
+		{
+			maxLatitude		=	gNMEAdata.latitudeHistory[iii];
+		}
+		if (gNMEAdata.latitudeHistory[iii] < minLatitude)
+		{
+			minLatitude		=	gNMEAdata.latitudeHistory[iii];
+		}
+
+		if (gNMEAdata.longitudeHistory[iii] > maxLongitude)
+		{
+			maxLongitude	=	gNMEAdata.longitudeHistory[iii];
+		}
+		if (gNMEAdata.longitudeHistory[iii] < minLongitude)
+		{
+			minLongitude	=	gNMEAdata.longitudeHistory[iii];
+		}
+
+		if ((gNMEAdata.latitudeHistory[iii] != 0.0) && (gNMEAdata.longitudeHistory[iii] != 0.0))
+		{
+			validLatValues[validLatLonIdx]	=	gNMEAdata.latitudeHistory[iii];
+			validLonValues[validLatLonIdx]	=	gNMEAdata.longitudeHistory[iii];
+
+			validLatLonIdx++;
+		}
+	}
+
+	gNMEAdata.latitude_avg	=	STAT_CalcMean(validLatLonIdx,			validLatValues);
+	gNMEAdata.latitude_std	=	STAT_CalcStdDeviation(validLatLonIdx,	validLatValues);
+
+	gNMEAdata.longitude_avg	=	STAT_CalcMean(validLatLonIdx,			validLonValues);
+	gNMEAdata.longitude_std	=	STAT_CalcStdDeviation(validLatLonIdx,	validLonValues);
+
+	startX		=	0;
+	endX		=	25;
+	startY		=	gNMEAdata.latitude_avg - 0.1;
+	endY		=	gNMEAdata.latitude_avg + 0.1;
+	labelStepX	=	2;
+	labelStepY	=	0.025;
+
+	WebGraph_GraphDataArray(startX, endX, labelStepX,
+							startY, endY, labelStepY,
+							kLatLonTacking_ArraySize, hourValues, gNMEAdata.latitudeHistory,	kGraphPointMode_RedLine, &scaleFactorX, &scaleFactorY, true, true, true);
+
+
+
+	//*****************************************************
+	//*	figure out where the "current" time on the graph is
+	currentPtOnGraph	=	gNMEAdata.gpsTime / kLatLonTacking_deltaTime;
+	DrawCurrentPointTimeOnGraph(hourValues[currentPtOnGraph], scaleFactorX, scaleFactorY, 20000);
+
+
+	gNMEAdata.latitude_avg	=	STAT_CalcMean(validLatLonIdx,			validLatValues);
+	gNMEAdata.latitude_std	=	STAT_CalcStdDeviation(validLatLonIdx,	validLatValues);
+
+	gNMEAdata.longitude_avg	=	STAT_CalcMean(validLatLonIdx,			validLonValues);
+	gNMEAdata.longitude_std	=	STAT_CalcStdDeviation(validLatLonIdx,	validLonValues);
+
+#define	kLegendWidth_Lat	260
+
+	ccc	=	0;
+	WebGraph_DrawLegend(ccc++, kGraphPointMode_RedLine,		"Latitude",		kLegendWidth_Lat);
+//	WebGraph_DrawLegend(ccc++, kGraphPointMode_GreenLine,	"Longitude",	kLegendWidth_Lat);
+
+//	sprintf(legendText, "avg Lat = %7.3f", gNMEAdata.latitude_avg);
+//	WebGraph_DrawLegend(ccc++, -1,		legendText,	kLegendWidth_Lat);
+//	sprintf(legendText, "std Lat  = %7.3f", gNMEAdata.latitude_std);
+//	WebGraph_DrawLegend(ccc++, -1,		legendText,	kLegendWidth_Lat);
+//
+//	sprintf(legendText, "avg Lon = %7.3f", gNMEAdata.longitude_avg);
+//	WebGraph_DrawLegend(ccc++, -1,		legendText,	kLegendWidth_Lat);
+//	sprintf(legendText, "std Lon  = %7.3f", gNMEAdata.longitude_std);
+//	WebGraph_DrawLegend(ccc++, -1,		legendText,	kLegendWidth_Lat);
+
+	WebGraph_DrawTitle("Lat/ History (Lat/Lon vs Time (24-hrs))", _gdColorBlack);
+
+	WebGraph_SaveImage(imageFolderName, latlonGraphFileName);
+
+}
+
 #endif	//	_ENABLE_LAT_LON_TRACKING_
 
 #ifdef _ENABLE_ALTITUDE_TRACKING_
@@ -1096,7 +1214,7 @@ int			currentPtOnGraph;
 double		scaleFactorX;
 double		scaleFactorY;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	WebGraph_CreateImage(800, 400);
 
@@ -1375,6 +1493,7 @@ char	timeString[32];
 
 #ifdef _ENABLE_LAT_LON_TRACKING_
 		CreateLatLonHistoryPlot(htmlFile, imageFolderName,			latlonGraphFileName);
+		CreateLatDetailHistoryPlot(htmlFile, imageFolderName,		"latitudeDetail.jpg");
 #endif
 
 #ifdef _ENABLE_ALTITUDE_TRACKING_
@@ -1425,7 +1544,7 @@ char	timeString[32];
 					PrintHTMLtableCell_INT(htmlFile, gNMEAdata.theSats[iii].satellitePRN,	kFormat_6_0, kUnits_none);
 					PrintHTMLtableCell_INT(htmlFile, gNMEAdata.theSats[iii].reportCnt,		kFormat_6_0, kUnits_none);
 					PrintHTMLtableCell_INT(htmlFile, gNMEAdata.theSats[iii].elvevation,		kFormat_6_0, kUnits_degrees);
-					PrintHTMLtableCell_INT(htmlFile, gNMEAdata.theSats[iii].azimuth,			kFormat_6_0, kUnits_degrees);
+					PrintHTMLtableCell_INT(htmlFile, gNMEAdata.theSats[iii].azimuth,		kFormat_6_0, kUnits_degrees);
 					PrintHTMLtableCell_INT(htmlFile, gNMEAdata.theSats[iii].signal2Noise,	kFormat_6_0, kUnits_none);
 					PrintHTMLtableCell_INT(htmlFile, gNMEAdata.theSats[iii].maxSNR,			kFormat_6_0, kUnits_none);
 				fprintf(htmlFile, "		</TR>\n");
@@ -1442,6 +1561,7 @@ char	timeString[32];
 
 
 #ifdef _ENABLE_NMEA_SENTANCE_TRACKING_
+
 		//*********************************************************************************
 		fprintf(htmlFile, "<TABLE BORDER=1>\n");
 		fprintf(htmlFile, "		<TR>\n");

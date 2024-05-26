@@ -228,6 +228,8 @@ virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer
 															char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS	Telescope_TrackingOnOff(const bool newTrackingState,
 															char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Telescope_TrackingRate(TYPE_DriveRates newTrackingRate,
+															char *alpacaErrMsg);
 
 
 		virtual	TYPE_ASCOM_STATUS	Telescope_UnPark(		char *alpacaErrMsg);
@@ -236,7 +238,18 @@ virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer
 		virtual	int					Telescope_GetLimitSwitchStatus(const TYPE_LIMITSWITCH whichLimit);
 		virtual	TYPE_PierSide		Telescope_GetPhysicalSideOfPier(void);
 		virtual	TYPE_PierSide		Telescope_CalculateSideOfPier(void);
+		virtual	TYPE_PierSide		Telescope_CalculateDestinationSideOfPier(const double	newRtAscen_Hours,
+																			const double	newDeclination_Degrees);
 
+				TYPE_ASCOM_STATUS	ExtractRaDecArguments(	TYPE_GetPutRequestData	*reqData,
+															double					*rightAscension,
+															double					*declination,
+															char					*alpacaErrMsg,
+															const bool				ingoreCase=false);
+				TYPE_ASCOM_STATUS	ExtractAltAzArguments(	TYPE_GetPutRequestData	*reqData,
+															double					*altitude,
+															double					*azimuth,
+															char					*alpacaErrMsg);
 				//*	full list of ASCOM telescope properties
 				TYPE_TelescopeProperties	cTelescopeProp;
 

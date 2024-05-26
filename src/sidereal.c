@@ -59,7 +59,7 @@
 // **********************************************************************************
 void	CalcSiderealTime(	struct tm	*utcTime,
 							struct tm	*siderealTimePtr,
-							double		argLongitude)
+							double		argLongitude_degs)
 {
 struct tm	*utcTimePtr;
 time_t		utcSysTime;
@@ -87,7 +87,7 @@ double		gmstDegs;
 	gmstDegs	-=	jCent_cubed / 38710000.0;
 
 	// add the offset for longitude in degrees
-	gmstDegs 	+=	argLongitude;
+	gmstDegs 	+=	argLongitude_degs;
 
 	// convert from degrees to hours and then normalize 0 to 23.9999
 	gmstDegs	/=	15.0;
@@ -148,7 +148,7 @@ double		gmstDegs;
 }
 
 //**************************************************************************
-double	CalcSiderealTime_dbl(struct tm	*utcTime, double argLongitude)
+double	CalcSiderealTime_dbl(struct tm	*utcTime, double argLongitude_degs)
 {
 struct tm	myUtcTime;
 struct tm	mySiderTime;
@@ -159,11 +159,11 @@ time_t		currentTime;
 	{
 		currentTime	=	time(NULL);
 		myUtcTime	=	*gmtime(&currentTime);
-		CalcSiderealTime(&myUtcTime, &mySiderTime, argLongitude);
+		CalcSiderealTime(&myUtcTime, &mySiderTime, argLongitude_degs);
 	}
 	else
 	{
-		CalcSiderealTime(utcTime, &mySiderTime, argLongitude);
+		CalcSiderealTime(utcTime, &mySiderTime, argLongitude_degs);
 	}
 
 	siderTime_Dbl	=	mySiderTime.tm_hour +

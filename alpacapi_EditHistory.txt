@@ -1,4 +1,4 @@
-History Comments found =3378 in 513 files
+History Comments found =3462 in 515 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -7,7 +7,10 @@ PDS_ReadNASAfiles.c:32   	//*	Apr  4,	1992	Text from labels and headers reading 
 PDS_ReadNASAfiles.c:33   	//*	Apr 19,	1992	Working on database window etc.
 PDS_ReadNASAfiles.c:34   	//*	Apr 20,	1992	PDS database file working fantastically
 PDS_ReadNASAfiles.c:35   	//*	Apr 21,	1992	Cleaning up and bullet proofing the database window stuff
-PDS_ReadNASAfiles.c:36   	//*	Jun 22,	1992	Received 60 CD-ROMs from NASA
+PDS_ReadNASAfiles.c:36   	//*	Jun 22,	1992	Received Received 60 CD-ROMs from NASA
+PDS_ReadNASAfiles.c:37   	//*	Jun 22,	1992	Received Vol	9-12 of Voyager
+PDS_ReadNASAfiles.c:38   	//*	Jun 22,	1992	Received Vol 1-8  of Viking Orbiter of Mars
+PDS_ReadNASAfiles.c:39   	//*	Jun 22,	1992	Received Vol 1-48 of MaMagellan Mission to Venus
 PDS_ReadNASAfiles.c:40   	//*	Jun 22,	1992	Reading Viking Browse files (300 x 264)
 PDS_ReadNASAfiles.c:41   	//*	Jun 22,	1992	Reading Magellan "F" files (uncompressed)
 PDS_ReadNASAfiles.c:42   	//*	Jun 25,	1992	Working real good with Viking and Magellan CD-ROMs
@@ -19,6 +22,9 @@ PDS_ReadNASAfiles.c:47   	//*	Jul 11,	1992	Added code to close window routine to
 PDS_ReadNASAfiles.c:48   	//*	Sep  7,	1992	Started implemented"Open PDS Database" menu,	auto dim working
 PDS_ReadNASAfiles.c:49   	//*	Nov  6,	1992	Minor bugs fixed in voyager browse stuff
 PDS_ReadNASAfiles.c:50   	//*	Apr 15,	1993	Received 47 CD-ROMs from NASA
+PDS_ReadNASAfiles.c:51   	//*	Apr 15,	1993	Received Vol 49-67     of Magellan Mission to Venus
+PDS_ReadNASAfiles.c:52   	//*	Apr 15,	1993	Received Vol 2001-2013 of Magellan Mission to Venus
+PDS_ReadNASAfiles.c:53   	//*	Apr 15,	1993	Received Vol 2001-2013 of Viking Orbiter of Mars
 ParseNMEA.c:10           	//*	Apr 14,	1996	<KAS> Put the boxes for the Heads-Up-Display into a Dialog Box template
 ParseNMEA.c:11           	//*	Apr 19,	1996	<KAS> Separated NMEA and APRS Parse Routines
 eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
@@ -32,7 +38,7 @@ eph.c:11                 	//*	Nov 20,	1999	<MLS> Minor formatting cleanup to imp
 StarData.c:9             	//*	Nov 20,	1999	<MLS> major re-writing and re-organization
 ParseNMEA.c:16           	//*	Feb  6,	2001	<MLS> ReturnNMEAAltitude - Modified to use ATOF instead of ATOL
 ParseNMEA.c:17           	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentences
-ParseNMEA.c:1825         	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentenses
+ParseNMEA.c:1828         	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentenses
 ParseNMEA.c:18           	//*	May 20,	2002	<KAS> Started working on adaptive beaconing and corner pegging
 ParseNMEA.c:19           	//*	Sep 16,	2004	<MLS> Added support for $GPNVP for special Korean GPS, requested by customer
 ParseNMEA.c:20           	//*	Nov 17,	2004	<MLS> Started separating out NMEA parsing into smaller more manageable routines
@@ -46,7 +52,7 @@ ParseNMEA.c:24           	//*	Nov 21,	2012	<MLS> Added GetCurrentLatLon_Strings(
 ConsoleDebug.h:9         	//*	Nov 30,	2012	<MLS> Added CONSOLE_ERROR macros, same as CONSOLE_DEBUG but always print
 ParseNMEA.c:25           	//*	Dec  5,	2012	<MLS> Check for max SNR value from satellite GSV string
 ParseNMEA.c:26           	//*	Dec  5,	2012	<MLS> Added GetMaxSatSignalStrength()
-ParseNMEA.c:1489         	//*	Dec  5,	2012	<MLS> Check for max snr value from satellite GSV string
+ParseNMEA.c:1492         	//*	Dec  5,	2012	<MLS> Check for max snr value from satellite GSV string
 ParseNMEA.c:27           	//*	Jan  2,	2013	<MLS> Added LatLonType argument to ReturnNMEALatLon()
 ParseNMEA.h:12           	//*	Jan  2,	2013	<MLS> Added LatLonType to TYPE_NMEAInfoStruct
 ParseNMEA.c:28           	//*	Mar 12,	2013	<MLS> Added support for separate test program,
@@ -63,7 +69,7 @@ VectorMath.c:11          	//*	Mar 15,	2015	<MLS> Added Matrix_Determinant()
 VectorMath.c:12          	//*	Mar 15,	2015	<MLS> Added Matrix_Inverse()
 VectorMath.c:13          	//*	Mar 15,	2015	<MLS> Added Matrix_Transpose()
 ParseNMEA.c:30           	//*	Oct  3,	2016	<MLS> Updating to be a general purpose GPS parser
-ParseNMEA.c:1369         	//*	Oct  3,	2016	TODO: Compare this with MacAPRS code
+ParseNMEA.c:1372         	//*	Oct  3,	2016	TODO: Compare this with MacAPRS code
 ParseNMEA.h:13           	//*	Oct  3,	2016	<MLS> Added TYPE_timeHHMMSS
 ParseNMEA.h:14           	//*	Oct  3,	2016	<MLS> Added _ENABLE_SATELLITE_ALMANAC_ to save on memory if not needed
 NMEA_helper.c:9          	//*	Oct  4,	2016	<MLS> Created NMEA_helper.c to avoid duplication
@@ -99,7 +105,7 @@ GPS_graph.c:12           	//*	Apr 25,	2017	<MLS> Added Legend to satellite posit
 ParseNMEA.c:41           	//*	Apr 25,	2017	<MLS> Added _ENABLE_PDOP_TRACKING_
 GPS_graph.c:13           	//*	May  3,	2017	<MLS> Added plotting of altitude over time
 ParseNMEA.c:42           	//*	May  3,	2017	<MLS> Added _ENABLE_ALTITUDE_TRACKING_
-ParseNMEA.c:1826         	//*	May  3,	2017	<MLS> Copying Magellan code from MacAPRS
+ParseNMEA.c:1829         	//*	May  3,	2017	<MLS> Copying Magellan code from MacAPRS
 ParseNMEA.c:43           	//*	May  4,	2017	<MLS> Added parsing for ($PMGLF), no documentation on what it is
 ParseNMEA.c:44           	//*	May  4,	2017	<MLS> Added parsing for GPS sensor temp ($PGRMT)
 GPS_graph.c:14           	//*	May  9,	2017	<MLS> Added sat numbers on almanac
@@ -1378,7 +1384,7 @@ windowtab_skytravel.cpp:52	//*	Mar 11,	2021	<MLS> Clif suggested a different way
 cameradriver.cpp:140     	//*	Mar 13,	2021	<MLS> Added "saveallimages" command, logic was already in place
 cameradriver.cpp:141     	//*	Mar 13,	2021	<MLS> Added Put_SaveAllImages()
 controller_skytravel.cpp:16	//*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
-discoverythread.c:563    	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
+discoverythread.c:579    	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 sendrequest_lib.c:35     	//*	Mar 13,	2021	<MLS> Added timeout to GetJsonResponse()
 sendrequest_lib.c:36     	//*	Mar 13,	2021	<MLS> Added SetSocketTimeouts()
 sendrequest_lib.c:37     	//*	Mar 13,	2021	<MLS> Added send timeout
@@ -1777,7 +1783,7 @@ widget.h:10              	//*	Feb 21,	2022	<MLS> Changed kWidgetType_Graphic to 
 widget.h:11              	//*	Feb 21,	2022	<MLS> Deleted kWidgetType_Custom
 windowtab.cpp:63         	//*	Feb 21,	2022	<MLS> Changed all references of CvScalar to cv::Scalar
 GaiaSQL.cpp:32           	//*	Feb 22,	2022	<KAS> Fixed dangling result that caused the server to log an error
-GaiaSQL.cpp:786          	//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
+GaiaSQL.cpp:789          	//*	Feb 22,	2022	<KAS> Fixed dangling result Bug
 cameradriver_opencv.cpp:42	//*	Feb 23,	2022	<MLS> Working on converting C++ versions of opencv
 controller_image.cpp:14  	//*	Feb 25,	2022	<MLS> SetLiveWindowImage() working under C++ opencv
 windowtab_camera.cpp:40  	//*	Feb 25,	2022	<MLS> Downloading image working with C++ opencv
@@ -2033,7 +2039,7 @@ servo_mount.h:29         	//*	May 20,	2022	<RNS> Added park state functions plus
 servo_mount_cfg.c:38     	//*	May 20,	2022	<RNS> converted last 2 globals to use TYPE_MOUNT_CONFIG struct
 servo_mount_cfg.h:29     	//*	May 20,	2022	<RNS> added to flipWin and offTarget to TYPE_MOUNT_CONFIG
 servo_test_tty.c:26      	//*	May 20,	2022	<RNS> Removed globals that should be limited only to servo_mount.c
-servo_test_tty.c:27      	//*	May 20,	2022	<RNS> Added park state support 
+servo_test_tty.c:27      	//*	May 20,	2022	<RNS> Added park state support
 servo_mount.c:48         	//*	May 21,	2022	<RNS> added addr arg to RC_ MC cmds for multi-RC support
 servo_mount.c:49         	//*	May 21,	2022	<RNS> added _move_to_park() and mod'd Servo_state to set the Park flag
 servo_mount.c:50         	//*	May 21,	2022	<RNS> added Marked the internal routines static and commented out from .h
@@ -2111,7 +2117,7 @@ telescopedriver.cpp:59   	//*	May 30,	2022	<MLS> Fixed CanMoveAxis to handle 3 a
 windowtab_teleSettings.cpp:22	//*	May 30,	2022	<MLS> Added buttons for FindHome, Park
 controller.cpp:90        	//*	May 31,	2022	<MLS> Added RunCommandLine()
 controller_tscope_common.cpp:25	//*	May 31,	2022	<MLS> Added ability to determine if driver supports refraction
-servo_mc_core.c:38       	//*	May 31,	2022	<RNS> Removed the old hand coded RC messages and strings, obsolete 
+servo_mc_core.c:38       	//*	May 31,	2022	<RNS> Removed the old hand coded RC messages and strings, obsolete
 servo_mount.c:62         	//*	May 31,	2022	<RNS> Fixed a mask in servo_state
 servo_mount.c:63         	//*	May 31,	2022	<RNS> Add debug tags for servo_state and cal_opt_path for  multi returns
 servo_mount.c:64         	//*	May 31,	2022	<RNS> Fixed the RA rel direction sign, was returning HA vector, not RA
@@ -2293,8 +2299,8 @@ servo_mount_cfg.c:52     	//*	Jul  6,	2022	<MLS> Added Servo_check_mount_cfg()
 servo_observ_cfg.c:31    	//*	Jul  6,	2022	<MLS> Added Servo_check_observ_cfg()
 cameradriver_save.cpp:36 	//*	Jul  7,	2022	<MLS> Added Quaternion data to WriteIMUtextFile()
 imu_lib_bno055.c:18      	//*	Jul  7,	2022	<MLS> Added IMU_BNO055_Read_Quaternion()
-servo_motion.c:30        	//*	Jul  7,	2022	<RNS> Fixed move_by_time for absolute, not relative move 
-servo_motion.c:31        	//*	Jul  7,	2022	<RNS> Fixed a bug where encoderMaxRate was not set 
+servo_motion.c:30        	//*	Jul  7,	2022	<RNS> Fixed move_by_time for absolute, not relative move
+servo_motion.c:31        	//*	Jul  7,	2022	<RNS> Fixed a bug where encoderMaxRate was not set
 servo_motion_cfg.c:34    	//*	Jul  7,	2022	<RNS> Added support for *_ENC_MAX: and encoderMaxRate
 servo_motion_cfg.h:30    	//*	Jul  7,	2022	<RNS> Added enum support for max encoder rate
 servo_rc_utils.c:60      	//*	Jul  7,	2022	<RNS> Fixed move_by_pos* bugs with negative vel/acc/decel
@@ -2321,7 +2327,7 @@ controller_tasktiming.cpp:21	//*	Jul 21,	2022	<MLS> Created controller_tasktimin
 controller_tasktiming.cpp:22	//*	Jul 21,	2022	<MLS> Added TaskTiming_Init(), TaskTiming_SetName()
 controller_tasktiming.cpp:23	//*	Jul 21,	2022	<MLS> Added TaskTiming_Start(), TaskTiming_Stop()
 windowtab_skytravel.cpp:108	//*	Jul 21,	2022	<MLS> Added _USE_LARGE_FONT_FOR_PUBLICATION_ for GAIA paper
-servo_mount.c:93         	//*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins 
+servo_mount.c:93         	//*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins
 cameradriver_fits.cpp:87 	//*	Jul 25,	2022	<MLS> Added WriteFITS_IMUinfo()
 cameradriver_save.cpp:37 	//*	Jul 25,	2022	<MLS> Increased # of decimal points in WriteIMUtextFile()
 StarData.c:19            	//*	Aug  1,	2022	<MLS> Added magnitude to special.txt parsing
@@ -2490,7 +2496,7 @@ spectrodrvr_usis.cpp:29  	//*	Oct 26,	2022	<MLS> More work on full USIS implemen
 servo_motion.c:34        	//*	Oct 27,	2022	<RNS> Changed reset_motor() to use motion and not RC calls
 servo_motion.c:35        	//*	Oct 28,	2022	<RNS> Added set/get calls for absZero motor field
 servo_motion.h:27        	//*	Oct 28,	2022	<RNS> Updated via cproto
-servo_motion_cfg.c:35    	//*	Oct 28,	2022	<RNS> Added support for absZero field 
+servo_motion_cfg.c:35    	//*	Oct 28,	2022	<RNS> Added support for absZero field
 servo_motion_cfg.h:31    	//*	Oct 28,	2022	<RNS> added absZero field for  original zero relative to currpos
 servo_mount.c:94         	//*	Oct 28,	2022	<RNS> Added support to initilize motor absZero field
 servo_motion.c:36        	//*	Nov  1,	2022	<RNS> Added error checks for trackrate and absZero calls
@@ -2665,7 +2671,7 @@ rotatordriver_sim.cpp:26 	//*	Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> P
 switchdriver_sim.cpp:25  	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.cpp
 switchdriver_sim.h:11    	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.h
 alpacadriver.cpp:157     	//*	Mar  3,	2023	<MLS> Added ProcessAlpacaCommand()
-alpacadriver.cpp:4022    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
+alpacadriver.cpp:4086    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
 alpacadriver_helper.c:13 	//*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
 calibration_sim.cpp:20   	//*	Mar  3,	2023	<MLS> Created calibration_sim.cpp
 cameradriver_SONY.cpp:1295	//*	Mar  3,	2023	<MLS> this line caused a compile err
@@ -2760,6 +2766,8 @@ windowtab_spectro.cpp:22 	//*	May  6,	2023	<MLS> Re-arranged display order of pr
 alpacadriver.cpp:163     	//*	May  7,	2023	<MLS> Added comment argument to GetCommandArgumentString
 alpacadriver.cpp:164     	//*	May  7,	2023	<MLS> Added OuputCommandTableNotes()
 alpaca_defs.h:74         	//*	May  9,	2023	<MLS> Changed TYPE_Sensor to TYPE_InstSensor to avoid confusion
+switchdriver.cpp:47      	//*	May 17,	2023	<MLS> Updated GetSwitchID() to generate http errors
+switchdriver.cpp:48      	//*	May 17,	2023	<MLS> CONFORUMU -> Found 0 errors, 3 issues and 3 information messages.
 controller_startup.cpp:21	//*	May 21,	2023	<MLS> Created controller_startup.cpp
 windowtab_startup.cpp:21 	//*	May 21,	2023	<MLS> Created windowtab_startup.cpp
 controller_startup.cpp:22	//*	May 23,	2023	<MLS> Added SetStartupTextStatus()
@@ -2857,9 +2865,9 @@ controller_switch.cpp:37 	//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() 
 controller_telescope.cpp:26	//*	Jun 18,	2023	<MLS> Added UpdateSupportedActions() to Telescope controller
 domedriver.cpp:81        	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to domedriver
 filterwheeldriver.cpp:46 	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to filterwheel driver
-focuserdriver.cpp:45     	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to focuser dirver
+focuserdriver.cpp:45     	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to focuser driver
 obsconditionsdriver.cpp:43	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to obsConditions driver
-rotatordriver.cpp:46     	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to rotor driver
+rotatordriver.cpp:46     	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to rotator driver
 telescopedriver.cpp:66   	//*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to telescope driver
 windowtab.cpp:94         	//*	Jun 18,	2023	<MLS> Added DeviceSelect to SetupWindowBottomBoxes()
 windowtab.cpp:95         	//*	Jun 18,	2023	<MLS> Adding DS indicator next to Readall indicator on all windowtabs
@@ -2939,7 +2947,7 @@ controller_filterwheel.cpp:27	//*	Jun 25,	2023	<MLS> Added AlpacaProcessReadAll(
 controller_rotator.cpp:25	//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities() to rotator controller
 controller_startup.cpp:25	//*	Jun 25,	2023	<MLS> Added RunBackgroundTasks() to startup for auto refresh and auto close
 controller_tscope_common.cpp:30	//*	Jun 25,	2023	<MLS> Added AlpacaGetCapabilities()
-discoverythread.c:564    	//*	Jun 25,	2023	<MLS> Increased GetJsonResponse() to 5 seconds (was 3)
+discoverythread.c:580    	//*	Jun 25,	2023	<MLS> Increased GetJsonResponse() to 5 seconds (was 3)
 common_AlpacaCmds.h:2    	//*	Jun 26,	2023	<MLS> Created common_AlpacaCmds.h
 controller.cpp:110       	//*	Jun 26,	2023	<MLS> Started on common command table lookup structure
 controllerAlpaca.cpp:57  	//*	Jun 26,	2023	<MLS> Added AlpacaProcessReadAllIdx()
@@ -3085,7 +3093,7 @@ cameradriver_gps.cpp:30  	//*	Sep  5,	2023	<MLS> Working on matching SharpCap FI
 cameradriver_QHY.cpp:43  	//*	Sep  5,	2023	<MLS> More work on qhy image header
 ConsoleDebug.h:18        	//*	Sep  5,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE() to quite mode
 ParseNMEA.c:61           	//*	Sep  5,	2023	<MLS> Removing global gNMEAdata, replacing with pointer
-ParseNMEA.c:1447         	//*	Sep  5,	2023	<MLS> Added NumSats from GPGSV
+ParseNMEA.c:1450         	//*	Sep  5,	2023	<MLS> Added NumSats from GPGSV
 ParseNMEA.h:22           	//*	Sep  5,	2023	<MLS> Added	currSatsInUse & currSatMode
 alpacadriver.cpp:178     	//*	Sep  6,	2023	<MLS> Added all the device version info to Get_Readall_Common()
 cameradriver_overlay.cpp:25	//*	Sep  6,	2023	<MLS> Created cameradriver_overlay.cpp
@@ -3154,7 +3162,7 @@ windowtab_about.cpp:26   	//*	Oct  2,	2023	<MLS> Fixed fitsio dependency
 helper_functions.c:20    	//*	Oct  3,	2023	<MLS> Added Millis() because millis() on R-Pi was behaving strangely
 raspberrypi_relaylib.c:27	//*	Oct  3,	2023	<MLS> Added initial state to RpiRelay_Init()
 alpacadriver.cpp:182     	//*	Nov  1,	2023	<MLS> Fixed git hub issue #29 - issues with
-alpacadriver.cpp:183     	//*	Nov  1,	2023	<MLS>	/management/v1/description?ClientID=1&ClientTransactionID=2
+alpacadriver.cpp:183     	//*	Nov  1,	2023	<MLS> /management/v1/description?ClientID=1&ClientTransactionID=2
 alpaca_defs.h:89         	//*	Nov  1,	2023	<MLS> Pushed Build 172
 alpaca_defs.h:90         	//*	Nov  1,	2023	<MLS> Build 173
 controller.cpp:113       	//*	Nov 21,	2023	<MLS> Fixed HandleKeyDown() control functions, tolower is NOT working
@@ -3177,6 +3185,7 @@ windowtab_drvrInfo.cpp:25	//*	Dec 17,	2023	<MLS> Added ActivateWindow() to drive
 controller_alpacaUnit.cpp:21	//*	Dec 23,	2023	<MLS> Added Software libraries window tab
 controller_alpacaUnit.cpp:22	//*	Dec 23,	2023	<MLS> Added AlpacaGetSoftwareLibraries()
 windowtab_libraries.cpp:21	//*	Dec 23,	2023	<MLS> Created windowtab_libraries.cpp
+cameradriver_overlay.cpp:26	//*	Mau 24,	2024	<MLS> Added _IMAGE_OVERLAY_
 alpaca_defs.h:91         	//*	Jan  1,	2024	-----------------------------------------------------------
 windowtab_alpacalist.cpp:28	//*	Jan  6,	2024	<MLS> Added Help button to alpaca list
 socket_listen.c:28       	//*	Jan  8,	2024	<MLS> Added _SHOW_HTTP_DATA_
@@ -3254,7 +3263,7 @@ controller_image.cpp:34  	//*	Mar 23,	2024	<MLS> Added IsFilePDS()
 windowtab.cpp:108        	//*	Mar 23,	2024	<MLS> Added LaunchWebURL()
 windowtab_fitsheader.cpp:22	//*	Mar 23,	2024	<MLS> Added double click to open any web link specified
 controller_image.cpp:35  	//*	Mar 24,	2024	<MLS> Added IsFileFITS()
-controller_image.cpp:36  	//*	Mar 24,	2024	<MLS> Added DrawTitleBlock_FITS() & DrawTitleBlock_PDS()
+controller_image.cpp:36  	//*	Mar 24,	2024	<MLS> Added DrawTitleBlock_FITS()
 controller_skyimage.cpp:12	//*	Mar 24,	2024	<MLS> Added recursive directory reading
 controller_skyimage.cpp:13	//*	Mar 24,	2024	<MLS> Fixed crash bug when image failed to load
 cameradriver.cpp:209     	//*	Mar 25,	2024	<MLS> Read NASA Moon Phase on creation of camera objects
@@ -3330,7 +3339,7 @@ cameradriver.cpp:210     	//*	Apr 19,	2024	<MLS> Added check for flip enabled to
 cameradriver.h:31        	//*	Apr 19,	2024	<MLS> Added kImageType_MONO8
 cameradriver_PlayerOne.cpp:29	//*	Apr 19,	2024	<MLS> Created cameradriver_PlayerOne.cpp
 cameradriver_PlayerOne.h:11	//*	Apr 19,	2024	<MLS> Created cameradriver_PlayerOne.h
-telescopedriver_ExpSci.cpp:33	//*	Apr 20,	2024	<MLS> Ordered Exlpore Scientific iEXOS-100-2 PMC-Eight Equatorial Tracker System
+telescopedriver_ExpSci.cpp:33	//*	Apr 20,	2024	<MLS> Ordered Explore Scientific iEXOS-100-2 PMC-Eight Equatorial Tracker System
 cameradriver_OGMA.cpp:30 	//*	Apr 21,	2024	<MLS> Discussed Alpaca protocol with Juan Martinez at OGMA
 cameradriver_OGMA.cpp:31 	//*	Apr 21,	2024	<MLS> Juan told me that OGMA is almost identical to ToupTek, nearly identical SDK
 cameradriver_OGMA.cpp:32 	//*	Apr 21,	2024	<MLS> OGMA cameras gave me one of their low-end cameras https://getogma.com/
@@ -3363,10 +3372,85 @@ web_graphics_opencv.h:9  	//*	Apr 26,	2024	<MLS> Created web_graphics_opencv.h
 gps_data.cpp:13          	//*	Apr 27,	2024	<MLS> GPS graph working from alpacapi driver
 GPS_graph.c:20           	//*	Apr 27,	2024	<MLS> Added _ENABLE_HTML_OUTPUT_
 alpacadriver.cpp:189     	//*	Apr 28,	2024	<MLS> Fixed ProcessGetPutRequest() to properly handle image requests
-telescopedriver.cpp:75   	//*	APr 28,	2024	<MLS> Added DumpTelescopeDriverStruct()
+alpacadriver_gps.cpp:29  	//*	Apr 28,	2024	<MLS> Added PrintLatLonStatsTable()
+telescopedriver.cpp:75   	//*	Apr 28,	2024	<MLS> Added DumpTelescopeDriverStruct()
+alpacadriver.h:34        	//*	Apr 29,	2024	<MLS> Added cSendJSONresponse to handle setupdialog
+alpacadriver_gps.cpp:30  	//*	Apr 29,	2024	<MLS> Added PrintNMEA_SentanceTable()
 alpaca_defs.h:97         	//*	Apr 29,	2024	<MLS> Build 177
-cameradriver.cpp:212     	//*	Jan  1,	2119	<TODO> ----------------------------------------
-cameradriver.cpp:213     	//*	Jun 26,	2119	<TODO> Add support for sub frames
+common_AlpacaCmds.cpp:7  	//*	Apr 29,	2024	<MLS> Added "setupdialog" command
+controller_image.cpp:43  	//*	May  5,	2024	<MLS> Changed DrawTitleBlock_FITS() to DrawTitleBlock_ImageHeader()
+controller_image.cpp:44  	//*	May  5,	2024	<MLS> Added image header support for NASA PDS images
+controller_image.cpp:45  	//*	May  5,	2024	<MLS> Added RunFastBackgroundTasks() to controller_image.cpp
+controller_skyimage.cpp:15	//*	May  5,	2024	<MLS> Fixed bug in running background tasks
+PDS_ReadNASAfiles.c:60   	//*	May  5,	2024	<MLS> Added readImageData flag to PDS_ReadHeaderAndImage()
+windowtab_imageList.cpp:21	//*	May  5,	2024	<MLS> Added object column to image display list
+controller_skyimage.cpp:16	//*	May  7,	2024	<MLS> Modified file name parsing to display partial path
+telescopedriver_ExpSci.cpp:36	//*	May  8,	2024	<MLS> Received iEXOS-100-2 PMC-Eight from Explore Scientifc
+telescopedriver_ExpSci.cpp:37	//*	May  9,	2024	<MLS> Communications working to PCM8
+telescopedriver_ExpSci.cpp:38	//*	May  9,	2024	<MLS> Park command working (mostly)
+telescopedriver_ExpSci.cpp:39	//*	May  9,	2024	<MLS> Added DumpPMC8data()
+usbmanager.cpp:32        	//*	May  9,	2024	<MLS> Added auto init to USB_GetPathFromID()
+telescopedriver.cpp:76   	//*	May 10,	2024	<MLS> Added Telescope_TrackingRate()
+telescopedriver_ExpSci.cpp:40	//*	May 10,	2024	<MLS> Added SetPMC8parameters()
+telescopedriver_ExpSci.cpp:41	//*	May 10,	2024	<MLS> Tracking rates working properly
+NASA_moonphase.cpp:30    	//*	May 11,	2024	<MLS> Added CalculateDeclinationAvg()
+telescopedriver_ExpSci.cpp:42	//*	May 11,	2024	<MLS> Added MotorCounts_to_RA() (from Driver.vb)
+telescopedriver_ExpSci.cpp:43	//*	May 11,	2024	<MLS> Added MotorCounts_to_DEC() (from Driver.vb)
+telescopedriver_ExpSci.cpp:44	//*	May 12,	2024	<MLS> Added DEC_to_MotorCounts() (from Driver.vb)
+telescopedriver_ExpSci.cpp:45	//*	May 12,	2024	<MLS> Added RA_to_MotorCounts() (from Driver.vb)
+telescopedriver_ExpSci.cpp:46	//*	May 12,	2024	<MLS> GOTO working
+telescopedriver_ExpSci.cpp:47	//*	May 12,	2024	<MLS> Have functioning driver in only 4 days
+telescopedriver_ExpSci.cpp:48	//*	May 12,	2024	<MLS> Added UpdateRaDec()
+telescopedriver.cpp:77   	//*	May 13,	2024	<MLS> Fixed logic in Put_SlewToTargetAsync() to match Alpaca specs
+telescopedriver.cpp:78   	//*	May 13,	2024	<MLS> Added Telescope_CalculateDestinationSideOfPier()
+telescopedriver_ExpSci.cpp:49	//*	May 13,	2024	<MLS> Added CalcTrackingRateFromStepValue()
+telescopedriver_ExpSci.cpp:50	//*	May 13,	2024	<MLS> Added CalcAxisRateFromStepValue()
+telescopedriver_ExpSci.cpp:51	//*	May 13,	2024	<MLS> Copied Side of Pier calculations from Driver.vb
+telescopedriver.cpp:79   	//*	May 14,	2024	<MLS> Fixed no Park error in FindHome(), MoveAxis() && SlewToCoordinatesAsync()
+alpaca_defs.h:98         	//*	May 15,	2024	<MLS> Added TYPE_GuideDirections enums
+discoverythread.c:36     	//*	May 15,	2024	<MLS> Added _DEBUG_DISCOVERY_
+JsonResponse.c:47        	//*	May 15,	2024	<MLS> Added JsonResponse_Add_Uint32()
+telescopedriver.cpp:80   	//*	May 15,	2024	<MLS> Added range checks to MoveAxis() to satisfy CONFORM
+telescopedriver_ExpSci.cpp:52	//*	May 15,	2024	<MLS> Added ProcessAcceleration_RA() & ProcessAcceleration_DEC()
+telescopedriver_ExpSci.cpp:53	//*	May 15,	2024	<MLS> Received ASCOM driver V2.0 dated 29-MAR-2024 from <WEH>
+telescopedriver_ExpSci.cpp:54	//*	May 15,	2024	<MLS> Updated SideOfPier routines
+windowtab_MoonPhase.cpp:29	//*	May 15,	2024	<MLS> Added RA/Dec to moon phase display
+windowtab_teleTracking.cpp:21	//*	May 16,	2024	<MLS> Created windowtab_teleTracking.cpp
+alpacadriver.cpp:190     	//*	May 17,	2024	<MLS> Added features to allow returning http error codes like 400
+calibrationdriver.cpp:44 	//*	May 17,	2024	<MLS> Added http error 400 processing to covercalibraor driver
+calibrationdriver.cpp:45 	//*	May 17,	2024	<MLS> CONFORMU-covercalibraor -> PASSED!!!!!!!!!!!!!!
+cameradriver.cpp:211     	//*	May 17,	2024	<MLS> Started adding http error 400 to camera methods
+domedriver.cpp:86        	//*	May 17,	2024	<MLS> Added http error 400 processing to dome driver
+filterwheeldriver.cpp:47 	//*	May 17,	2024	<MLS> Added http error 400 processing to filterwheel driver
+filterwheeldriver.cpp:48 	//*	May 17,	2024	<MLS> Added http error 400 to Put_Position()
+filterwheeldriver.cpp:49 	//*	May 17,	2024	<MLS> CONFORMU-filterwheel -> PASSED!!!!!!!!!!!!!!
+focuserdriver.cpp:46     	//*	May 17,	2024	<MLS> Added http error 400 processing to focuser driver
+helper_functions.c:22    	//*	May 17,	2024	<MLS> Added IsValidNumericString()
+helper_functions.c:23    	//*	May 17,	2024	<MLS> Added IsValidTrueFalseString()
+JsonResponse.c:48        	//*	May 17,	2024	<MLS> Added httpRetCode to JsonResponse_FinishHeader()
+JsonResponse.c:49        	//*	May 17,	2024	<MLS> Added httpRetCode to JsonResponse_Add_Finish()
+obsconditionsdriver.cpp:44	//*	May 17,	2024	<MLS> Added http error 400 processing to obsConditions driver
+RequestData.h:20         	//*	May 17,	2024	<MLS> Added httpRetCode to TYPE_GetPutRequestData struct
+switchdriver.cpp:49      	//*	May 17,	2024	<MLS> Started on http 400 error support for switch driver
+telescopedriver.cpp:81   	//*	May 17,	2024	<MLS> Added ExtractRaDecArguments() & ExtractAltAzArguments()
+telescopedriver.cpp:82   	//*	May 17,	2024	<MLS> Added http error 400 processing to telescope driver
+telescopedriver_ExpSci.cpp:55	//*	May 17,	2024	<MLS> Added ProcessESGI()
+alpacadriver.cpp:191     	//*	May 18,	2024	<MLS> Added _DEBUG_MANAGEMENT_
+alpacadriver.cpp:192     	//*	May 18,	2024	<MLS> Fixed cSendJSONresponse bug, not initialized to true
+managementdriver.cpp:41  	//*	May 18,	2024	<MLS> Added _DEBUG_MANAGEMENT_
+rotatordriver.cpp:47     	//*	May 18,	2024	<MLS> Started on http 400 error support for rotator driver
+alpacadriverSetup.cpp:32 	//*	May 19,	2024	<MLS> Added Setup_OutputNumberBox()
+telescopedriver_ExpSci.cpp:56	//*	May 20,	2024	<MLS> Added movement limits for slewing
+opencv_utils.cpp:14      	//*	May 22,	2024	<MLS> Added IsOpenCVimageValid()
+windowtab.cpp:113        	//*	May 22,	2024	<MLS> Added ClearWidgetImage()
+windowtab_fov.cpp:32     	//*	May 23,	2024	<MLS> Added diagonal dimension in mm (calculated)
+windowtab_MoonPhase.cpp:30	//*	May 23,	2024	<MLS> Added RA/Dec graph moon phase display
+windowtab_fov.cpp:33     	//*	May 25,	2024	<MLS> Added ProcessMouseEvent(), ProcessLineSelect(), SetNewSelectedDevice()
+windowtab_fov.cpp:34     	//*	May 25,	2024	<MLS> Line select now working in FOV window
+alpaca_defs.h:99         	//*	May 26,	2024	<MLS> Build 178
+cameradriver_PlayerOne.cpp:35	//*	May 26,	2024	<MLS> Fixed common property "Name"  aka DeviceName
+cameradriver.cpp:213     	//*	Jan  1,	2119	<TODO> ----------------------------------------
+cameradriver.cpp:214     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:48 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:49 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -3377,19 +3461,19 @@ controller_camera.cpp:79 	//*	Feb  6,	2121	<TODO> Move downloading of images to 
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3378 in 513 files
-Total lines              = 239476
-Total comment Lines      = 39002 (16.3%)
-Total comments           = 43750 (18.3%)
-Total history comments   = 3378 (1.4%)
+History Comments found   = 3462 in 515 files
+Total lines              = 243886
+Total comment Lines      = 39953 (16.4%)
+Total comments           = 44805 (18.4%)
+Total history comments   = 3462 (1.4%)
 Total C files            = 69
-Total C++ files          = 192
-Total H files            = 250
-Preprocssor cnt          = 7681
-Total SLOC               = 152125
-Total SLOC-Logical       = 117254
+Total C++ files          = 193
+Total H files            = 251
+Preprocssor cnt          = 7789
+Total SLOC               = 154996
+Total SLOC-Logical       = 119518
 Programmer comment summary
-MLS             = 2974
+MLS             = 3052
 TODO            =   11
 DDB             =    1
 JMH             =    3

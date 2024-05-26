@@ -44,7 +44,7 @@
 #endif
 
 
-
+#undef kDomeWindowWidth
 #define	kDomeWindowWidth	1000
 #define	kDomeWindowHeight	720
 

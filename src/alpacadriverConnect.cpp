@@ -124,14 +124,14 @@ char				argumentString[32];
 //*****************************************************************************
 bool	AlpacaDriver::AlpacaConnect(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	return(true);
 }
 
 //*****************************************************************************
 bool	AlpacaDriver::AlpacaDisConnect(void)
 {
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 	return(false);
 }
 

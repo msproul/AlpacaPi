@@ -67,10 +67,13 @@ typedef struct	//	TYPE_CmdEntry
 //*****************************************************************************
 //*	Helper functions
 #define	kArgumentIsNumeric	true
+#define	kRequireCase		false
+#define	kIgnoreCase			true
 bool			GetKeyWordArgument(	const char	*dataSource,
 									const char	*keyword,
 									char		*argument,
 									const int	maxArgLen,
+									const bool	ingoreCase=false,
 									const bool	argIsNumeric=false);
 
 

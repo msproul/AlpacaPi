@@ -116,7 +116,7 @@ void	WindowTabFITSheader::SetNewSelectedDevice(int lineIndex)
 {
 int		iii;
 
-	if (lineIndex >= 0)
+	if ((cFitsHeaderText != NULL) && (lineIndex >= 0))
 	{
 		//*	clear out previous selections
 		for (iii=0; iii<cFitsLineCount; iii++)
@@ -140,12 +140,15 @@ int		theExtendedChar;
 
 	//*	find a selected device
 	deviceIndex	=	-1;
-	for (iii=0; iii<cFitsLineCount; iii++)
+	if (cFitsHeaderText != NULL)
 	{
-		if (cFitsHeaderText[iii].lineSelected)
+		for (iii=0; iii<cFitsLineCount; iii++)
 		{
-			deviceIndex	=	iii;
-			break;
+			if (cFitsHeaderText[iii].lineSelected)
+			{
+				deviceIndex	=	iii;
+				break;
+			}
 		}
 	}
 

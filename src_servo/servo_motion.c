@@ -27,8 +27,8 @@
 //*	Jul  3,	2022	<RNS> Moved MC_comm initialization to Motion_init()
 //*	Jul  4,	2022	<RNS> Implemented Motion_get_axis_state()
 //*	Jul  4,	2022	<RNS> Implemented Motion_move_axis_by_time
-//*	Jul  7,	2022	<RNS> Fixed move_by_time for absolute, not relative move 
-//*	Jul  7,	2022	<RNS> Fixed a bug where encoderMaxRate was not set 
+//*	Jul  7,	2022	<RNS> Fixed move_by_time for absolute, not relative move
+//*	Jul  7,	2022	<RNS> Fixed a bug where encoderMaxRate was not set
 //*	Jul 11,	2022	<RNS> Tweaked the _PID functions to work better for RC
 //*	Jul 12,	2022	<RNS> Moved code around to help with the queue glitch
 //*	Oct 27,	2022	<RNS> Changed reset_motor() to use motion and not RC calls
@@ -403,7 +403,7 @@ int Motion_wait_axis_buffer_clear(uint8_t axis)
 {
 TYPE_MOTION_MOTOR 	*motor;
 uint8_t 			raState, decState, motorState;
-int 				status = kSTATUS_OK; 
+int 				status = kSTATUS_OK;
 
 	motor = Motion_get_motor_ptr(axis);
 	if (motor == NULL)
@@ -498,7 +498,7 @@ int					status;
 	// Update the motor state and send move cmd
 	motor->state	=	MOVING_BY_TIME;
 	Motion_get_axis_trackRate(axis, &startVel);
-	// printf("StartVel = %d\n", startVel); 
+	// printf("StartVel = %d\n", startVel);
 	Motion_get_axis_acc(axis, &acc);
 
 	// Calc the move distance for the time period assuming a rapid decel
@@ -511,7 +511,7 @@ int					status;
 
 	// Move current position by dis for the approximte time duration with really fast decel
 	RC_get_curr_pos(motor->addr, axis, &currPos);
-	dist += currPos; 
+	dist += currPos;
 	status	=	RC_move_by_posvad(motor->addr, axis, dist, abs(vel), motor->acc, 0, false);
 	status 	-= 	Motion_wait_axis_buffer_clear(axis);
 
@@ -559,7 +559,7 @@ int32_t				currPos;
 	}
 	// Get the current step position and subtract it from the current absZero
 	RC_get_curr_pos(motor->addr, axis, &currPos);
-	motor->absZero -= currPos; 
+	motor->absZero -= currPos;
 	// Now set the current position to zero
 	RC_set_home(motor->addr, axis);
 	return kSTATUS_OK;
@@ -569,7 +569,7 @@ int32_t				currPos;
 //*************************************************************************
 int Motion_reset_axis(uint8_t axis)
 {
-int 				status; 
+int 				status;
 TYPE_MOTION_MOTOR	*motor;
 
 	motor	=	Motion_get_motor_ptr(axis);
@@ -584,7 +584,7 @@ TYPE_MOTION_MOTOR	*motor;
 		printf("ERROR!!!  Motion_reset_axis() returned error\n");
 	}
 	Motion_set_axis_buffer(axis, false);
-	// CO'd to use the motion* routine instead of the RC* routine 
+	// CO'd to use the motion* routine instead of the RC* routine
 	//RC_set_home(motor->addr, axis);
 	Motion_set_axis_zero(axis);
 
@@ -629,10 +629,10 @@ int status;
 int main(void)
 {
 	int status;
-	// int addr = 128; 
+	// int addr = 128;
 	uint8_t raState, decState;
 	char buf[256];
-	int i; 
+	int i;
 
 	status = Motion_init("servo_motion.cfg");
 	if (status != kSTATUS_OK)

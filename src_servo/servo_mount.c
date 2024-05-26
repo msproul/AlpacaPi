@@ -90,7 +90,7 @@
 //*	Jul 12,	2022	<RNS> Fixed a ton of initialization in Servo_init()
 //*	Jul 20,	2022	<RNS> Fixed sign error in _move_to_static for relative RA direction
 //*	Jul 20,	2022	<RNS> Fixed if-else braces error in COP for Fork mount
-//*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins 
+//*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins
 //*	Oct 28,	2022	<RNS> Added support to initilize motor absZero field
 //*	Nov 04,	2022	<RNS> Rewrote move_to_park to use absZero encoder values
 //*	Nov 11,	2022	<RNS> Fixed/toggled RA vs. HA relative direction in COP_type()
@@ -796,7 +796,7 @@ double	currRa, currDec;
 		Servo_set_axis_tracking(SERVO_RA_AXIS, gMountConfig.ra.defaultRate);
 
 		// Initialize all the zero position fields and set timestamp
-		Motion_set_axis_absZero(SERVO_RA_AXIS, 0); 
+		Motion_set_axis_absZero(SERVO_RA_AXIS, 0);
 		gMountConfig.ra.zeroPos = 0.0;
 		gMountConfig.ra.zeroTS = Time_get_systime();
 
@@ -815,7 +815,7 @@ double	currRa, currDec;
 		Motion_set_axis_profile(SERVO_DEC_AXIS);
 		gMountConfig.dec.defaultRate = 0;
 		Servo_set_axis_tracking(SERVO_DEC_AXIS, gMountConfig.dec.defaultRate);
-		Motion_set_axis_absZero(SERVO_DEC_AXIS, 0); 
+		Motion_set_axis_absZero(SERVO_DEC_AXIS, 0);
 		gMountConfig.dec.zeroPos = 0.0;
 		gMountConfig.dec.zeroTS = Time_get_systime();
 
@@ -1032,14 +1032,14 @@ int		status	=	kSTATUS_OK;
 
 		Motion_set_axis_buffer(SERVO_RA_AXIS, false);
 		status	-=	Motion_move_axis_by_step(SERVO_RA_AXIS, raStep);
-		
+
 		Motion_get_pending_cmds(&raState, &decState);
 		printf("S_mst: After RA M_mabs Qra:%d Qdec%d\n", raState, decState);
 		printf("!!! raStep = %d  vel = %d  acc = %d\n", raStep, gMountConfig.ra.vel, gMountConfig.ra.acc);
 
 		// This velocity command will start when the above pos cmd completes
 		// Buffered move by tracking velocity
-				
+
 		Motion_get_pending_cmds(&raState, &decState);
 		printf("S_mst: Before RA M_mabv Qra:%d Qdec:%d\n", raState, decState);
 
@@ -1148,7 +1148,7 @@ static void Servo_calc_flip_coordins(double *ra, double *dec, double *direction,
 //*****************************************************************************
 // This routine will find the shortest path between two points on a circle
 // Circle size is supplied by the 'max' arg, and for RA it is 24.0, Dec is 360.0
-// It will return the vector needed to move from the start position in the 
+// It will return the vector needed to move from the start position in the
 // selected units.  This was a PITA
 //*****************************************************************************
 double Servo_calc_short_vector(double begin, double end, double max)
@@ -1196,10 +1196,10 @@ double	modDiff;
 //*****************************************************************************
 int Servo_COP_type(double startRaHa, double raPath, double flipWin)
 {
-	double haPath; 
+	double haPath;
 
 	// HA relative direction is reversed from RA relative direction
-	haPath = -raPath; 
+	haPath = -raPath;
 	// If starting position is on the EAST side of the meridian
 	if (startRaHa < 0.0)
 	{
@@ -1234,48 +1234,48 @@ int Servo_COP_type(double startRaHa, double raPath, double flipWin)
 } // of Servo_COP_move_type()
 
 //*****************************************************************************
-// INTERNAL ROUNTINE: Checks the RA path to avoid moving the RA axis more than 
-// 12H (180degs) from current LST using hour angle math.  We want to keep the 
-// mount 'upright' to avoid cable wrap issues. 
+// INTERNAL ROUNTINE: Checks the RA path to avoid moving the RA axis more than
+// 12H (180degs) from current LST using hour angle math.  We want to keep the
+// mount 'upright' to avoid cable wrap issues.
 // TODO: Need to flip to static once fully debugged
 //*****************************************************************************
 bool Servo_check_RA_axis_for_wrap(double startRaHa, double raPath)
 {
-	double haPath; 
+	double haPath;
 
 	// HA relative direction is reversed from RA relative direction
-	haPath = -raPath; 
+	haPath = -raPath;
 	// If the end path is outside the region of +/- 12.0 HA
 	if (fabs(startRaHa + haPath) > 12.0)
 	{
-		return true; 
+		return true;
 	}
-	else 
+	else
 	{
-		return false; 
+		return false;
 	}
 } // of Servo_check_RA_axis_for_wrap()
 
 //*****************************************************************************
 // INTERNAL ROUNTINE: Checks if a GERMAN mount would have the counterweight
-// higher then the telescope.  This uses 6H (90degs) from current LST using 
-// hour angle math.  We want to keep the mount 'upright' 
+// higher then the telescope.  This uses 6H (90degs) from current LST using
+// hour angle math.  We want to keep the mount 'upright'
 // TODO: Need to flip to static once fully debugged
 //*****************************************************************************
 bool Servo_check_german_for_upside_down(double startRaHa, double raPath, double region)
 {
-	double haPath; 
+	double haPath;
 
 	// HA relative direction is reversed from RA relative direction
-	haPath = -raPath; 
+	haPath = -raPath;
 	// If the end path is beyond +/- 6.0 HA (90 degs from meridian) plus region
 	if (fabs(startRaHa + haPath) > (6.0 + region))
 	{
-		return true; 
+		return true;
 	}
 	else // start position is WEST of the meridian
 	{
-		return false; 
+		return false;
 	}
 } // of Servo_check_german_for_upside_down()
 //*****************************************************************************
@@ -1663,7 +1663,7 @@ bool	flip	=	false;
 	}
 
 	// determine the new target based on the  RA/Dec relative direction
-	targetRa	=	currRa + raRelDir;  // BUG!  
+	targetRa	=	currRa + raRelDir;  // BUG!
 	targetDec	=	currDec + decRelDir;
 
 	// convert the target RA & Dec to target steps
@@ -1734,7 +1734,7 @@ int		status	=	kSTATUS_OK;
 
 	printf("@@@ Servo_move_to_static()  currHA:%.6f lst:%.6f currRa:%.6f\n", currHA, lst, currRa);
 	// calc relative hours needed for RA by subtracting current pos HA from the input park HA
-	raRelDir	=	currHA - parkHA;		// this calc seems backwards, but it works when modelled 
+	raRelDir	=	currHA - parkHA;		// this calc seems backwards, but it works when modelled
 	printf("@@@ Servo_move_to_static()  parkHA:%.6f currHA:%.6f\n", parkHA, currHA);
 
 	// determine the new RA target in hours based current RA plus relative direction
@@ -1762,7 +1762,7 @@ int		status	=	kSTATUS_OK;
 int Servo_move_to_park(void)
 {
 int32_t	targetRaStep, targetDecStep;
-double 	currRa, currDec; 
+double 	currRa, currDec;
 int		status;
 
 	// printf("@@@ Servo_move_to_park() gParkState = %d\n", gParkState);
@@ -1791,7 +1791,7 @@ int		status;
 
 		// Set the mount coordins to the flipped position
 		Servo_set_pos(currRa, currDec);
-	} 
+	}
 	// Get the absolute zeros which is the original park position for the session
 	Motion_get_axis_absZero(SERVO_RA_AXIS, &targetRaStep);
 	Motion_get_axis_absZero(SERVO_DEC_AXIS, &targetDecStep);
@@ -1900,7 +1900,7 @@ uint32_t	iMax, deadZ;
 int32_t		minP, maxP;
 uint8_t		raState, decState;
 
-uint32_t	rcStatus = 0xFFFFFFFF; 
+uint32_t	rcStatus = 0xFFFFFFFF;
 
 int state;
 char buf[256];
@@ -1984,7 +1984,7 @@ char buf[256];
 
 	currRa	+=	-1.0;
 	currDec	+=	-15.0;
-	
+
 	//Servo_ignore_horizon(true);
 	printf("* Target Pos  RA = %lf   Dec = %lf\n", currRa, currDec);
 	printf("********************************************************\n");

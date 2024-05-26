@@ -11,6 +11,7 @@
 //*	Sep 19,	2022	<MLS> Moved DumpCVMatStruct() from controller.cpp
 //*	Sep  6,	2023	<MLS> Added LLG_FillRect() to opencv_utils
 //*	Sep  6,	2023	<MLS> Added LLG_DrawCString() to opencv_utils
+//*	May 22,	2024	<MLS> Added IsOpenCVimageValid()
 //*****************************************************************************
 
 #define _ENABLE_CONSOLE_DEBUG_
@@ -167,29 +168,83 @@ void	DumpCVMatStruct(const char *calledFrom, cv::Mat *theImageMat, const char *m
 	{
 		CONSOLE_DEBUG(message);
 	}
+	if (theImageMat != NULL)
+	{
+		CONSOLE_DEBUG_W_NUM("theImageMat->cols\t\t=",		theImageMat->cols);
+		CONSOLE_DEBUG_W_NUM("theImageMat->rows\t\t=",		theImageMat->rows);
+		CONSOLE_DEBUG_W_NUM("theImageMat->dims\t\t=",		theImageMat->dims);
+		if ((theImageMat->dims >= 0) && (theImageMat->dims < 10))
+		{
+			if (theImageMat->dims >= 1)
+			{
+				CONSOLE_DEBUG_W_SIZE("step[0] (rowStepSize)\t=",	theImageMat->step[0]);
+			}
+			if (theImageMat->dims >= 2)
+			{
+				CONSOLE_DEBUG_W_SIZE("step[1] (nChannels)\t=",		theImageMat->step[1]);
+			}
+			if (theImageMat->dims >= 3)
+			{
+				CONSOLE_DEBUG_W_SIZE("theImageMat->step[2]\t=",		theImageMat->step[2]);
+			}
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_STR("theImageMat->dims\t\t=",		"Is corrupt");
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG("theImageMat is NULL");
+	}
+}
 
-	CONSOLE_DEBUG_W_NUM("theImageMat->cols\t\t=",		theImageMat->cols);
-	CONSOLE_DEBUG_W_NUM("theImageMat->rows\t\t=",		theImageMat->rows);
-	CONSOLE_DEBUG_W_NUM("theImageMat->dims\t\t=",		theImageMat->dims);
-	if (theImageMat->dims >= 1)
+//*****************************************************************************
+bool	IsOpenCVimageValid(const char *calledFrom, cv::Mat *theImageMat, bool verbose)
+{
+bool	imageIsValid	=	true;
+
+	CONSOLE_DEBUG_W_STR("Called from", calledFrom);
+
+	if (theImageMat != NULL)
 	{
-		CONSOLE_DEBUG_W_SIZE("step[0] (rowStepSize)\t=",	theImageMat->step[0]);
+		if (theImageMat->cols < 0)
+		{
+			imageIsValid	=	false;
+		}
+		else if (theImageMat->cols > 10000)
+		{
+			imageIsValid	=	false;
+		}
+		else if (theImageMat->rows < 0)
+		{
+			imageIsValid	=	false;
+		}
+		else if (theImageMat->rows > 10000)
+		{
+			imageIsValid	=	false;
+		}
 	}
-	if (theImageMat->dims >= 2)
+	else
 	{
-		CONSOLE_DEBUG_W_SIZE("step[1] (nChannels)\t=",		theImageMat->step[1]);
+		imageIsValid	=	false;
 	}
-	if (theImageMat->dims >= 3)
+	if (verbose)
 	{
-		CONSOLE_DEBUG_W_SIZE("theImageMat->step[2]\t=",		theImageMat->step[2]);
+		CONSOLE_DEBUG_W_BOOL("imageIsValid\t=", imageIsValid);
+		if (imageIsValid == false)
+		{
+			DumpCVMatStruct(calledFrom, theImageMat, "Image is invalid");
+		}
 	}
+	return(imageIsValid);
 }
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 
-//**************************************************************************************
+//*****************************************************************************
 //*	Low Level FillRect
-//**************************************************************************************
+//*****************************************************************************
 void	LLG_FillRect(cv::Mat *openCV_Image, int left, int top, int width, int height, cv::Scalar fillColor)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);

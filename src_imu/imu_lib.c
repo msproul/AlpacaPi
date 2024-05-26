@@ -178,13 +178,13 @@ double	IMU_GetAverageRoll(void)
 double	adjustedRollValue;
 
 	adjustedRollValue	=	gIMUaverage.roll;
-	CONSOLE_DEBUG_W_DBL("adjustedRollValue\t=",	adjustedRollValue);
+//	CONSOLE_DEBUG_W_DBL("adjustedRollValue\t=",	adjustedRollValue);
 	if (gIMU_TypePresent == kIMU_type_LIS2DH12)
 	{
 		adjustedRollValue	=	gIMUaverage.roll - 90;
 	}
-	CONSOLE_DEBUG_W_DBL("adjustedRollValue\t=",	adjustedRollValue);
-	CONSOLE_DEBUG_W_DBL(__FUNCTION__, gIMUaverage.roll);
+//	CONSOLE_DEBUG_W_DBL("adjustedRollValue\t=",	adjustedRollValue);
+//	CONSOLE_DEBUG_W_DBL(__FUNCTION__, gIMUaverage.roll);
 	return(adjustedRollValue);
 }
 

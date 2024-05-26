@@ -411,12 +411,15 @@ SWITCH_DRIVER_OBJECTS=										\
 TELESCOPE_DRIVER_OBJECTS=									\
 				$(OBJECT_DIR)telescopedriver.o				\
 				$(OBJECT_DIR)telescopedriver_comm.o			\
-				$(OBJECT_DIR)telescopedriver_ExpSci.o		\
 				$(OBJECT_DIR)telescopedriver_lx200.o		\
 				$(OBJECT_DIR)telescopedriver_Rigel.o		\
 				$(OBJECT_DIR)telescopedriver_servo.o		\
 				$(OBJECT_DIR)telescopedriver_sim.o			\
 				$(OBJECT_DIR)lx200_com.o					\
+
+EXPSCI_OBJECTS=												\
+				$(OBJECT_DIR)telescopedriver_ExpSci.o		\
+
 
 ######################################################################################
 SERIAL_OBJECTS=												\
@@ -486,6 +489,13 @@ GPS_OBJECTS=												\
 #				$(OBJECT_DIR)serialport.o					\
 
 ######################################################################################
+# GPS objects
+NMEA_OBJECTS=												\
+				$(OBJECT_DIR)ParseNMEA.o					\
+				$(OBJECT_DIR)NMEA_helper.o					\
+
+
+######################################################################################
 #pragma mark make help
 help:
 	#################################################################################
@@ -511,7 +521,7 @@ help:
 	#        make nocamera       Build without the camera support
 	#        make noopencv       Camera driver for ZWO WITHOUT opencv
 	#        make pi             Version for Raspberry Pi
-	#        make piqhy          Camera driver for QHY cameras only for Raspberry-Pi
+	#        make qhypi          Camera driver for QHY cameras only for Raspberry-Pi
 	#        make qsi            Camera driver for QSI cameras
 	#        make wx             Version that uses the R-Pi sensor board
 	#
@@ -641,6 +651,7 @@ gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_POSITION_ERROR_TRACKING_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_PDOP_TRACKING_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_TRAILS_
 gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_ALMANAC_
+gpscam		:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_SENTANCE_TRACKING_
 gpscam		:										\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(DRIVER_OBJECTS)				\
@@ -945,12 +956,7 @@ allcam		:									\
 #pragma mark make tele  C++ linux-x86
 tele	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_DISCOVERY_QUERRY_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_
-#tele	:		DEFINEFLAGS		+=	-D_ENABLE_DOME_ROR_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 tele	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
@@ -988,6 +994,34 @@ tele	:										\
 					-lpthread					\
 					-o alpacapi-telescope
 
+######################################################################################
+#pragma mark make telegps
+telegps	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+telegps	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+telegps	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_LX200_
+telegps	:		DEFINEFLAGS		+=	-D_ENABLE_LX200_COM_
+telegps	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+telegps	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+telegps	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+telegps	:										\
+					$(DRIVER_OBJECTS)			\
+					$(TELESCOPE_DRIVER_OBJECTS)	\
+					$(GPS_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SERIAL_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+		$(LINK)  								\
+					$(DRIVER_OBJECTS)			\
+					$(TELESCOPE_DRIVER_OBJECTS)	\
+					$(GPS_OBJECTS)				\
+					$(HELPER_OBJECTS)			\
+					$(SERIAL_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					$(OPENCV_LINK)				\
+					-lpthread					\
+					-o alpacapi-telescope
+
 
 ######################################################################################
 #pragma mark make pmc8 explore scientific
@@ -995,20 +1029,70 @@ pmc8	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 pmc8	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_EXP_SCI_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GPS_GRAPHS_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ALTITUDE_TRACKING_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_LAT_LON_TRACKING_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_POSITION_ERROR_TRACKING_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_PDOP_TRACKING_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_TRAILS_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_ALMANAC_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_SENTANCE_TRACKING_
-pmc8	:										\
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_QHY_
+pmc8	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GPS_GRAPHS_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ALTITUDE_TRACKING_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_LAT_LON_TRACKING_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_POSITION_ERROR_TRACKING_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_PDOP_TRACKING_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_TRAILS_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_ALMANAC_
+#pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_SENTANCE_TRACKING_
+pmc8	:											\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(TELESCOPE_DRIVER_OBJECTS)		\
+					$(GPS_OBJECTS)					\
+					$(EXPSCI_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(IMU_OBJECTS)					\
+
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(TELESCOPE_DRIVER_OBJECTS)		\
+					$(GPS_OBJECTS)					\
+					$(EXPSCI_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(IMU_OBJECTS)					\
+					$(OPENCV_LINK)					\
+					-L$(PLAYERONE_LIB)				\
+					-lPlayerOnePW					\
+					-lPlayerOneCamera				\
+					-lcfitsio						\
+					-lqhyccd						\
+					-lpthread						\
+					-o alpacapi-expsci
+
+
+######################################################################################
+#pragma mark make pmc8 explore scientific
+pmpl	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+pmpl	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_EXP_SCI_
+pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
+pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+pmpl	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
+pmpl	:										\
 					$(DRIVER_OBJECTS)			\
-					$(GPS_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(TELESCOPE_DRIVER_OBJECTS)	\
+					$(EXPSCI_OBJECTS)			\
 					$(HELPER_OBJECTS)			\
 					$(SERIAL_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
@@ -1016,14 +1100,24 @@ pmc8	:										\
 
 		$(LINK)  								\
 					$(DRIVER_OBJECTS)			\
-					$(GPS_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(TELESCOPE_DRIVER_OBJECTS)	\
+					$(EXPSCI_OBJECTS)			\
 					$(HELPER_OBJECTS)			\
 					$(SERIAL_OBJECTS)			\
 					$(SOCKET_OBJECTS)			\
 					$(OPENCV_LINK)				\
+					$(OPENCV_LINK)				\
+					-L$(PLAYERONE_LIB)			\
+					-lPlayerOnePW				\
+					-lPlayerOneCamera			\
 					-lpthread					\
+					-lcfitsio						\
 					-o alpacapi-expsci
+
+#					-ludev							\
+#					-lusb-1.0						\
+#					-lpthread						\
 
 ######################################################################################
 #pragma mark make imutest
@@ -1133,6 +1227,7 @@ newt16		:										\
 					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
+					$(NMEA_OBJECTS)					\
 					$(SERIAL_OBJECTS)				\
 					$(SLITTRACKER_DRIVER_OBJECTS)	\
 					$(SOCKET_OBJECTS)				\
@@ -1144,6 +1239,7 @@ newt16		:										\
 					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
+					$(NMEA_OBJECTS)					\
 					$(SERIAL_OBJECTS)				\
 					$(SLITTRACKER_DRIVER_OBJECTS)	\
 					$(SOCKET_OBJECTS)				\
@@ -1250,6 +1346,7 @@ wo102		:										\
 					$(SERIAL_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
+					$(NMEA_OBJECTS)					\
 
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
@@ -1262,6 +1359,7 @@ wo102		:										\
 					$(SERIAL_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
+					$(NMEA_OBJECTS)					\
 					$(OPENCV_LINK)					\
 					$(ASI_CAMERA_OBJECTS)			\
 					$(ZWO_EFW_OBJECTS)				\
@@ -2229,38 +2327,39 @@ piswitch8	:									\
 
 
 ######################################################################################
-#pragma mark make piqhy
+#pragma mark make qhypi
 #	make qhy
-piqhy		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_QHY_
-piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-piqhy		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
-piqhy		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
-piqhy		:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/ARM/x86/NoFlyCapture
-piqhy		:									\
+qhypi		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
+qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_QHY_
+qhypi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+qhypi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
+qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
+qhypi		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(SERIAL_OBJECTS)				\
+					$(GPS_OBJECTS)					\
 
 
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
-					$(OPENCV_LINK)					\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
 					$(SERIAL_OBJECTS)				\
+					$(GPS_OBJECTS)					\
+					$(OPENCV_LINK)					\
 					-lcfitsio						\
 					-lusb-1.0						\
 					-ludev							\
@@ -2460,6 +2559,7 @@ finder		:										\
 findercv4		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_ASI_
+findercv4	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
@@ -2473,6 +2573,8 @@ findercv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+findercv4	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_FilterWheel_SDK_Linux_V1.2.0/include
+findercv4	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
 findercv4		:								\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
@@ -2497,6 +2599,8 @@ findercv4		:								\
 					$(OPENCV_LINK)					\
 					$(ASI_CAMERA_OBJECTS)			\
 					$(ZWO_EFW_OBJECTS)				\
+					-L$(PLAYERONE_LIB)				\
+					-lPlayerOneCamera				\
 					-lcfitsio						\
 					-lusb-1.0						\
 					-ludev							\
@@ -2709,6 +2813,7 @@ jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
 jetson		:	DEFINEFLAGS		+=	-D_USE_OPENCV_
+jetson		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 jetson		:	DEFINEFLAGS		+=	-D_ENABLE_STAR_SEARCH_
@@ -2840,6 +2945,7 @@ ATIK_OBJECTS=												\
 #pragma mark ATIK Linux
 #	make atik
 atik	:		ATIK_LIB_DIR	=	$(ATIK_LIB_MASTER_DIR)/linux/x64/NoFlyCapture
+atik	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 atik	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 atik	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 atik	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ATIK_
@@ -2847,25 +2953,28 @@ atik	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 atik	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 atik	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 atik	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
-atik	:										\
-					$(DRIVER_OBJECTS)			\
-					$(CPP_OBJECTS)				\
-					$(LIVE_WINDOW_OBJECTS)		\
-					$(SOCKET_OBJECTS)			\
+atik	:											\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
 
-
-		$(LINK)  								\
-					$(DRIVER_OBJECTS)			\
-					$(CPP_OBJECTS)				\
-					$(LIVE_WINDOW_OBJECTS)		\
-					$(SOCKET_OBJECTS)			\
-					$(OPENCV_LINK)				\
-					-L$(ATIK_LIB_DIR)/			\
-					-latikcameras				\
-					-ludev						\
-					-lusb-1.0					\
-					-lpthread					\
-					-lcfitsio					\
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(CAMERA_DRIVER_OBJECTS)		\
+					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(HELPER_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(LIVE_WINDOW_OBJECTS)			\
+					$(OPENCV_LINK)					\
+					-L$(ATIK_LIB_DIR)/				\
+					-latikcameras					\
+					-ludev							\
+					-lusb-1.0						\
+					-lpthread						\
+					-lcfitsio						\
 					-o atik
 
 ######################################################################################
@@ -2896,10 +3005,9 @@ playerone	:										\
 
 
 ######################################################################################
-#pragma mark PlayerOne with ZWO camera
+#pragma mark PlayerOne Camera
 #	make poz
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-poz	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
@@ -2925,7 +3033,6 @@ poz	:												\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
 					$(OPENCV_LINK)					\
-					$(ASI_CAMERA_OBJECTS)			\
 					-L$(PLAYERONE_LIB)				\
 					-lPlayerOnePW					\
 					-lPlayerOneCamera				\
@@ -3864,6 +3971,7 @@ SKYIMAGE_OBJECTS=											\
 				$(OBJECT_DIR)controller_skyimage.o			\
 				$(OBJECT_DIR)cpu_stats.o					\
 				$(OBJECT_DIR)fits_opencv.o					\
+				$(OBJECT_DIR)linuxerrors.o					\
 				$(OBJECT_DIR)NASA_moonphase.o				\
 				$(OBJECT_DIR)opencv_utils.o					\
 				$(OBJECT_DIR)readconfigfile.o				\

@@ -19,6 +19,8 @@
 //*	Aug  6,	2023	<MLS> Added StripCRLF()
 //*	Oct  3,	2023	<MLS> Added Millis() because millis() on R-Pi was behaving strangely
 //*	Apr 12,	2024	<MLS> Added FormatTimeStringISO8601_tm()
+//*	May 17,	2024	<MLS> Added IsValidNumericString()
+//*	May 17,	2024	<MLS> Added IsValidTrueFalseString()
 //*****************************************************************************
 
 #include	<math.h>
@@ -116,6 +118,50 @@ int		sLen;
 		}
 		sLen	=	strlen(theString);
 	}
+}
+
+//*****************************************************************************
+bool	IsValidNumericString(const char *theString)
+{
+bool	isValid;
+
+	if (isdigit(theString[0]) || (theString[0] == '-'))
+	{
+		isValid	=	true;
+	}
+	else
+	{
+		isValid	=	false;
+	}
+	return(isValid);
+}
+
+//*****************************************************************************
+bool	IsValidTrueFalseString(const char *theString)
+{
+bool	isValid;
+
+	if (strcasecmp(theString, "true") == 0)
+	{
+		isValid	=	true;
+	}
+	else if (strcasecmp(theString, "True") == 0)
+	{
+		isValid	=	true;
+	}
+	else if (strcasecmp(theString, "false") == 0)
+	{
+		isValid	=	true;
+	}
+	else if (strcasecmp(theString, "False") == 0)
+	{
+		isValid	=	true;
+	}
+	else
+	{
+		isValid	=	false;
+	}
+	return(isValid);
 }
 
 
@@ -362,7 +408,7 @@ void	FormatTimeStringISO8601_tm(struct tm *linuxTime, char *timeString)
 {
 int	milliSecs	=	0;
 
-	sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03ldZ",
+	sprintf(timeString, "%d-%02d-%02dT%02d:%02d:%02d.%03dZ",
 							(1900 + linuxTime->tm_year),
 							(1 + linuxTime->tm_mon),
 							linuxTime->tm_mday,
@@ -606,9 +652,8 @@ struct timeval	currentTime;
 	return(milliSecs);
 }
 
-#if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
-
-
+//#if !defined(__arm__) || defined(_INCLUDE_MILLIS_)
+#if defined(_INCLUDE_MILLIS_)
 //*****************************************************************************
 uint32_t	millis(void)
 {

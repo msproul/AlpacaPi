@@ -260,40 +260,43 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ClientTransactionID",
-							gClientTransactionID,
-							INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		JsonResponse_Add_Int32(	mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ClientTransactionID",
+								reqData->ClientTransactionID,
+								INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ServerTransactionID",
-							gServerTransactionID,
-							INCLUDE_COMMA);
+		JsonResponse_Add_Int32(	mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ServerTransactionID",
+								gServerTransactionID,
+								INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ErrorNumber",
-							alpacaErrCode,
-							INCLUDE_COMMA);
+		JsonResponse_Add_Int32(	mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ErrorNumber",
+								alpacaErrCode,
+								INCLUDE_COMMA);
 
 
-	JsonResponse_Add_String(mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ErrorMessage",
-							alpacaErrMsg,
-							NO_COMMA);
+		JsonResponse_Add_String(mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ErrorMessage",
+								alpacaErrMsg,
+								NO_COMMA);
 
-	JsonResponse_Add_Finish(mySocket,
-							reqData->jsonTextBuffer,
-							(cHttpHeaderSent == false));
-
+		JsonResponse_Add_Finish(mySocket,
+								reqData->httpRetCode,
+								reqData->jsonTextBuffer,
+								(cHttpHeaderSent == false));
+	}
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG_W_STR("Output JSON\t=", reqData->jsonTextBuffer);
 #endif // _DEBUG_CONFORM_

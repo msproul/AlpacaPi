@@ -95,6 +95,8 @@
 //*	Mar 22,	2024	<MLS> Build 175
 //*	Apr 15,	2024	<MLS> Build 176
 //*	Apr 29,	2024	<MLS> Build 177
+//*	May 15,	2024	<MLS> Added TYPE_GuideDirections enums
+//*	May 26,	2024	<MLS> Build 178
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -114,7 +116,7 @@
 
 #define	kApplicationName		"AlpacaPi"
 #define	kVersionString			"V0.7.2"
-#define	kBuildNumber			177
+#define	kBuildNumber			178
 #define kAlpacaDiscoveryPORT	32227
 #define kAlpacaPiDefaultPORT	6800
 
@@ -305,7 +307,8 @@ typedef enum
 	kDriveRate_driveSidereal	=	0,	//*	Sidereal tracking rate (15.041 arcseconds per second).
 	kDriveRate_driveLunar		=	1,	//*	Lunar tracking rate (14.685 arcseconds per second).
 	kDriveRate_driveSolar		=	2,	//*	Solar tracking rate (15.0 arcseconds per second).
-	kDriveRate_driveKing		=	3	//*	King tracking rate (15.0369 arcseconds per second).
+	kDriveRate_driveKing		=	3,	//*	King tracking rate (15.0369 arcseconds per second).
+	kDriveRate_Count
 } TYPE_DriveRates;
 
 //*****************************************************************************
@@ -516,6 +519,17 @@ typedef struct	//	TYPE_CoverCalibrationProperties
 
 
 //*****************************************************************************
+typedef enum	//	TYPE_GuideDirections
+{
+	kGuide_North	=	0,	//*	North (+ declination/altitude).
+	kGuide_South	=	1,	//*	South (- declination/altitude).
+	kGuide_East		=	2,	//*	East (+ right ascension/azimuth).
+	kGuide_West		=	3,	//*	West (- right ascension/azimuth)
+	kGuide_last
+} TYPE_GuideDirections;
+
+
+//*****************************************************************************
 //*	these are the exact properties from ASCOM Telescope V3
 //*****************************************************************************
 typedef struct	//	TYPE_TelescopeProperties
@@ -547,6 +561,7 @@ typedef struct	//	TYPE_TelescopeProperties
 	bool							CanUnpark;
 	double							Declination;				//*	degrees
 	double							DeclinationRate;
+	TYPE_PierSide					DestinationSideOfPier;
 	bool							driverSupportsRefraction;	//*	NON-alpaca
 	bool							DoesRefraction;
 	double							RightAscension;				//*	hours

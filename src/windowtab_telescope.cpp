@@ -181,6 +181,7 @@ int			coordHeight;
 	SetWidgetType(		kTelescope_BtnUp,	kWidgetType_Button);
 	SetWidgetBGColor(	kTelescope_BtnUp,	cBtnBGcolor_Normal);
 	SetWidgetTextColor(	kTelescope_BtnUp,	cBtnTXTcolor);
+	SetWidgetHelpText(	kTelescope_BtnUp,	"Start/stop motion up");
 	yLoc			+=	directionBtnHeight;
 	yLoc			+=	10;
 
@@ -190,12 +191,14 @@ int			coordHeight;
 	SetWidgetType(		kTelescope_BtnEast,	kWidgetType_Button);
 	SetWidgetBGColor(	kTelescope_BtnEast,	cBtnBGcolor_Normal);
 	SetWidgetTextColor(	kTelescope_BtnEast,	cBtnTXTcolor);
+	SetWidgetHelpText(	kTelescope_BtnEast,	"Start/stop motion to the east");
 
 	SetWidget(			kTelescope_BtnEmergencyStop,	myClm4_offset,		yLoc,		directionBtnWidth,		directionBtnHeight);
 	SetWidgetText(		kTelescope_BtnEmergencyStop,	"STOP");
 	SetWidgetType(		kTelescope_BtnEmergencyStop,	kWidgetType_Button);
 	SetWidgetBGColor(	kTelescope_BtnEmergencyStop,	CV_RGB(255,	0,	0));
 	SetWidgetTextColor(	kTelescope_BtnEmergencyStop,	cBtnTXTcolor);
+	SetWidgetHelpText(	kTelescope_BtnEmergencyStop,	"Immediate stop, without deceleration!");
 
 
 	SetWidget(			kTelescope_BtnWest,	myClm7_offset,		yLoc,		directionBtnWidth,		directionBtnHeight);
@@ -203,6 +206,7 @@ int			coordHeight;
 	SetWidgetType(		kTelescope_BtnWest,	kWidgetType_Button);
 	SetWidgetBGColor(	kTelescope_BtnWest,	cBtnBGcolor_Normal);
 	SetWidgetTextColor(	kTelescope_BtnWest,	cBtnTXTcolor);
+	SetWidgetHelpText(	kTelescope_BtnWest,	"Start/stop motion to the west");
 
 
 	yLoc			+=	directionBtnHeight;
@@ -213,6 +217,7 @@ int			coordHeight;
 	SetWidgetType(		kTelescope_BtnDown,	kWidgetType_Button);
 	SetWidgetBGColor(	kTelescope_BtnDown,	cBtnBGcolor_Normal);
 	SetWidgetTextColor(	kTelescope_BtnDown,	cBtnTXTcolor);
+	SetWidgetHelpText(	kTelescope_BtnDown,	"Start/stop motion down");
 
 
 	yLoc			+=	directionBtnHeight;
@@ -228,6 +233,7 @@ int			coordHeight;
 	SetWidgetFont(		kTelescope_BtnTrackingOn,	kFont_Medium);
 	SetWidgetBGColor(	kTelescope_BtnTrackingOn,	cBtnBGcolor_Normal);
 	SetWidgetTextColor(	kTelescope_BtnTrackingOn,	cBtnTXTcolor);
+	SetWidgetHelpText(	kTelescope_BtnTrackingOn,	"Turn tracking on");
 	xLoc	+=	trackingBtnWidth;
 	xLoc	+=	3;
 
@@ -237,6 +243,7 @@ int			coordHeight;
 	SetWidgetFont(		kTelescope_BtnTrackingOff,	kFont_Medium);
 	SetWidgetBGColor(	kTelescope_BtnTrackingOff,	cBtnBGcolor_Normal);
 	SetWidgetTextColor(	kTelescope_BtnTrackingOff,	cBtnTXTcolor);
+	SetWidgetHelpText(	kTelescope_BtnTrackingOff,	"Turn tracking off");
 	xLoc	+=	trackingBtnWidth;
 	xLoc	+=	3;
 
@@ -250,8 +257,10 @@ int			coordHeight;
 
 	yLoc			+=	2;
 	yLoc			+=	2;
-	SetWidget(		kTelescope_ErrorMsg,	0,		yLoc,		cWidth - 100,		cBtnHeight);
-	SetWidgetFont(	kTelescope_ErrorMsg,	kFont_Medium);
+	SetWidget(				kTelescope_HelpMsg,	2,		yLoc,		cWidth - 4,		cBtnHeight);
+	SetWidgetType(			kTelescope_HelpMsg,	kWidgetType_TextBox);
+	SetWidgetFont(			kTelescope_HelpMsg,	kFont_Medium);
+	SetHelpTextBoxNumber(	kTelescope_HelpMsg);
 
 	//---------------------------------------------------------------------------------------
 	//*	go back to the top
@@ -371,6 +380,12 @@ int			coordHeight;
 							kTelescope_LastCmdString,
 							kTelescope_AlpacaLogo,
 							-1);
+
+	SetWidgetHelpText(	kTelescope_IPaddr,			"IP address:port/alpaca device #");
+	SetWidgetHelpText(	kTelescope_LastCmdString,	"Last Alpaca command sent to device");
+	SetWidgetHelpText(	kTelescope_AlpacaErrorMsg,	"Last Alpaca error message");
+//	SetWidgetHelpText(	kTelescope_Readall,			"Device supports readall");
+//	SetWidgetHelpText(	kTelescope_DeviceState,		"Device supports DeviceState");
 }
 
 //*****************************************************************************
@@ -384,7 +399,6 @@ bool	updateButtons;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	ClearLastAlpacaCommand();
-	SetWidgetText(kTelescope_ErrorMsg, "");
 	SetWidgetText(kTelescope_AlpacaErrorMsg, "");
 
 
@@ -405,7 +419,7 @@ bool	updateButtons;
 			}
 			else
 			{
-				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when Parked");
+				SetWidgetText(kTelescope_AlpacaErrorMsg,	"Invalid when Parked");
 			}
 			break;
 
@@ -539,7 +553,7 @@ double	dec_SlewRate_degPerSec;
 			}
 			else
 			{
-				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing down");
+				SetWidgetText(kTelescope_AlpacaErrorMsg,	"Invalid when slewing down");
 			}
 			break;
 
@@ -577,7 +591,7 @@ double	dec_SlewRate_degPerSec;
 			}
 			else
 			{
-				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing up");
+				SetWidgetText(kTelescope_AlpacaErrorMsg,	"Invalid when slewing up");
 			}
 			break;
 
@@ -608,7 +622,7 @@ double	dec_SlewRate_degPerSec;
 			}
 			else
 			{
-				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing west");
+				SetWidgetText(kTelescope_AlpacaErrorMsg,	"Invalid when slewing west");
 			}
 			break;
 
@@ -638,7 +652,7 @@ double	dec_SlewRate_degPerSec;
 			}
 			else
 			{
-				SetWidgetText(kTelescope_ErrorMsg,	"Invalid when slewing east");
+				SetWidgetText(kTelescope_AlpacaErrorMsg,	"Invalid when slewing east");
 			}
 			break;
 
@@ -811,7 +825,7 @@ char	dataString[64];
 
 	//--------------------------------------------------------------------------
 	//*	IMU data
-	CONSOLE_DEBUG("Updating IMU data for telescope window");
+//	CONSOLE_DEBUG("Updating IMU data for telescope window");
 	SetWidgetNumber(	kTelescope_IMU_Roll_value,	telescopeProp->IMU_Roll);
 	SetWidgetNumber(	kTelescope_IMU_Pitch_value,	telescopeProp->IMU_Pitch);
 	SetWidgetNumber(	kTelescope_IMU_Yaw_value,	telescopeProp->IMU_Yaw);
@@ -829,7 +843,7 @@ char	dataString[64];
 		int		iii;
 		char	valueString[48];
 
-			CONSOLE_DEBUG(__FUNCTION__);
+//			CONSOLE_DEBUG(__FUNCTION__);
 
 			if (telescopeProp->AxisRates[kAxis_RA].Minimum < telescopeProp->AxisRates[kAxis_RA].Maximum)
 			{
@@ -847,7 +861,7 @@ char	dataString[64];
 				slewValue	=	cSlewRate_RAmin + axisRateStep;
 				for (iii=0; iii<kSupportedSlewRates; iii++)
 				{
-					CONSOLE_DEBUG_W_DBL("slewValue      \t=", slewValue);
+//					CONSOLE_DEBUG_W_DBL("slewValue      \t=", slewValue);
 					cRA_slewRates[iii]	=	slewValue;
 
 					slewValue	+=	axisRateStep;
@@ -871,7 +885,7 @@ char	dataString[64];
 				slewValue	=	cSlewRate_DECmin + axisRateStep;
 				for (iii=0; iii<kSupportedSlewRates; iii++)
 				{
-					CONSOLE_DEBUG_W_DBL("slewValue      \t=", slewValue);
+//					CONSOLE_DEBUG_W_DBL("slewValue      \t=", slewValue);
 					cDEC_slewRates[iii]	=	slewValue;
 
 					slewValue	+=	axisRateStep;

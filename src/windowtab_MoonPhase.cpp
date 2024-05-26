@@ -26,6 +26,8 @@
 //*	Apr  5,	2024	<MLS> Added ability to download NASA moon image files
 //*	Apr  5,	2024	<MLS> Added ELat & ELon to graph
 //*	Apr  6,	2024	<MLS> Fixed initialization bug (cDisplayedImage)
+//*	May 15,	2024	<MLS> Added RA/Dec to moon phase display
+//*	May 23,	2024	<MLS> Added RA/Dec graph moon phase display
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -77,6 +79,8 @@ char	textBuff[64];
 	cGraphColor_ELon		=	W_LIGHTGRAY;
 	cGraphColor_Current		=	W_GREEN;
 	cGraphColor_Displayed	=	W_RED;
+	cGraphColor_RA			=	W_ORANGE;
+	cGraphColor_DEC			=	W_PINK;
 
 	cEnableGraph_Phase		=	true;
 	cEnableGraph_Age		=	false;
@@ -85,6 +89,8 @@ char	textBuff[64];
 	cEnableGraph_AxisA		=	false;
 	cEnableGraph_ELat		=	false;
 	cEnableGraph_ELon		=	false;
+	cEnableGraph_RA			=	false;
+	cEnableGraph_DEC		=	false;
 	cEnableOverlay			=	true;
 
 	cMoonOpenCVimage		=	NULL;
@@ -147,7 +153,7 @@ int		iii;
 	iii				=	kMoonPhase_EnablePhaseBtn;
 	checkBoxWidth	=	105;
 	xLoc			=	10;
-	while (iii <= kMoonPhase_EnableELonBtn)
+	while (iii <= kMoonPhase_EnableDEC_Btn)
 	{
 		SetWidget(			iii,	xLoc,	yLoc,	checkBoxWidth,	cRadioBtnHt);
 		SetWidgetType(		iii,	kWidgetType_CheckBox);
@@ -176,6 +182,12 @@ int		iii;
 
 	SetWidgetText(		kMoonPhase_EnableELonBtn,	"ELon");
 	SetWidgetTextColor(	kMoonPhase_EnableELonBtn,	cGraphColor_ELon);
+
+	SetWidgetText(		kMoonPhase_EnableRA_Btn,	"RA");
+	SetWidgetTextColor(	kMoonPhase_EnableRA_Btn,	cGraphColor_RA);
+
+	SetWidgetText(		kMoonPhase_EnableDEC_Btn,	"Declination");
+	SetWidgetTextColor(	kMoonPhase_EnableDEC_Btn,	cGraphColor_DEC);
 
 	//------------------------------------------
 	//*	year display and buttons
@@ -255,6 +267,7 @@ int		iii;
 	SetWidgetTextColor(	kMoonPhase_Curr_DiameterValue,		cGraphColor_Current);
 	SetWidgetTextColor(	kMoonPhase_Curr_DistanceValue,		cGraphColor_Current);
 	SetWidgetTextColor(	kMoonPhase_Curr_PolarAxisValue,		cGraphColor_Current);
+	SetWidgetTextColor(	kMoonPhase_Curr_RA_DECValue,		cGraphColor_Current);
 	SetWidgetTextColor(	kMoonPhase_Curr_ELatELonValue,		cGraphColor_Current);
 
 	//-------------------------------------------------------------
@@ -415,6 +428,7 @@ int		myButtonHeight;
 	SetWidgetText(iii,	"Diameter (arc-secs)");	iii	+=	2;
 	SetWidgetText(iii,	"Distance (km)");		iii	+=	2;
 	SetWidgetText(iii,	"Polar Axis Angle");	iii	+=	2;
+	SetWidgetText(iii,	"RA / DEC");			iii	+=	2;
 	SetWidgetText(iii,	"ELat / ELon");			iii	+=	2;
 
 	SetWidgetOutlineBox(outlineIdx, titleIdx, (outlineIdx - 1));
@@ -571,6 +585,13 @@ bool	updateFlag;
 			cEnableGraph_ELon	=	!cEnableGraph_ELon;
 			break;
 
+		case kMoonPhase_EnableRA_Btn:
+			cEnableGraph_RA	=	!cEnableGraph_RA;
+			break;
+
+		case kMoonPhase_EnableDEC_Btn:
+			cEnableGraph_DEC	=	!cEnableGraph_DEC;
+			break;
 
 		case kMoonPhase_OverlayChkBox:
 			cEnableOverlay	=	!cEnableOverlay;
@@ -634,6 +655,8 @@ void	WindowTabMoonPhase::UpdateButtons(void)
 	SetWidgetChecked(kMoonPhase_EnableELatBtn,	cEnableGraph_ELat);
 	SetWidgetChecked(kMoonPhase_EnableELonBtn,	cEnableGraph_ELon);
 
+	SetWidgetChecked(kMoonPhase_EnableRA_Btn,	cEnableGraph_RA);
+	SetWidgetChecked(kMoonPhase_EnableDEC_Btn,	cEnableGraph_DEC);
 
 	SetWidgetChecked(kMoonPhase_OverlayChkBox,	cEnableOverlay);
 
@@ -1155,7 +1178,7 @@ bool			validPhaseInfo;
 			while ((graphIdx < gMoonPhaseCnt) && (pt1_X < myCVrect.width))
 			{
 				graphValueDbl	=   gMoonPhaseInfo[graphIdx].AxisA;
-				graphValue		=	100 - (graphValueDbl * 2);
+				graphValue		=	100 + (graphValueDbl * 2);
 				//*	compute the x,y points for the line
 				pt1_X			=	previousX;
 				pt1_Y			=	TranslateYvalue((&myCVrect), previousGraphValue);
@@ -1209,6 +1232,58 @@ bool			validPhaseInfo;
 			{
 				graphValueDbl	=   gMoonPhaseInfo[graphIdx].ELon;
 				graphValue		=	100 + (graphValueDbl * kELatELonMag);
+				//*	compute the x,y points for the line
+				pt1_X			=	previousX;
+				pt1_Y			=	TranslateYvalue((&myCVrect), previousGraphValue);
+				pt2_X			=	previousX + 1;
+				pt2_Y			=	TranslateYvalue((&myCVrect), graphValue);
+				LLG_MoveTo(pt1_X, pt1_Y);
+				LLG_LineTo(pt2_X, pt2_Y);
+
+				previousX			=	pt2_X;
+				previousGraphValue	=	graphValue;
+				graphIdx			+=	cPhaseStepValue;
+			}
+		}
+		//=========================================================
+		//*	Draw the RA graph (Right Ascension)
+		if (cEnableGraph_RA)
+		{
+			LLG_SetColor(cGraphColor_RA);
+			graphIdx			=	0;
+			previousX			=	theWidget->left;
+			previousGraphValue	=	0;
+			pt1_X				=	0;
+			while ((graphIdx < gMoonPhaseCnt) && (pt1_X < myCVrect.width))
+			{
+				graphValueDbl	=   gMoonPhaseInfo[graphIdx].RA;
+				graphValue		=	100 + (graphValueDbl * 2.0);
+				//*	compute the x,y points for the line
+				pt1_X			=	previousX;
+				pt1_Y			=	TranslateYvalue((&myCVrect), previousGraphValue);
+				pt2_X			=	previousX + 1;
+				pt2_Y			=	TranslateYvalue((&myCVrect), graphValue);
+				LLG_MoveTo(pt1_X, pt1_Y);
+				LLG_LineTo(pt2_X, pt2_Y);
+
+				previousX			=	pt2_X;
+				previousGraphValue	=	graphValue;
+				graphIdx			+=	cPhaseStepValue;
+			}
+		}
+		//=========================================================
+		//*	Draw the DEC graph (Declination)
+		if (cEnableGraph_DEC)
+		{
+			LLG_SetColor(cGraphColor_DEC);
+			graphIdx			=	0;
+			previousX			=	theWidget->left;
+			previousGraphValue	=	0;
+			pt1_X				=	0;
+			while ((graphIdx < gMoonPhaseCnt) && (pt1_X < myCVrect.width))
+			{
+				graphValueDbl	=   gMoonPhaseInfo[graphIdx].Dec;
+				graphValue		=	100 + (graphValueDbl * 3);
 				//*	compute the x,y points for the line
 				pt1_X			=	previousX;
 				pt1_Y			=	TranslateYvalue((&myCVrect), previousGraphValue);
@@ -1379,6 +1454,12 @@ int			textColor;
 	SetWidgetNumber(	kMoonPhase_Curr_DiameterValue,		cCurrentMoonPhaseInfo.Diam);
 	SetWidgetNumber(	kMoonPhase_Curr_DistanceValue,		cCurrentMoonPhaseInfo.Dist);
 	SetWidgetNumber(	kMoonPhase_Curr_PolarAxisValue,		cCurrentMoonPhaseInfo.AxisA);
+
+	sprintf(valueText, "%4.5f / %4.5f",	cCurrentMoonPhaseInfo.RA,
+										cCurrentMoonPhaseInfo.Dec);
+	SetWidgetText(		kMoonPhase_Curr_RA_DECValue,			valueText);
+
+
 	sprintf(valueText, "%4.3f / %4.3f",	cCurrentMoonPhaseInfo.ELat,
 										cCurrentMoonPhaseInfo.ELon);
 	SetWidgetText(		kMoonPhase_Curr_ELatELonValue,			valueText);
@@ -1401,6 +1482,12 @@ int			textColor;
 	SetWidgetNumber(	kMoonPhase_Disp_DiameterValue,		cDisplayedMoonPhaseInfo.Diam);
 	SetWidgetNumber(	kMoonPhase_Disp_DistanceValue,		cDisplayedMoonPhaseInfo.Dist);
 	SetWidgetNumber(	kMoonPhase_Disp_PolarAxisValue,		cDisplayedMoonPhaseInfo.AxisA);
+
+	sprintf(valueText, "%4.5f / %4.5f",	cDisplayedMoonPhaseInfo.RA,
+										cDisplayedMoonPhaseInfo.Dec);
+	SetWidgetText(		kMoonPhase_Disp_RA_DECValue,			valueText);
+
+
 	sprintf(valueText, "%4.3f / %4.3f",	cDisplayedMoonPhaseInfo.ELat,
 										cDisplayedMoonPhaseInfo.ELon);
 	SetWidgetText(		kMoonPhase_Disp_ELatELonValue,			valueText);
@@ -1427,6 +1514,7 @@ int			textColor;
 	SetWidgetTextColor(	kMoonPhase_Disp_DiameterValue,		textColor);
 	SetWidgetTextColor(	kMoonPhase_Disp_DistanceValue,		textColor);
 	SetWidgetTextColor(	kMoonPhase_Disp_PolarAxisValue,		textColor);
+	SetWidgetTextColor(	kMoonPhase_Disp_RA_DECValue,		textColor);
 	SetWidgetTextColor(	kMoonPhase_Disp_ELatELonValue,		textColor);
 }
 

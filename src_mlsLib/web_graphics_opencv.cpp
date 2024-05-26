@@ -156,19 +156,32 @@ bool	WebGraph_CheckImage(const char *routineName, const int lineNum)
 //*****************************************************************************
 int		WebGraph_SaveImage(const char *pathName, const char *fileName)
 {
-int			openCVerr;
+bool		openCVokFlag;
 char		outputFileName[256];
+int			saveReturnCode;
 
+	saveReturnCode	=	-1;
 	if (gWebGrapicsImage != NULL)
 	{
 		strcpy(outputFileName, pathName);
 		strcat(outputFileName, "/");
 		strcat(outputFileName, fileName);
 
-		openCVerr	=	cv::imwrite(outputFileName, *gWebGrapicsImage);
-		if (openCVerr == 0)
+		try
 		{
-			CONSOLE_DEBUG_W_NUM("cv::imwrite returned error\t=", openCVerr);
+			openCVokFlag	=	cv::imwrite(outputFileName, *gWebGrapicsImage);
+		}
+		catch (const cv::Exception& ex)
+		{
+			fprintf(stderr, "Exception writing image: %s\n", ex.what());
+		}
+		if (openCVokFlag)
+		{
+			saveReturnCode	=	0;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_BOOL("cv::imwrite returned error\t=", openCVokFlag);
 		}
 		//---try------try------try------try------try------try---
 		try
@@ -184,7 +197,7 @@ char		outputFileName[256];
 		}
 	}
 
-	return(0);
+	return(saveReturnCode);
 }
 
 

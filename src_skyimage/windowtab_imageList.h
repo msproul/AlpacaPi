@@ -20,6 +20,7 @@ enum
 	kImageList_ClmTitle4,
 	kImageList_ClmTitle5,
 	kImageList_ClmTitle6,
+	kImageList_ClmTitle7,
 
 	kImageList_AlpacaDev_01,
 	kImageList_AlpacaDev_02,
@@ -69,6 +70,7 @@ enum
 
 	kImageList_AlpacaDev_Total,
 	kImageList_Btn_CloseAll,
+	kImageList_Btn_Scan,
 	kImageList_Btn_Help,
 	kImageList_ScrollBar,
 

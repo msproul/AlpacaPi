@@ -23,10 +23,11 @@
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
 //*	Sep  6,	2023	<MLS> Created cameradriver_overlay.cpp
+//*	Mau 24,	2024	<MLS> Added _IMAGE_OVERLAY_
 //*****************************************************************************
 
 
-#ifdef _ENABLE_CAMERA_
+#if defined(_ENABLE_CAMERA_) && defined(_IMAGE_OVERLAY_)
 
 #include	<stdbool.h>
 #include	<stdint.h>
@@ -110,4 +111,5 @@ cv::Scalar	textColor;
 #endif // defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 }
 
-#endif //	_ENABLE_CAMERA_
+#endif //	defined(_ENABLE_CAMERA_) && defined(_IMAGE_OVERLAY_)
+

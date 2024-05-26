@@ -180,13 +180,16 @@
 //*	Sep 13,	2023	<MLS> Fixed HTML header bug when sending PNG file SendJpegResponse()
 //*	Sep 20,	2023	<MLS> Adding optional thread to driver base class
 //*	Nov  1,	2023	<MLS> Fixed git hub issue #29 - issues with
-//*	Nov  1,	2023	<MLS>	/management/v1/description?ClientID=1&ClientTransactionID=2
+//*	Nov  1,	2023	<MLS> /management/v1/description?ClientID=1&ClientTransactionID=2
 //*	Nov 26,	2023	<MLS> Removed links form HTML cmd table for cmds starting with "-"
 //*	Apr 10,	2024	<MLS> Started on global GPS support
 //*	Apr 22,	2024	<MLS> Started working on multi-language support
 //*	Apr 25,	2024	<MLS> Successfully got JavaScript to send HTTP PUT command
 //*	Apr 25,	2024	<MLS> Added ProcessOptionsCommand()
 //*	Apr 28,	2024	<MLS> Fixed ProcessGetPutRequest() to properly handle image requests
+//*	May 17,	2024	<MLS> Added features to allow returning http error codes like 400
+//*	May 18,	2024	<MLS> Added _DEBUG_MANAGEMENT_
+//*	May 18,	2024	<MLS> Fixed cSendJSONresponse bug, not initialized to true
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -195,6 +198,7 @@
 //*****************************************************************************
 //		 getrusage() - get resource usage
 //*****************************************************************************
+
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -240,6 +244,10 @@
 
 //#define _DEBUG_CONFORM_
 //#define	_SHOW_HTTP_DATA_
+
+//#define	_DEBUG_HTML_
+//#define _DEBUG_MANAGEMENT_
+
 
 #ifdef _ENABLE_CAMERA_
 	#include	"cameradriver.h"
@@ -323,7 +331,6 @@ char			gWebTitle[80]								=	"AlpacaPi";
 char			gFullVersionString[128]						=	"";
 int				gAlpacaListenPort							=	kAlpacaPiDefaultPORT;	//*	6800 is the default
 uint32_t		gClientID									=	1;
-uint32_t		gClientTransactionID						=	1;
 uint32_t		gServerTransactionID						=	1;		//*	we are the server, we will increment this each time a transaction occurs
 bool			gErrorLogging								=	false;	//*	write errors to log file if true
 bool			gConformLogging								=	false;	//*	log all commands to log file to match up with Conform
@@ -408,6 +415,7 @@ int		iii;
 	cDeleteMe					=	false;
 	cRunStartupOperations		=	true;
 	cVerboseDebug				=	false;
+	cSendJSONresponse			=	true;
 	cMagicCookie				=	kMagicCookieValue;
 	cDeviceModel[0]				=	0;
 	cDeviceManufacturer[0]		=	0;
@@ -517,6 +525,7 @@ int		iii;
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
 	BandWidthStatsInit();
 #endif // _ENABLE_BANDWIDTH_LOGGING_
+	CONSOLE_DEBUG_W_BOOL("cSendJSONresponse\t=", cSendJSONresponse);
 }
 
 //**************************************************************************************
@@ -697,6 +706,13 @@ char				tempString[64];
 			alpacaErrCode	=	Get_SupportedActions(reqData, NULL);
 			break;
 
+		case kCmd_Common_SetupDialog:
+			CONSOLE_DEBUG("kCmd_Common_SetupDialog");
+			Setup_ProcessCommand(reqData);
+			cSendJSONresponse	=	false;
+			alpacaErrCode		=	kASCOM_Err_Success;
+			break;
+
 #ifdef _INCLUDE_EXIT_COMMAND_
 		//*	the exit command was implemented for a special case application, it is not intended
 		//*	to be used in the normal astronomy community
@@ -723,6 +739,7 @@ char				tempString[64];
 			CONSOLE_DEBUG(alpacaErrMsg);
 			CONSOLE_DEBUG_W_STR("deviceCommand\t=", reqData->deviceCommand);
 
+			reqData->httpRetCode	=	400;
 			strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 			DumpRequestStructure(__FUNCTION__, reqData);
 //			CONSOLE_ABORT(__FUNCTION__);
@@ -1934,8 +1951,9 @@ struct tm	*linuxTime;
 //*****************************************************************************
 const char	gBadResponse400[]	=
 {
-	"HTTP/1.0 400 Bad Request\r\n"
-	"Server: AkamaiGHost\r\n"
+	"HTTP/1.0 404 Bad Request\r\n"
+//	"Server: AkamaiGHost\r\n"
+	"Server: AlpacaPi\r\n"
 	"Mime-Version: 1.0\r\n"
 	"Content-Type: text/html\r\n"
 	"Content-Length: 207\r\n"
@@ -1944,12 +1962,14 @@ const char	gBadResponse400[]	=
 	"<!DOCTYPE html>\r\n"
 	"<HTML lang=\"en\">\r\n"
 	"<HEAD>\r\n"
-	"<TITLE>Invalid URL</TITLE>\r\n"
-	"</HEAD><BODY>\r\n"
+	"<TITLE>404 Not Found</TITLE>\r\n"
+	"</HEAD>\r\n"
+	"<BODY>\r\n"
 	"<H1>Invalid URL</H1>\r\n"
 	"The requested URL , is invalid.<p>\r\n"
 //	"Reference&#32;&#35;9&#46;d0fb4317&#46;1555413904&#46;e81982\r\n"
-	"</BODY></HTML>\r\n"
+	"</BODY>\r\n"
+	"</HTML>\r\n"
 };
 
 //*****************************************************************************
@@ -2269,10 +2289,10 @@ int		iii;
 				SocketWriteData(mySocketFD,	lineBuffer);
 
 				//*	cpu usage, this may get moved to a different page later
-				sprintf(lineBuffer, "<TD><CENTER>%llu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalMilliSeconds);
+				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalMilliSeconds);
 				SocketWriteData(mySocketFD,	lineBuffer);
 			#if (__LONG_LONG_WIDTH__ == 64)
-				sprintf(lineBuffer, "<TD><CENTER>%llu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
+				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
 			#else
 				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
 			#endif
@@ -2876,12 +2896,13 @@ static int	SendFileToSocket(int socket, const char *fileName)
 {
 FILE			*filePointer;
 int				numRead;
+int				retCode;
 int				bytesWritten;
 int				totalBytesWritten;
 bool			keepGoing;
 char			dataBuffer[1600];
 
-//	CONSOLE_DEBUG_W_STR("Sending file:", fileName);
+	CONSOLE_DEBUG_W_STR("Sending file:", fileName);
 	totalBytesWritten	=	0;
 	filePointer	=	fopen(fileName, "r");
 	if (filePointer != NULL)
@@ -2907,7 +2928,12 @@ char			dataBuffer[1600];
 				keepGoing	=	false;
 			}
 		}
-		fclose(filePointer);
+		retCode	=	fclose(filePointer);
+		if (retCode != 0)
+		{
+			CONSOLE_DEBUG_W_NUM("fclose(filePointer) failed with rc\t=",	retCode);
+
+		}
 //		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
 //		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
 	}
@@ -2915,6 +2941,7 @@ char			dataBuffer[1600];
 	{
 		CONSOLE_DEBUG("Failed to open file");
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(totalBytesWritten);
 }
 
@@ -2981,9 +3008,9 @@ int				returnCode;
 			}
 		}
 
-//		CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
-
+		//------------------------------------------------------------------
 		//*	make sure there is nothing past the extension
+//		CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
 		myFilenamePtr	=	strstr(myJpegFileName, ".jpg");
 		if (myFilenamePtr != NULL)
 		{
@@ -2994,6 +3021,7 @@ int				returnCode;
 		{
 			myFilenamePtr[4]	=	0;
 		}
+//		CONSOLE_DEBUG_W_STR("myJpegFileName=", myJpegFileName);
 	}
 	else
 	{
@@ -3005,7 +3033,7 @@ int				returnCode;
 	{
 		CONSOLE_DEBUG_W_STR("Failed to send file:", myJpegFileName);
 	}
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
 //*****************************************************************************
@@ -3024,7 +3052,8 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 //		CONSOLE_DEBUG("Calling ProcessCommand() ---------------------------------------------");
 //		CONSOLE_DEBUG_W_STR("cAlpacaName         \t=",	alpacaDevice->cAlpacaName);
 //		CONSOLE_DEBUG_W_STR("deviceCommand       \t=",	reqData->deviceCommand);
-		alpacaErrCode	=	alpacaDevice->ProcessCommand(reqData);
+		alpacaDevice->cSendJSONresponse	=	true;
+		alpacaErrCode					=	alpacaDevice->ProcessCommand(reqData);
 		if (alpacaErrCode == kASCOM_Err_Success)
 		{
 			//*	record the time of the last successful command
@@ -3071,6 +3100,10 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 int					deviceTypeEnum;
 int					iii;
 bool				deviceFound;
+
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif // _DEBUG_MANAGEMENT_
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	if (strncmp(reqData->httpCmdString, "PUT", 3) == 0)
@@ -3193,7 +3226,7 @@ int					iii;
 int					deviceTypeEnum;
 bool				deviceFound;
 
-	CONSOLE_DEBUG("/setup/ found");
+//	CONSOLE_DEBUG("/setup/ found");
 //	CONSOLE_DEBUG_W_STR("httpCmdString\t=", reqData->httpCmdString);
 
 	//*	check to see if its
@@ -3272,6 +3305,7 @@ int			returnCode;
 	}
 	else
 	{
+		CONSOLE_DEBUG("localtime() failed!!!!!!!!!!!!");
 		strcpy(datestring, "date-unknown");
 	}
 	if (reqData->get_putIndicator == 'G')
@@ -3290,13 +3324,15 @@ int			returnCode;
 	if (gIPlogNeedsToBeOpened)
 	{
 		//*	create a log filename with today's date
+		currentTime		=	time(NULL);
 		linuxTime		=	localtime(&currentTime);
+		CONSOLE_DEBUG_W_NUM("tm_mday", linuxTime->tm_mday);
 		sprintf(logFilename, "requestlog-%d-%d-%02d-%02d.txt",	gAlpacaListenPort,
 																(1900 + linuxTime->tm_year),
 																(1 + linuxTime->tm_mon),
 																linuxTime->tm_mday);
 //		CONSOLE_DEBUG("-------------------------------------------------------------------------");
-//		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
+		CONSOLE_DEBUG_W_STR("Open log file:", logFilename);
 //		SETUP_TIMING();
 		gIPlogFilePointer		=	fopen(logFilename, "a");
 		gIPlogNeedsToBeOpened	=	false;
@@ -3337,6 +3373,8 @@ int			returnCode;
 		if (linuxTime->tm_mday != gCurrentDayOfMonth)
 		{
 			CONSOLE_DEBUG("Closing log file");
+			CONSOLE_DEBUG_W_NUM("gCurrentDayOfMonth\t=",	gCurrentDayOfMonth);
+			CONSOLE_DEBUG_W_NUM("tm_mday           \t=",	linuxTime->tm_mday);
 			returnCode	=	fclose(gIPlogFilePointer);
 			if (returnCode != 0)
 			{
@@ -3353,7 +3391,6 @@ int			returnCode;
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
-//#define	_DEBUG_HTML_
 
 //*****************************************************************************
 //*
@@ -3421,7 +3458,7 @@ int				contentDataLen;
 		sLen		=	strlen(htmlData);
 #ifdef _DEBUG_HTML_
 		CONSOLE_DEBUG_W_NUM("htmlData length\t=", sLen);
-		CONSOLE_DEBUG_W_NUM("sizeof(lineBuff)\t=", sizeof(lineBuff));
+		CONSOLE_DEBUG_W_SIZE("sizeof(lineBuff)\t=", sizeof(lineBuff));
 #endif
 
 		//*	keep a copy of the entire thing
@@ -3446,7 +3483,18 @@ int				contentDataLen;
 				ccc++;
 			}
 			reqData->httpUserAgent[ccc]	=	0;
+			//*	special case because "ConformUniversal/2.1.0+23787.e8effdcb04975452b0e7e529b87bcb851920d57a"
+			//*	is too long for the log file
+			if (strncmp(reqData->httpUserAgent, "ConformU", 8) == 0)
+			{
+			char	*plusPtr;
 
+				plusPtr	=	strchr(reqData->httpUserAgent, '+');
+				if (plusPtr != NULL)
+				{
+					*plusPtr	=	0;
+				}
+			}
 			//===========================================================================
 			//*	check to see who is talking to us so we can keep count.....................
 			if (strncasecmp(reqData->httpUserAgent, "AlpacaPi", 8) == 0)
@@ -3826,7 +3874,7 @@ char				*delimPtr;
 		{
 			//*	the device number is not a valid number
 			CONSOLE_DEBUG("=====================================================");
-			CONSOLE_DEBUG_W_STR("Device number sting is invalid!!!", myDeviceNumString);
+			CONSOLE_DEBUG_W_STR("Device number string is invalid!!!", myDeviceNumString);
 			reqData->deviceNumber	=	-1;
 		}
 	}
@@ -3861,13 +3909,15 @@ char				*delimPtr;
 	//	/management/apiversions
 	if (requestType == kRequestType_Managment)
 	{
-//		CONSOLE_DEBUG_W_NUM("slashCounter          \t=",	slashCounter);
-//		CONSOLE_DEBUG_W_STR("myRequestTypeString   \t=",	myRequestTypeString);
-//		CONSOLE_DEBUG_W_STR("myAlpacaVersionString \t=",	myAlpacaVersionString);
-//		CONSOLE_DEBUG_W_STR("myDeviceString        \t=",	myDeviceString);
-//		CONSOLE_DEBUG_W_STR("myDeviceNumString     \t=",	myDeviceNumString);
-//		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
-//		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+#ifdef _DEBUG_MANAGEMENT_
+		CONSOLE_DEBUG_W_NUM("slashCounter          \t=",	slashCounter);
+		CONSOLE_DEBUG_W_STR("myRequestTypeString   \t=",	myRequestTypeString);
+		CONSOLE_DEBUG_W_STR("myAlpacaVersionString \t=",	myAlpacaVersionString);
+		CONSOLE_DEBUG_W_STR("myDeviceString        \t=",	myDeviceString);
+		CONSOLE_DEBUG_W_STR("myDeviceNumString     \t=",	myDeviceNumString);
+		CONSOLE_DEBUG_W_STR("myDeviceCmdString     \t=",	myDeviceCmdString);
+		CONSOLE_DEBUG_W_STR("reqData->deviceCommand\t=",	reqData->deviceCommand);
+#endif // _DEBUG_MANAGEMENT_
 
 		if ((strlen(myAlpacaVersionString) > 3) && (strlen(myDeviceString) == 0))
 		{
@@ -3929,18 +3979,28 @@ char				*delimPtr;
 #endif // _DEBUG_CONFORM_
 
 	//*	Check for ClientTransactionID
-	foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "ClientTransactionID", argumentString, 31);
+	reqData->ClientTransactionID	=	67890;	//*	set the default (fake out conformU)
+	reqData->ClientTransactionID	=	1234;	//*	set the default (fake out conformU)
+	foundKeyWord	=	GetKeyWordArgument(reqData->contentData, "ClientTransactionID", argumentString, 31, kIgnoreCase);
 	if (foundKeyWord)
 	{
-		gClientTransactionID	=	atoi(argumentString);
+	int	myClientTransactionID;
+
+		//*	ConformU likes to play games and send negative numbers text strings, it expects a 0 in this case
+		myClientTransactionID			=	atoi(argumentString);
+		if (myClientTransactionID < 0)
+		{
+			myClientTransactionID	=	0;
+		}
+		reqData->ClientTransactionID	=	myClientTransactionID;
+		strcpy(reqData->ClientTransactionIDstr,	argumentString);
 	}
 #ifdef _DEBUG_CONFORM_
 	else
 	{
-//		CONSOLE_DEBUG("gClientTransactionID NOT FOUND");
+//		CONSOLE_DEBUG("ClientTransactionID NOT FOUND");
 	}
 	CONSOLE_DEBUG_W_NUM("gClientID\t=", gClientID);
-	CONSOLE_DEBUG_W_NUM("gClientTransactionID\t=", gClientTransactionID);
 
 #endif // _DEBUG_CONFORM_
 
@@ -3992,6 +4052,7 @@ int	iii;
 	//*	the TYPE_GetPutRequestData simplifies parsing and passing of the
 	//*	parsed data to subroutines
 	reqData.socket				=	socket;
+	reqData.httpRetCode			=	200;
 	reqData.get_putIndicator	=	htmlData[0];
 	reqData.requestTypeEnum		=	-1;
 	reqData.deviceNumber		=	-1;
@@ -4014,6 +4075,9 @@ int	iii;
 //		DumpRequestStructure(__FUNCTION__, &reqData);
 //	}
 
+#ifdef _DEBUG_MANAGEMENT_
+	CONSOLE_DEBUG_W_NUM("requestType\t=", requestType);
+#endif // _DEBUG_MANAGEMENT_
 	alpacaErrCode	=	kASCOM_Err_Success;
 	switch(requestType)
 	{
@@ -4049,6 +4113,7 @@ int	iii;
 
 		//*	standard ALPACA management
 		case kRequestType_Managment:
+//			CONSOLE_DEBUG(__FUNCTION__);
 			alpacaErrCode	=	ProcessManagementRequest(&reqData, byteCount);
 			break;
 
@@ -4173,7 +4238,10 @@ int		bytesWritten;
 //	CONSOLE_DEBUG_W_STR("Sending data:\r\n", optionsResponse);
 
 	bytesWritten	=	SocketWriteData(socket,	optionsResponse);
-//	CONSOLE_DEBUG_W_NUM("bytesWritten\t=",	bytesWritten);
+	if (bytesWritten <= 0)
+	{
+		CONSOLE_DEBUG_W_NUM("bytesWritten\t=",	bytesWritten);
+	}
 }
 
 
@@ -4803,6 +4871,13 @@ int	imu_ReturnCode;
 					"IMU Failed to initialize");
 	}
 #endif
+#ifdef _ENABLE_GLOBAL_GPS_
+	if (gEnableGlobalGPS)
+	{
+		CONSOLE_DEBUG("Starting GPS thread");
+		GPS_StartThread(gGlobalGPSpath, gGlobalGPSbaudrate);
+	}
+#endif
 
 	DEBUG_TIMING("Timing step 2:");
 	//--------------------------------------------------------
@@ -4837,13 +4912,6 @@ int	imu_ReturnCode;
 
 	DEBUG_TIMING("Timing step 5:");
 
-#ifdef _ENABLE_GLOBAL_GPS_
-	if (gEnableGlobalGPS)
-	{
-		CONSOLE_DEBUG("Starting GPS thread");
-		GPS_StartThread(gGlobalGPSpath, gGlobalGPSbaudrate);
-	}
-#endif
 
 	//========================================================================================
 	CONSOLE_DEBUG("Starting main loop -----------------------------------------");
@@ -5048,6 +5116,31 @@ int		cmdEnumValue;
 	}
 	return(cmdEnumValue);
 }
+#include	<ctype.h>
+//*****************************************************************************
+static void	GenerateInvertedCase(const char *charStr, char *invertedStr)
+{
+int	sLen;
+int	iii;
+
+	sLen	=	strlen(charStr);
+	for (iii=0; iii<sLen; iii++)
+	{
+		if (isupper(charStr[iii]))
+		{
+			invertedStr[iii]	=	tolower(charStr[iii]);
+		}
+		else if (islower(charStr[iii]))
+		{
+			invertedStr[iii]	=	toupper(charStr[iii]);
+		}
+		else
+		{
+			invertedStr[iii]	=	charStr[iii];
+		}
+	}
+	invertedStr[iii]	=	0;
+}
 
 //*****************************************************************************
 //*	This finds the unique keyword in the data string.
@@ -5064,6 +5157,7 @@ bool	GetKeyWordArgument(	const char	*dataSource,
 							const char	*keyword,
 							char		*argument,
 							const int	maxArgLen,
+							const bool	ingoreCase,
 							const bool	argIsNumeric)
 {
 int		dataSrcLen;
@@ -5075,7 +5169,7 @@ char	myArgString[256];
 int		myArgLength;
 int		ccc;
 char	theChar;
-
+char	invertedCaseKeyWord[64];
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("dataSource\t=", dataSource);
@@ -5086,6 +5180,8 @@ char	theChar;
 	foundKeyWord	=	false;
 	if ((dataSource != NULL) && (keyword != NULL) && (argument != NULL))
 	{
+		GenerateInvertedCase(keyword, invertedCaseKeyWord);
+
 		//*	this steps through the string looking for keywords
 		//*	Once the keyword is found, it MUST be followed by an "="
 		dataSrcLen	=	strlen(dataSource);
@@ -5124,7 +5220,9 @@ char	theChar;
 					CONSOLE_DEBUG_W_STR("myArgString\t=", myArgString);
 				#endif // _DEBUG_CONFORM_
 
-					if (strcasecmp(myKeyWord, keyword) == 0)
+					//*	conformU wants us accept any case on GET and strict case on PUT
+					if ((strcmp(myKeyWord, keyword) == 0) ||
+						((strcasecmp(myKeyWord, keyword) == 0) && ingoreCase))
 					{
 						foundKeyWord	=	true;
 						//==================================================================
@@ -5359,24 +5457,26 @@ void	InitObsConditionGloblas(void)
 void	DumpRequestStructure(const char *functionName, TYPE_GetPutRequestData	*reqData)
 {
 	CONSOLE_DEBUG("*******************************************");
-	CONSOLE_DEBUG_W_STR(	"Called from         \t=",	functionName);
-	CONSOLE_DEBUG_W_STR(	"httpUserAgent       \t=",	reqData->httpUserAgent);
-	CONSOLE_DEBUG_W_NUM(	"cHTTPclientType     \t=",	reqData->cHTTPclientType);
-	CONSOLE_DEBUG_W_BOOL(	"clientIs_AlpacaPi   \t=",	reqData->clientIs_AlpacaPi);
-	CONSOLE_DEBUG_W_BOOL(	"clientIs_ConformU   \t=",	reqData->clientIs_ConformU);
+	CONSOLE_DEBUG_W_STR(	"Called from           \t=",	functionName);
+	CONSOLE_DEBUG_W_STR(	"httpUserAgent         \t=",	reqData->httpUserAgent);
+	CONSOLE_DEBUG_W_NUM(	"cHTTPclientType       \t=",	reqData->cHTTPclientType);
+	CONSOLE_DEBUG_W_BOOL(	"clientIs_AlpacaPi     \t=",	reqData->clientIs_AlpacaPi);
+	CONSOLE_DEBUG_W_BOOL(	"clientIs_ConformU     \t=",	reqData->clientIs_ConformU);
 
-	CONSOLE_DEBUG_W_STR(	"httpCmdString       \t=",	reqData->httpCmdString);
-	CONSOLE_DEBUG_W_NUM(	"requestTypeEnum     \t=",	reqData->requestTypeEnum);
-	CONSOLE_DEBUG_W_NUM(	"Alpaca Version      \t=",	reqData->alpacaVersion);
+	CONSOLE_DEBUG_W_STR(	"httpCmdString         \t=",	reqData->httpCmdString);
+	CONSOLE_DEBUG_W_NUM(	"requestTypeEnum       \t=",	reqData->requestTypeEnum);
+	CONSOLE_DEBUG_W_NUM(	"Alpaca Version        \t=",	reqData->alpacaVersion);
 
-	CONSOLE_DEBUG_W_STR(	"deviceType          \t=",	reqData->deviceType);
-	CONSOLE_DEBUG_W_NUM(	"Device Number       \t=",	reqData->deviceNumber);
-	CONSOLE_DEBUG_W_STR(	"cmdBuffer           \t=",	reqData->cmdBuffer);
-	CONSOLE_DEBUG_W_STR(	"deviceCommand       \t=",	reqData->deviceCommand);
-	CONSOLE_DEBUG_W_STR(	"contentData         \t=",	reqData->contentData);
-	CONSOLE_DEBUG_W_NUM(	"gClientID           \t=",	gClientID);
-	CONSOLE_DEBUG_W_NUM(	"gClientTransactionID\t=",	gClientTransactionID);
-	CONSOLE_DEBUG_W_NUM(	"gServerTransactionID\t=",	gServerTransactionID);
+	CONSOLE_DEBUG_W_STR(	"deviceType            \t=",	reqData->deviceType);
+	CONSOLE_DEBUG_W_NUM(	"Device Number         \t=",	reqData->deviceNumber);
+	CONSOLE_DEBUG_W_STR(	"cmdBuffer             \t=",	reqData->cmdBuffer);
+	CONSOLE_DEBUG_W_STR(	"deviceCommand         \t=",	reqData->deviceCommand);
+	CONSOLE_DEBUG_W_STR(	"contentData           \t=",	reqData->contentData);
+	CONSOLE_DEBUG_W_STR(	"ClientTransactionIDstr\t=",	reqData->ClientTransactionIDstr);
+	CONSOLE_DEBUG_W_NUM(	"ClientTransactionID   \t=",	reqData->ClientTransactionID);
+	CONSOLE_DEBUG_W_NUM(	"gClientID             \t=",	gClientID);
+	CONSOLE_DEBUG_W_NUM(	"gServerTransactionID  \t=",	gServerTransactionID);
+	CONSOLE_DEBUG_W_NUM(	"httpRetCode           \t=",	reqData->httpRetCode);
 
 
 //	printf("Dev#=%d\tG/P=%c\r\n",	reqData->deviceNumber, reqData->get_putIndicator);

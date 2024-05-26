@@ -377,6 +377,30 @@ else
 	echo "Failed to build Switch client !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
 fi
 
+###########################################
+#	Apr 29,	2024	<MLS> Added make topens to test script
+rm ror
+make clean >/dev/null; make $CORES topens >/dev/null 2>$ERRORLOGFILE
+############################################
+if [ -f ror ]
+then
+	echo "ror (topens) driver made successfully" >> $LOGFILENAME
+else
+	echo "Failed to build ror(topens) driver !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
+fi
+
+###########################################
+#	Apr 29,	2024	<MLS> Added make pmc8 to test script
+rm alpacapi-expsci
+make clean >/dev/null; make $CORES pmc8 >/dev/null 2>$ERRORLOGFILE
+############################################
+if [ -f alpacapi-expsci ]
+then
+	echo "pmc8(alpacapi-expsci) driver made successfully" >> $LOGFILENAME
+else
+	echo "Failed to build pmc8(alpacapi-expsci) driver !!!!!!!!!!!!!!!!!!!!!" >> $LOGFILENAME
+fi
+alpacapi-expsci
 
 
 echo -n "End time = " >> $LOGFILENAME

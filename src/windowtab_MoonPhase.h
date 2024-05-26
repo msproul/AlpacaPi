@@ -29,6 +29,9 @@ enum
 	kMoonPhase_EnableELatBtn,
 	kMoonPhase_EnableELonBtn,
 
+	kMoonPhase_EnableRA_Btn,
+	kMoonPhase_EnableDEC_Btn,
+
 
 //	kMoonPhase_YearLftBtn,
 	kMoonPhase_YearText,
@@ -59,6 +62,9 @@ enum
 	kMoonPhase_Curr_PolarAxisLbl,
 	kMoonPhase_Curr_PolarAxisValue,
 
+	kMoonPhase_Curr_RA_DECLbl,
+	kMoonPhase_Curr_RA_DECValue,
+
 	kMoonPhase_Curr_ELatELonLbl,
 	kMoonPhase_Curr_ELatELonValue,
 
@@ -88,6 +94,9 @@ enum
 	kMoonPhase_Disp_DistanceValue,
 	kMoonPhase_Disp_PolarAxisLbl,
 	kMoonPhase_Disp_PolarAxisValue,
+
+	kMoonPhase_Disp_RA_DECLbl,
+	kMoonPhase_Disp_RA_DECValue,
 
 	kMoonPhase_Disp_ELatELonLbl,
 	kMoonPhase_Disp_ELatELonValue,
@@ -186,6 +195,10 @@ class WindowTabMoonPhase: public WindowTab
 				int				cGraphColor_ELat;
 				int				cGraphColor_ELon;
 
+				int				cGraphColor_RA;
+				int				cGraphColor_DEC;
+
+
 				int				cGraphColor_Current;
 				int				cGraphColor_Displayed;
 
@@ -196,6 +209,9 @@ class WindowTabMoonPhase: public WindowTab
 				bool			cEnableGraph_AxisA;
 				bool			cEnableGraph_ELat;
 				bool			cEnableGraph_ELon;
+
+				bool			cEnableGraph_RA;
+				bool			cEnableGraph_DEC;
 				bool			cEnableOverlay;
 				//*	moon image stuff
 				cv::Mat			*cMoonOpenCVimage;

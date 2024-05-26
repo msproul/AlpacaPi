@@ -828,15 +828,15 @@ HRESULT				ogmaResult;
 		if (SUCCEEDED(ogmaResult))
 		{
 			CONSOLE_DEBUG_W_NUM("ogma_bitDepth (0 = 8 bits mode, 1 = 16 bits mode)\t=", ogma_bitDepth);
-#define OGMACAM_PIXELFORMAT_RAW8              0x00
-#define OGMACAM_PIXELFORMAT_RAW10             0x01
-#define OGMACAM_PIXELFORMAT_RAW12             0x02
-#define OGMACAM_PIXELFORMAT_RAW14             0x03
-#define OGMACAM_PIXELFORMAT_RAW16             0x04
-#define OGMACAM_PIXELFORMAT_YUV411            0x05
-#define OGMACAM_PIXELFORMAT_VUYY              0x06
-#define OGMACAM_PIXELFORMAT_YUV444            0x07
-#define OGMACAM_PIXELFORMAT_RGB888            0x08
+#define OGMACAM_PIXELFORMAT_RAW8			0x00
+#define OGMACAM_PIXELFORMAT_RAW10			0x01
+#define OGMACAM_PIXELFORMAT_RAW12			0x02
+#define OGMACAM_PIXELFORMAT_RAW14			0x03
+#define OGMACAM_PIXELFORMAT_RAW16			0x04
+#define OGMACAM_PIXELFORMAT_YUV411			0x05
+#define OGMACAM_PIXELFORMAT_VUYY			0x06
+#define OGMACAM_PIXELFORMAT_YUV444			0x07
+#define OGMACAM_PIXELFORMAT_RGB888			0x08
 			switch(newImageType)
 			{
 				case kImageType_RAW8:

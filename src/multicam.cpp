@@ -242,7 +242,7 @@ int					mySocket;
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
 								"ClientTransactionID",
-								gClientTransactionID,
+								reqData->ClientTransactionID,
 								INCLUDE_COMMA);
 
 	JsonResponse_Add_Int32(		mySocket,
@@ -274,6 +274,7 @@ int					mySocket;
 								NO_COMMA);
 
 	JsonResponse_Add_Finish(	mySocket,
+								reqData->httpRetCode,
 								reqData->jsonTextBuffer,
 								(cHttpHeaderSent == false));
 

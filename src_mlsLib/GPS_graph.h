@@ -11,6 +11,7 @@ void	CreateAltitudeHistoryPlot(		FILE *htmlFile, const char *imageFolderName, co
 void	CreateSNRdistrbutionPlot(		FILE *htmlFile, const char *imageFolderName, const char *snrGraphFileName);
 void	CreateSatsInUseHistoryPlot(		FILE *htmlFile, const char *imageFolderName, const char *satsInUseGraphFileName);
 void	CreateSatelliteElevationGraph(	FILE *htmlFile, const char *imageFolderName, const char *elevationGraphFileName);
+void	CreateLatDetailHistoryPlot(		FILE *htmlFile, const char *imageFolderName, const char *latlonGraphFileName);
 
 #ifdef _ENABLE_SATELLITE_ALMANAC_
 	void	DisplayGPSalmanac(TYPE_SatStatsStruct *theSatData, bool showSatNum);

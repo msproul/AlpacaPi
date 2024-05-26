@@ -71,12 +71,14 @@ class ControllerSkyImage: public Controller
 			WindowTabAbout			*cAboutBoxTabObjPtr;
 
 			char					cDirectoryPath[256];
+			int						cDirectoryPathLen;
 			int						cFitsProcessCntr;
-			int                     cFileIndex;
+			int						cFileIndex;
 			int						cBackGroundImgIdx;
 };
 
 extern	int	gCurrentImageIndex;
+extern	int	gImageCount;
 
 bool	LoadNextImageFromList(ControllerImage *imageController);
 bool	LoadPreviousImageFromList(ControllerImage *imageController);

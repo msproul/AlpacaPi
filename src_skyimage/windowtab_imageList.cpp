@@ -18,6 +18,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Mar 12,	2024	<MLS> Created windowtab_imageList.cpp
+//*	May  5,	2024	<MLS> Added object column to image display list
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -78,7 +79,7 @@ int		textBoxHt;
 int		textBoxWd;
 int		widgetWidth;
 int		iii;
-short	tabArray[kMaxTabStops]	=	{450, 550, 650, 750, 850, 950, 0};
+short	tabArray[kMaxTabStops]	=	{450, 550, 650, 750, 850, 950, 1100, 0};
 int		clmnHdr_xLoc;
 int		clmnHdrWidth;
 char	titleText[256];
@@ -91,6 +92,7 @@ char	titleText[256];
 	strcpy(titleText, gDirectoryPath);
 	strcat(titleText, " (double click to open image)");
 	yLoc	=	SetTitleBox(kImageList_Title, -1, yLoc, titleText);
+	yLoc2	=	yLoc;
 
 	clmnHdr_xLoc	=	1;
 	iii				=	kImageList_ClmTitle1;
@@ -116,6 +118,7 @@ char	titleText[256];
 	SetWidgetText(		kImageList_ClmTitle4,	"Exposure");
 	SetWidgetText(		kImageList_ClmTitle5,	"Gain");
 	SetWidgetText(		kImageList_ClmTitle6,	"%sat");
+	SetWidgetText(		kImageList_ClmTitle7,	"Object");
 	yLoc			+=	cRadioBtnHt;
 	yLoc			+=	2;
 
@@ -139,34 +142,35 @@ char	titleText[256];
 	}
 
 	//---------------------------------------------------------------------
-	xLoc		=	0;
-	widgetWidth	=	(cWidth / 4) + 40;
-	SetWidget(				kImageList_AlpacaDev_Total,	xLoc,	yLoc,	widgetWidth,	cSmallBtnHt);
-	SetWidgetFont(			kImageList_AlpacaDev_Total,	kFont_Medium);
+	//*	create the bottom row of buttons/msg box
+
+	xLoc		=	2;
+	yLoc		=	cHeight - cTitleHeight;
+	yLoc2		-=	2;
+
+	widgetWidth	=	(cWidth / 5);
+	iii			=	kImageList_AlpacaDev_Total;
+	while (iii <= kImageList_Btn_Help)
+	{
+		SetWidget(			iii,	xLoc,	yLoc,	widgetWidth,	cSmallBtnHt);
+		SetWidgetType(		iii,	kWidgetType_Button);
+		SetWidgetFont(		iii,	kFont_Medium);
+		SetWidgetBGColor(	iii,	CV_RGB(255,	255,	255));
+		xLoc		+=	widgetWidth;
+		xLoc		+=	2;
+
+		iii++;
+	}
+	SetWidgetType(			kImageList_AlpacaDev_Total,	kWidgetType_TextBox);
 	SetWidgetText(			kImageList_AlpacaDev_Total,	"Total units =?");
 	SetWidgetJustification(	kImageList_AlpacaDev_Total,	kJustification_Left);
+	SetWidgetBGColor(		kImageList_AlpacaDev_Total,	CV_RGB(0,	0,	0));
 	SetWidgetTextColor(		kImageList_AlpacaDev_Total,	CV_RGB(255,	255,	255));
 
-	xLoc		+=	widgetWidth;
-	xLoc		+=	2;
-
-	//---------------------------------------------------------------------
-	SetWidget(			kImageList_Btn_CloseAll,	xLoc,	yLoc,		widgetWidth,		cSmallBtnHt);
-	SetWidgetFont(		kImageList_Btn_CloseAll,	kFont_Medium);
-	SetWidgetType(		kImageList_Btn_CloseAll,	kWidgetType_Button);
-	SetWidgetBGColor(	kImageList_Btn_CloseAll,	CV_RGB(255,	255,	255));
-	SetWidgetText(		kImageList_Btn_CloseAll,	"Close All");
-
-	xLoc		+=	widgetWidth;
-	xLoc		+=	2;
-	//---------------------------------------------------------------------
-	SetWidget(			kImageList_Btn_Help,	xLoc,	yLoc,		widgetWidth,		cSmallBtnHt);
-	SetWidgetFont(		kImageList_Btn_Help,	kFont_Medium);
-	SetWidgetType(		kImageList_Btn_Help,	kWidgetType_Button);
-	SetWidgetBGColor(	kImageList_Btn_Help,	CV_RGB(255,	255,	255));
-	SetWidgetHelpText(	kImageList_Btn_Help,	"Click to launch web documentation");
-	SetWidgetText(		kImageList_Btn_Help,	"Help");
-
+	SetWidgetText(			kImageList_Btn_CloseAll,	"Close All");
+	SetWidgetText(			kImageList_Btn_Scan,		"Scan");
+	SetWidgetText(			kImageList_Btn_Help,		"Help");
+	SetWidgetHelpText(		kImageList_Btn_Help,		"Click to launch web documentation");
 
 	yLoc			+=	cTitleHeight;
 	yLoc			+=	2;
@@ -279,7 +283,14 @@ char	*extensionPtr;
 			CONSOLE_DEBUG_W_HEX("Delete key=", keyPressed);
 			if (imageIndex >= 0)
 			{
-				if (gImageList[imageIndex].lineSelected)
+				if (gImageList[imageIndex].ImageFileType == kImageFileType_PDS)
+				{
+					CONSOLE_DEBUG("Deleting of PDS images NOT allowed");
+					break;
+				}
+
+				if ((gImageList[imageIndex].lineSelected) &&
+					(gImageList[imageIndex].ImageFileType == kImageFileType_FITS))
 				{
 					CONSOLE_DEBUG_W_STR("Deleting:", gImageList[imageIndex].FilePath);
 					retCode	=	remove(gImageList[imageIndex].FilePath);
@@ -307,6 +318,10 @@ char	*extensionPtr;
 						CONSOLE_DEBUG_W_NUM("Deleting png:", retCode);
 					}
 				}
+			}
+			else
+			{
+				CONSOLE_DEBUG("Line not selected");
 			}
 			break;
 
@@ -351,6 +366,7 @@ int	newSortColumn;
 		case kImageList_ClmTitle4:
 		case kImageList_ClmTitle5:
 		case kImageList_ClmTitle6:
+		case kImageList_ClmTitle7:
 			newSortColumn	=	buttonIdx - kImageList_ClmTitle1;
 			if (newSortColumn == cSortColumn)
 			{
@@ -530,13 +546,14 @@ int				imageIdx;
 		if ((boxId <= kImageList_AlpacaDev_Last) && (imageIdx < gImageCount) && (gImageList[imageIdx].validEntry))
 		{
 
-			sprintf(textString, "%s\t%d\t%d\t%3.6f\t%d\t%3.4f",
+			sprintf(textString, "%s\t%d\t%d\t%3.6f\t%d\t%3.4f\t%s",
 									gImageList[imageIdx].FileName,
 									gImageList[imageIdx].DATAMIN,
 									gImageList[imageIdx].DATAMAX,
 									gImageList[imageIdx].Exposure_secs,
 									gImageList[imageIdx].Gain,
-									gImageList[imageIdx].SaturationPercent);
+									gImageList[imageIdx].SaturationPercent,
+									gImageList[imageIdx].Object);
 
 			//-----------------------------------------------------
 			//*	deal with selected state
@@ -639,6 +656,16 @@ int				returnValue;
 				returnValue	=	strcasecmp(obj1->FileName, obj2->FileName);
 			}
 			break;
+
+		case 6:
+			returnValue	=	strcmp(obj1->Object, obj2->Object);
+			break;
+	}
+
+	//*	make it consistent,
+	if (returnValue == 0)
+	{
+		returnValue	=	strcasecmp(obj1->FileName, obj2->FileName);
 	}
 
 	if (gInvertSort_ImageList)

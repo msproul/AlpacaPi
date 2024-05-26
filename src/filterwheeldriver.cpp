@@ -44,6 +44,9 @@
 //*	Jun 22,	2021	<MLS> Updated filtwheel driver cCommonProp.InterfaceVersion to 2
 //*	AUg  5,	2022	<MLS> Added Get_Readall() to filterwheel driver
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to filterwheel driver
+//*	May 17,	2024	<MLS> Added http error 400 processing to filterwheel driver
+//*	May 17,	2024	<MLS> Added http error 400 to Put_Position()
+//*	May 17,	2024	<MLS> CONFORMU-filterwheel -> PASSED!!!!!!!!!!!!!!
 //*****************************************************************************
 
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
@@ -296,40 +299,43 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ClientTransactionID",
-							gClientTransactionID,
-							INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		JsonResponse_Add_Uint32(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ClientTransactionID",
+									reqData->ClientTransactionID,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ServerTransactionID",
-							gServerTransactionID,
-							INCLUDE_COMMA);
+		JsonResponse_Add_Uint32(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ServerTransactionID",
+									gServerTransactionID,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(	mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ErrorNumber",
-							alpacaErrCode,
-							INCLUDE_COMMA);
+		JsonResponse_Add_Int32(	mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ErrorNumber",
+								alpacaErrCode,
+								INCLUDE_COMMA);
 
 
-	JsonResponse_Add_String(mySocket,
-							reqData->jsonTextBuffer,
-							kMaxJsonBuffLen,
-							"ErrorMessage",
-							alpacaErrMsg,
-							NO_COMMA);
+		JsonResponse_Add_String(mySocket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"ErrorMessage",
+								alpacaErrMsg,
+								NO_COMMA);
 
-	JsonResponse_Add_Finish(mySocket,
-							reqData->jsonTextBuffer,
-							(cHttpHeaderSent == false));
-
+		JsonResponse_Add_Finish(mySocket,
+								reqData->httpRetCode,
+								reqData->jsonTextBuffer,
+								(cHttpHeaderSent == false));
+	}
 #ifdef _DEBUG_CONFORM_
 	CONSOLE_DEBUG_W_STR("Output JSON\t=", reqData->jsonTextBuffer);
 #endif // _DEBUG_CONFORM_
@@ -553,53 +559,65 @@ char				commentString[128];
 
 	if (positionFound)
 	{
-		newPosition		=	AsciiToDouble(poisitonString);
-//		CONSOLE_DEBUG_W_NUM("newPosition\t=",	newPosition);
-
-		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//*	newPosition starts at "0"
-		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		if ((newPosition >= 0) && (newPosition < cNumberOfPositions))
+		if (IsValidNumericString(poisitonString))
 		{
-			alpacaErrCode	=	Set_CurrentFilterPositon(newPosition);
-			if (alpacaErrCode == 0)
+			newPosition		=	AsciiToDouble(poisitonString);
+
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//*	newPosition starts at "0"
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			if ((newPosition >= 0) && (newPosition < cNumberOfPositions))
 			{
-				cFilterWheelProp.Position	=	newPosition;
+				alpacaErrCode	=	Set_CurrentFilterPositon(newPosition);
+				if (alpacaErrCode == 0)
+				{
+					cFilterWheelProp.Position	=	newPosition;
+				}
+				else
+				{
+					CONSOLE_DEBUG("Failed to open filter wheel");
+				}
+		#ifdef _INCLUDE_ALPACA_EXTENSIONS_
+				//*	NOTE: the cFilterDef slot 0 is not used.
+				sprintf(commentString, "#%d-%s",
+										newPosition,
+									//	cFilterDef[newPosition].filterDesciption
+										cFilterWheelProp.Names[newPosition].FilterName
+										);
+
+				JsonResponse_Add_String(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										"Comment",
+										commentString,
+										INCLUDE_COMMA);
+		#endif // _INCLUDE_ALPACA_EXTENSIONS_
 			}
 			else
 			{
-				CONSOLE_DEBUG("Failed to open filter wheel");
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "New position is out of range");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
-#ifdef _INCLUDE_ALPACA_EXTENSIONS_
-			//*	NOTE: the cFilterDef slot 0 is not used.
-			sprintf(commentString, "#%d-%s",
-									newPosition,
-								//	cFilterDef[newPosition].filterDesciption
-									cFilterWheelProp.Names[newPosition].FilterName
-									);
-
-			JsonResponse_Add_String(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"Comment",
-									commentString,
-									INCLUDE_COMMA);
-#endif // _INCLUDE_ALPACA_EXTENSIONS_
 		}
 		else
 		{
-			CONSOLE_DEBUG_W_NUM("New position is out of range\t=", newPosition);
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "New position is out of range");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "New position is non-numeric");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
 		//*	improperly formatted request
-		CONSOLE_DEBUG_W_STR("improperly formatted request\t=", reqData->contentData);
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Improperly formatted request");
-		alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Position is missing");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 

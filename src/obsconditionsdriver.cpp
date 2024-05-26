@@ -41,6 +41,7 @@
 //*	Nov 27,	2022	<MLS> CONFORMU-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
 //*	Jun  4,	2023	<MLS> Updated compile time ifdefs
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to obsConditions driver
+//*	May 17,	2024	<MLS> Added http error 400 processing to obsConditions driver
 //*****************************************************************************
 
 
@@ -300,39 +301,42 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ClientTransactionID",
-								gClientTransactionID,
-								INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		JsonResponse_Add_Uint32(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ClientTransactionID",
+									reqData->ClientTransactionID,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ServerTransactionID",
-								gServerTransactionID,
-								INCLUDE_COMMA);
+		JsonResponse_Add_Uint32(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ServerTransactionID",
+									gServerTransactionID,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorNumber",
-								alpacaErrCode,
-								INCLUDE_COMMA);
+		JsonResponse_Add_Int32(		mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ErrorNumber",
+									alpacaErrCode,
+									INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorMessage",
-								alpacaErrMsg,
-								NO_COMMA);
+		JsonResponse_Add_String(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"ErrorMessage",
+									alpacaErrMsg,
+									NO_COMMA);
 
-	JsonResponse_Add_Finish(	mySocket,
-								reqData->jsonTextBuffer,
-								(cHttpHeaderSent == false));
-
+		JsonResponse_Add_Finish(	mySocket,
+									reqData->httpRetCode,
+									reqData->jsonTextBuffer,
+									(cHttpHeaderSent == false));
+	}
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 	return(alpacaErrCode);
@@ -513,13 +517,16 @@ double					avgPeriodValue;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Average period out of range");
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument AveragePeriod not found");
 	}
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -561,29 +568,22 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 double				dewPointValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	if (cObsConditionProp.Temperature.IsSupported && cObsConditionProp.Humidity.IsSupported)
 	{
-		if (cObsConditionProp.Temperature.IsSupported && cObsConditionProp.Humidity.IsSupported)
-		{
-			dewPointValue	=	cObsConditionProp.Temperature.Value -
-								((100.0 - cObsConditionProp.Humidity.Value) / 5);
+		dewPointValue	=	cObsConditionProp.Temperature.Value -
+							((100.0 - cObsConditionProp.Humidity.Value) / 5);
 
-			JsonResponse_Add_Double(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									dewPointValue,
-									INCLUDE_COMMA);
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
-		}
+		JsonResponse_Add_Double(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								dewPointValue,
+								INCLUDE_COMMA);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not Implemented");
 	}
 	return(alpacaErrCode);
 }
@@ -1008,7 +1008,9 @@ double					lastUpdateTime;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument SensorName not found");
 	}
 	return(alpacaErrCode);
 }
@@ -1073,8 +1075,9 @@ double					lastUpdateTime;
 	}
 	else
 	{
-		CONSOLE_DEBUG(reqData->contentData);
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument SensorName not found");
 	}
 	return(alpacaErrCode);
 }

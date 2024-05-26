@@ -26,7 +26,10 @@
 //*****************************************************************************
 //*	Apr 15,	2024	<MLS> Created alpacadriver_gps.cpp
 //*	Apr 15,	2024	<MLS> Added SendHtml_GPS()
+//*	Apr 28,	2024	<MLS> Added PrintLatLonStatsTable()
+//*	Apr 29,	2024	<MLS> Added PrintNMEA_SentanceTable()
 //*****************************************************************************
+
 
 #include	<sys/stat.h>
 
@@ -49,6 +52,7 @@
 #include	"ParseNMEA.h"
 #include	"GPS_graph.h"
 
+#ifdef _ENABLE_GLOBAL_GPS_
 
 bool		gEnableGlobalGPS	=	true;
 char		gGlobalGPSbaudrate	=	'9';
@@ -123,6 +127,8 @@ enum
 		kFormat_6_2,
 		kFormat_6_3,
 		kFormat_6_4,
+		kFormat_6_5,
+
 };
 //**************************************************************************************
 enum
@@ -136,24 +142,55 @@ enum
 void	PrintHTMLtableCellDouble(int mySocketFD, double argValue, int numFormat, int units)
 {
 char	lineBuffer[256];
+char	numString[32];
+
+	switch(numFormat)
+	{
+		case kFormat_6_0:			sprintf(numString,	"%6.0f",	argValue);	break;
+		case kFormat_6_1:			sprintf(numString,	"%6.1f",	argValue);	break;
+		case kFormat_6_2:			sprintf(numString,	"%6.2f",	argValue);	break;
+		case kFormat_6_3:			sprintf(numString,	"%6.3f",	argValue);	break;
+		case kFormat_6_4:			sprintf(numString,	"%6.4f",	argValue);	break;
+		case kFormat_6_5:			sprintf(numString,	"%6.4f",	argValue);	break;
+	}
 
 	switch(units)
 	{
 		case kUnits_none:
-			sprintf(lineBuffer, "\t\t<TD><CENTER>%6.4f</TD>\r\n", argValue);
+			sprintf(lineBuffer, "\t\t<TD><CENTER>%s</TD>\r\n",		numString);
 			break;
 		case kUnits_degrees:
-			sprintf(lineBuffer, "\t\t<TD><CENTER>%6.4f&deg;</TD>\r\n", argValue);
+			sprintf(lineBuffer, "\t\t<TD><CENTER>%s&deg;</TD>\r\n", numString);
 			break;
 		case kUnits_feet:
-			sprintf(lineBuffer, "\t\t<TD><CENTER>%6.4f<sub>(ft)</sub></TD>\r\n", argValue);
+			sprintf(lineBuffer, "\t\t<TD><CENTER>%s<sub>(ft)</sub></TD>\r\n", numString);
 			break;
 
 	}
 	SocketWriteData(mySocketFD,	lineBuffer);
 }
 
-#ifdef _ENABLE_GLOBAL_GPS_
+//*****************************************************************************
+void	PrintHTMLtableCell_INT(int mySocketFD, int argValue, int numFormat, int units)
+{
+char	lineBuffer[256];
+
+	switch(units)
+	{
+		case kUnits_none:
+			sprintf(lineBuffer, "\t\t<TD><CENTER>%d</TD>\r\n", argValue);
+			break;
+		case kUnits_degrees:
+			sprintf(lineBuffer, "\t\t<TD><CENTER>%d&deg;</TD>\r\n", argValue);
+			break;
+		case kUnits_feet:
+			sprintf(lineBuffer, "\t\t<TD><CENTER>%d<sub>(ft)</sub></TD>\r\n", argValue);
+			break;
+
+	}
+	SocketWriteData(mySocketFD,	lineBuffer);
+}
+
 
 //*****************************************************************************
 static void	PrintLatLonStatsTable(int mySocketFD)
@@ -181,10 +218,10 @@ double	delataFeet;
 
 	SocketWriteData(mySocketFD,	"		<TR>\n");
 		PrintHTMLtableCell(mySocketFD, "Latitude");
-		PrintHTMLtableCellDouble(mySocketFD, gNMEAdata.latitude_avg, kFormat_6_4, kUnits_degrees);
-		PrintHTMLtableCellDouble(mySocketFD, gNMEAdata.latitude_std, kFormat_6_4, kUnits_degrees);
-		PrintHTMLtableCellDouble(mySocketFD, delataMiles, kFormat_6_4, kUnits_none);
-		PrintHTMLtableCellDouble(mySocketFD, delataFeet, kFormat_6_4, kUnits_feet);
+		PrintHTMLtableCellDouble(mySocketFD,	gNMEAdata.latitude_avg,	kFormat_6_5, kUnits_degrees);
+		PrintHTMLtableCellDouble(mySocketFD,	gNMEAdata.latitude_std,	kFormat_6_5, kUnits_degrees);
+		PrintHTMLtableCellDouble(mySocketFD,	delataMiles,			kFormat_6_4, kUnits_none);
+		PrintHTMLtableCellDouble(mySocketFD,	delataFeet,				kFormat_6_1, kUnits_feet);
 	SocketWriteData(mySocketFD,	"		</TR>\n");
 
 	delataMiles	=	(gNMEAdata.longitude_std / 360.0) * 24901.0;
@@ -192,10 +229,10 @@ double	delataFeet;
 
 	SocketWriteData(mySocketFD,	"		<TR>\n");
 		PrintHTMLtableCell(mySocketFD, "Longitude");
-		PrintHTMLtableCellDouble(mySocketFD, gNMEAdata.longitude_avg, kFormat_6_4, kUnits_degrees);
-		PrintHTMLtableCellDouble(mySocketFD,gNMEAdata. longitude_std, kFormat_6_4, kUnits_degrees);
-		PrintHTMLtableCellDouble(mySocketFD, delataMiles, kFormat_6_4, kUnits_none);
-		PrintHTMLtableCellDouble(mySocketFD, delataFeet, kFormat_6_4, kUnits_feet);
+		PrintHTMLtableCellDouble(mySocketFD,	gNMEAdata.longitude_avg,	kFormat_6_5, kUnits_degrees);
+		PrintHTMLtableCellDouble(mySocketFD,	gNMEAdata. longitude_std,	kFormat_6_5, kUnits_degrees);
+		PrintHTMLtableCellDouble(mySocketFD,	delataMiles,				kFormat_6_4, kUnits_none);
+		PrintHTMLtableCellDouble(mySocketFD,	delataFeet,					kFormat_6_1, kUnits_feet);
 	SocketWriteData(mySocketFD,	"		</TR>\n");
 
 
@@ -205,19 +242,72 @@ double	delataFeet;
 }
 #endif // _ENABLE_GLOBAL_GPS_
 
+
+#ifdef _ENABLE_NMEA_SENTANCE_TRACKING_
+//*****************************************************************************
+static void	PrintNMEA_SentanceTable(int mySocketFD)
+{
+int		totalSentanceCnt;
+int		iii;
+
+	SocketWriteData(mySocketFD, "<CENTER><TABLE BORDER=1>\n");
+	SocketWriteData(mySocketFD, "		<TR>\n");
+		PrintHTMLtableCell(mySocketFD, "<CENTER>NMEA ID");
+		PrintHTMLtableCell(mySocketFD, "<CENTER>Count");
+		PrintHTMLtableCell(mySocketFD, "<CENTER>Last data");
+	SocketWriteData(mySocketFD, "		</TR>\n");
+
+	totalSentanceCnt	=	0;
+	for (iii=0; iii<kMaxNMEAsentances; iii++)
+	{
+		if (gNMEAsentances[iii].count > 0)
+		{
+			totalSentanceCnt	+=	gNMEAsentances[iii].count;
+			SocketWriteData(mySocketFD, "		<TR>\n");
+				PrintHTMLtableCell(mySocketFD,		gNMEAsentances[iii].nmeaID);
+				PrintHTMLtableCell_INT(mySocketFD,	gNMEAsentances[iii].count,	kFormat_6_0, kUnits_none);
+				PrintHTMLtableCell(mySocketFD,		gNMEAsentances[iii].lastData);
+			SocketWriteData(mySocketFD, "		</TR>\n");
+		}
+	}
+
+	SocketWriteData(mySocketFD, "		<TR>\n");
+		PrintHTMLtableCell(mySocketFD,		"<CENTER>total");
+		PrintHTMLtableCell_INT(mySocketFD,	totalSentanceCnt,	kFormat_6_0, kUnits_none);
+	SocketWriteData(mySocketFD, "		</TR>\n");
+
+//		SocketWriteData(mySocketFD, "		<TR>\n");
+//			PrintHTMLtableCell(mySocketFD,		"<CENTER>total");
+//			PrintHTMLtableCell_INT(mySocketFD,	gNMEAdataRecorded,	kFormat_6_0, kUnits_none);
+//		SocketWriteData(mySocketFD, "		</TR>\n");
+
+	SocketWriteData(mySocketFD, "</TABLE></CENTER>\n");
+}
+#endif
+
+
+uint32_t	gLastGrapicsSave_ms	=	0;
+
 //*****************************************************************************
 void	SendHtml_GPS(TYPE_GetPutRequestData *reqData)
 {
 char		lineBuffer[512];
-char		latString[256];
-char		lonString[256];
 int			mySocketFD;
 char		gpsWebTitle[]	=	"GPS Information";
-int			returnCode;
-struct stat	fileStatus;
 
 #ifdef _ENABLE_GPS_GRAPHS_
-	CreateGPSgraphics();
+uint32_t	current_ms;
+uint32_t	delta_ms;
+
+		//*	check to see if we need to create the images
+		//*	dont bother re-creating the images if it was done in the last minute
+		current_ms	=	millis();
+		delta_ms	=	current_ms - gLastGrapicsSave_ms;
+		if ((gLastGrapicsSave_ms == 0) || (delta_ms > (1 * 60 * 1000)))
+		{
+			CreateGPSgraphics();
+			gLastGrapicsSave_ms	=	millis();
+		}
 #endif // _ENABLE_GPS_GRAPHS_
 
 
@@ -240,6 +330,11 @@ struct stat	fileStatus;
 #ifdef _ENABLE_GLOBAL_GPS_
 		if (gEnableGlobalGPS)
 		{
+		char		latString[256];
+		char		lonString[256];
+		int			returnCode;
+		struct stat	fileStatus;
+
 			SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 			SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
@@ -367,6 +462,9 @@ struct stat	fileStatus;
 
 				SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 				SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+			#ifdef _ENABLE_NMEA_SENTANCE_TRACKING_
+				PrintNMEA_SentanceTable(mySocketFD);
+			#endif // _ENABLE_NMEA_SENTANCE_TRACKING_
 			}
 		}
 		else

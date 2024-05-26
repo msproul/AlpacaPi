@@ -63,7 +63,16 @@
 #include	"alpacadriver_helper.h"
 #include	"helper_functions.h"
 #include	"cameradriver.h"
-#include	"ParseNMEA.h"
+
+#ifdef _PARSE_NMEA_H_
+	#warning	"_PARSE_NMEA_H_ already included"
+#endif
+
+#ifdef _ENABLE_GLOBAL_GPS_
+	#ifndef _PARSE_NMEA_H_
+		#include	"ParseNMEA.h"
+	#endif
+#endif // _ENABLE_GLOBAL_GPS_
 
 #ifdef _ENABLE_QHY_
 	#include	<qhyccd.h>
@@ -91,7 +100,7 @@ void	CameraDriver::WriteFITS_GPSinfo(fitsfile *fitsFilePtr)
 }
 
 
-#ifndef _ENABLE_GLOBAL_GPS_
+#if !defined(_ENABLE_GLOBAL_GPS_) && !defined(_ENABLE_QHY_)
 //*****************************************************************************
 void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString)
 {
@@ -111,6 +120,7 @@ void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString)
 		default:	strcat(modeString, "Unknown: ");			break;
 	}
 }
+
 //**************************************************************************************
 void	ParseNMEA_FormatLatLonStrings(double latValue, char *latString, double lonValue, char *lonString)
 {

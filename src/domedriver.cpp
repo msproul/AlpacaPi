@@ -83,6 +83,7 @@
 //*	Jul 16,	2023	<MLS> Added cRORrelayDelay_secs into Setup for ChrisA
 //*	Jul 17,	2023	<MLS> Added better logic for remote shutter check when shutter is moving
 //*	Jul 17,	2023	<MLS> Added watchdog timer enable/disable to dome setup web page
+//*	May 17,	2024	<MLS> Added http error 400 processing to dome driver
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -645,46 +646,49 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"ClientTransactionID",
-															gClientTransactionID,
-															INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ClientTransactionID",
+																reqData->ClientTransactionID,
+																INCLUDE_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"ServerTransactionID",
-															gServerTransactionID,
-															INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ServerTransactionID",
+																gServerTransactionID,
+																INCLUDE_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"ErrorNumber",
-															alpacaErrCode,
-															INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ErrorNumber",
+																alpacaErrCode,
+																INCLUDE_COMMA);
 
-//	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
-//								reqData->jsonTextBuffer,
-//								kMaxJsonBuffLen,
-//								"NewState",
-//								domeState,
-//								INCLUDE_COMMA);
+	//	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+	//								reqData->jsonTextBuffer,
+	//								kMaxJsonBuffLen,
+	//								"NewState",
+	//								domeState,
+	//								INCLUDE_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"ErrorMessage",
-															alpacaErrMsg,
-															NO_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ErrorMessage",
+																alpacaErrMsg,
+																NO_COMMA);
 
-	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
-															reqData->jsonTextBuffer,
-															(cHttpHeaderSent == false));
-
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+																reqData->httpRetCode,
+																reqData->jsonTextBuffer,
+																(cHttpHeaderSent == false));
+	}
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 	return(alpacaErrCode);
@@ -940,19 +944,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Altitude(	TYPE_GetPutRequestData *reqData, cha
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	reqData->socket,
-																reqData->jsonTextBuffer,
-																kMaxJsonBuffLen,
-																responseString,
-																cDomeProp.Altitude,
-																INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															cDomeProp.Altitude,
+															INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -961,19 +958,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Athome(		TYPE_GetPutRequestData *reqData, char
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.AtHome,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.AtHome,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -982,19 +972,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Atpark(		TYPE_GetPutRequestData *reqData, char
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.AtPark,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.AtPark,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1003,19 +986,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Azimuth(	TYPE_GetPutRequestData *reqData, char
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.Azimuth,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.Azimuth,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1024,19 +1000,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Canfindhome(	TYPE_GetPutRequestData *reqData, 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanFindHome,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanFindHome,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1046,19 +1015,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Canpark(	TYPE_GetPutRequestData *reqData, char
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanPark,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanPark,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1068,19 +1030,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Cansetaltitude(	TYPE_GetPutRequestData *reqDat
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanSetAltitude,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanSetAltitude,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1090,19 +1045,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Cansetazimuth(	TYPE_GetPutRequestData *reqData
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanSetAzimuth,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanSetAzimuth,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1112,19 +1060,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Cansetpark(	TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanSetPark,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanSetPark,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1135,19 +1076,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Cansetshutter(	TYPE_GetPutRequestData *reqData
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanSetShutter,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanSetShutter,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1156,19 +1090,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Canslave(	TYPE_GetPutRequestData *reqData, cha
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanSlave,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanSlave,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1178,19 +1105,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Cansyncazimuth(	TYPE_GetPutRequestData *reqDat
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.CanSyncAzimuth,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.CanSyncAzimuth,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1201,19 +1121,12 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Slewing(	TYPE_GetPutRequestData *reqData, char
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.Slewing,
-															INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.Slewing,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1224,29 +1137,22 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Shutterstatus(	TYPE_GetPutRequestData *reqData
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 char				statusString[32];
 
-	if (reqData != NULL)
-	{
-		//*	shutter state is an enum defined by Alpaca/ASCOM, defined in alpaca_defs.h
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+	//*	shutter state is an enum defined by Alpaca/ASCOM, defined in alpaca_defs.h
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.ShutterStatus,
+														INCLUDE_COMMA);
+
+	GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
+
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
 															reqData->jsonTextBuffer,
 															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.ShutterStatus,
+															"shutterstatus-str",
+															statusString,
 															INCLUDE_COMMA);
-
-		GetDomeShutterStatusString(cDomeProp.ShutterStatus, statusString);
-
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
-																reqData->jsonTextBuffer,
-																kMaxJsonBuffLen,
-																"shutterstatus-str",
-																statusString,
-																INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
 	return(alpacaErrCode);
 }
 
@@ -1256,21 +1162,13 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Slaved(		TYPE_GetPutRequestData *reqData, char
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		alpacaErrCode	=	kASCOM_Err_Success;
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															responseString,
-															cDomeProp.Slaved,
-															INCLUDE_COMMA);
-
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														responseString,
+														cDomeProp.Slaved,
+														INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1283,62 +1181,57 @@ bool				foundKeyWord;
 bool				newSlavedValue;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Slaved",
+											argumentString,
+											(sizeof(argumentString) -1));
+
+	if (cDomeProp.CanSlave)
 	{
-		if (cDomeProp.CanSlave)
+		if (foundKeyWord)
 		{
-			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-													"Slaved",
-													argumentString,
-													(sizeof(argumentString) -1));
-			if (foundKeyWord)
+			newSlavedValue	=	IsTrueFalse(argumentString);
+			if (newSlavedValue)
 			{
-				newSlavedValue	=	IsTrueFalse(argumentString);
-				if (newSlavedValue)
+				if (cDomeProp.CanSlave)
 				{
-					if (cDomeProp.CanSlave)
+					//*	we can only slave if the shutter is open
+					if (cDomeProp.ShutterStatus == kShutterStatus_Open)
 					{
-						//*	we can only slave if the shutter is open
-						if (cDomeProp.ShutterStatus == kShutterStatus_Open)
-						{
-							cDomeProp.Slaved	=	true;
-							alpacaErrCode		=	kASCOM_Err_Success;
-						}
-						else
-						{
-							alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-							GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Shutter must be open");
-							CONSOLE_DEBUG(alpacaErrMsg);
-						}
+						cDomeProp.Slaved	=	true;
+						alpacaErrCode		=	kASCOM_Err_Success;
 					}
 					else
 					{
 						alpacaErrCode	=	kASCOM_Err_InvalidOperation;
-						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Slave mode not permitted");
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Shutter must be open");
 						CONSOLE_DEBUG(alpacaErrMsg);
 					}
 				}
 				else
 				{
-					cDomeProp.Slaved	=	false;
-					alpacaErrCode		=	kASCOM_Err_Success;
+					alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Slave mode not permitted");
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
+				cDomeProp.Slaved	=	false;
+				alpacaErrCode		=	kASCOM_Err_Success;
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not supported");
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not supported");
 	}
 	return(alpacaErrCode);
 }
@@ -1523,16 +1416,15 @@ bool				foundKeyWord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	cTimeOfLastMoveCmd		=	time(NULL);
+	//*	look for Azimuth
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Azimuth",
+											argumentString,
+											(sizeof(argumentString) -1),
+											kArgumentIsNumeric);
+
 	if (cDomeProp.CanSetAzimuth)
 	{
-		if (reqData != NULL)
-		{
-			//*	look for Azimuth
-			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-													"Azimuth",
-													argumentString,
-													(sizeof(argumentString) -1),
-													kArgumentIsNumeric);
 			if (foundKeyWord)
 			{
 				newAzimuthValue	=	AsciiToDouble(argumentString);
@@ -1561,22 +1453,18 @@ bool				foundKeyWord;
 				}
 				else
 				{
-					alpacaErrCode	=	kASCOM_Err_InvalidValue;
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
 					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
 				}
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
 				CONSOLE_DEBUG(alpacaErrMsg);
-				CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 			}
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
-		}
 	}
 	else
 	{
@@ -1603,44 +1491,39 @@ char				argumentString[64];
 bool				foundKeyWord;
 
 	CONSOLE_DEBUG(__FUNCTION__);
+	//*	look for Azimuth
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Azimuth",
+											argumentString,
+											(sizeof(argumentString) -1),
+											kArgumentIsNumeric);
+
 	cTimeOfLastMoveCmd		=	time(NULL);
 	if (cDomeProp.CanSyncAzimuth)
 	{
-		if (reqData != NULL)
+		if (foundKeyWord)
 		{
-			//*	look for Azimuth
-			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-													"Azimuth",
-													argumentString,
-													(sizeof(argumentString) -1),
-													kArgumentIsNumeric);
-			if (foundKeyWord)
+			newAzimuthValue	=	AsciiToDouble(argumentString);
+			CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
+			if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
 			{
-				newAzimuthValue	=	AsciiToDouble(argumentString);
-				CONSOLE_DEBUG_W_DBL("newAzimuthValue\t=", newAzimuthValue);
-				if ((newAzimuthValue >= 0.0) && (newAzimuthValue <= 360.0))
-				{
-					cDomeProp.Azimuth	=	newAzimuthValue;
-					alpacaErrCode		=	kASCOM_Err_Success;
-				}
-				else
-				{
-					alpacaErrCode	=	kASCOM_Err_InvalidValue;
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
-					CONSOLE_DEBUG(alpacaErrMsg);
-				}
+				cDomeProp.Azimuth	=	newAzimuthValue;
+				alpacaErrCode		=	kASCOM_Err_Success;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value");
 				CONSOLE_DEBUG(alpacaErrMsg);
-				CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid Value 'Azimuth=' was not found");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -1667,24 +1550,17 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	cTimeOfLastMoveCmd		=	time(NULL);
 	if (cDomeConfig == kIsDome)
 	{
-		if (reqData != NULL)
+		if (cDomeProp.Slewing)
 		{
-			if (cDomeProp.Slewing)
-			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
-			}
-			else
-			{
-				cGoingBump	=	true;
-				StartDomeMoving(direction);
-				//*	we started it moving at 50%, make the state machine think its already up to speed
-				//*	so that it stays at 50%
-				cDomeState	=	kDomeState_Moving;
-			}
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
+			cGoingBump	=	true;
+			StartDomeMoving(direction);
+			//*	we started it moving at 50%, make the state machine think its already up to speed
+			//*	so that it stays at 50%
+			cDomeState	=	kDomeState_Moving;
 		}
 	}
 	else
@@ -1705,20 +1581,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cDomeConfig == kIsDome)
 	{
-		if (reqData != NULL)
+		if (cDomeProp.Slewing)
 		{
-			if (cDomeProp.Slewing)
-			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
-			}
-			else
-			{
-				StartDomeMoving(direction);
-			}
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
+			StartDomeMoving(direction);
 		}
 	}
 	else
@@ -1739,24 +1608,17 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	if (cDomeConfig == kIsDome)
 	{
-		if (reqData != NULL)
+		if (cDomeProp.Slewing)
 		{
-			if (cDomeProp.Slewing)
-			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
-			else
-			{
-				StartDomeMoving(direction);
-				//*	we started it moving at 50%, make the state machine think its already up to speed
-				//*	so that it stays at 50%
-				cDomeState	=	kDomeState_Moving;
-			}
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Dome already in motion, command ignored");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
+			StartDomeMoving(direction);
+			//*	we started it moving at 50%, make the state machine think its already up to speed
+			//*	so that it stays at 50%
+			cDomeState	=	kDomeState_Moving;
 		}
 	}
 	else
@@ -1774,20 +1636,13 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Currentstate(	TYPE_GetPutRequestData *reqData,
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 char				stateString[48];
 
-	if (reqData != NULL)
-	{
-		GetStateString(cDomeState, stateString);
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
-																reqData->jsonTextBuffer,
-																kMaxJsonBuffLen,
-																"CurrentState",
-																stateString,
-																INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	GetStateString(cDomeState, stateString);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															"CurrentState",
+															stateString,
+															INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1817,31 +1672,24 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_PowerStatus(TYPE_GetPutRequestData *reqData,
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				powerState;
 
-	if (reqData != NULL)
-	{
-		powerState		=	false;
-		alpacaErrCode	=	GetPower(&powerState);
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
-																reqData->jsonTextBuffer,
-																kMaxJsonBuffLen,
-																responseString,
-																(powerState ? "ON" : "OFF"),
-																INCLUDE_COMMA);
+	powerState		=	false;
+	alpacaErrCode	=	GetPower(&powerState);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															(powerState ? "ON" : "OFF"),
+															INCLUDE_COMMA);
 
-		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
-//			CONSOLE_DEBUG(alpacaErrMsg);
-		}
-		else if (alpacaErrCode != kASCOM_Err_Success)
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Power state unknown");
-//			CONSOLE_DEBUG(alpacaErrMsg);
-		}
-	}
-	else
+	if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
+//			CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	else if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Power state unknown");
+//			CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1873,31 +1721,24 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_AuxiliaryStatus(TYPE_GetPutRequestData *reqDat
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 bool				auxiliaryState;
 
-	if (reqData != NULL)
-	{
-		auxiliaryState	=	false;
-		alpacaErrCode	=	GetAuxiliary(&auxiliaryState);
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
-																reqData->jsonTextBuffer,
-																kMaxJsonBuffLen,
-																responseString,
-																(auxiliaryState ? "ON" : "OFF"),
-																INCLUDE_COMMA);
+	auxiliaryState	=	false;
+	alpacaErrCode	=	GetAuxiliary(&auxiliaryState);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	reqData->socket,
+															reqData->jsonTextBuffer,
+															kMaxJsonBuffLen,
+															responseString,
+															(auxiliaryState ? "ON" : "OFF"),
+															INCLUDE_COMMA);
 
-		if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
-//			CONSOLE_DEBUG(alpacaErrMsg);
-		}
-		else if (alpacaErrCode != kASCOM_Err_Success)
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Auxiliary state unknown");
-//			CONSOLE_DEBUG(alpacaErrMsg);
-		}
-	}
-	else
+	if (alpacaErrCode == kASCOM_Err_PropertyNotImplemented)
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Property Not Implemented");
+//			CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	else if (alpacaErrCode != kASCOM_Err_Success)
+	{
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Auxiliary state unknown");
+//			CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -1928,81 +1769,74 @@ TYPE_ASCOM_STATUS	DomeDriver::Get_Readall(	TYPE_GetPutRequestData *reqData, char
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 char				stateString[48];
 
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData,	alpacaErrMsg);
+	//*	do the common ones first
+	Get_Readall_Common(	reqData,	alpacaErrMsg);
 
-		Get_Altitude(		reqData,	alpacaErrMsg,	"altitude");
-		Get_Athome(			reqData,	alpacaErrMsg,	"athome");
-		Get_Atpark(			reqData,	alpacaErrMsg,	"atpark");
-		Get_Azimuth(		reqData,	alpacaErrMsg,	"azimuth");
-		Get_Canfindhome(	reqData,	alpacaErrMsg,	"canfindhome");
-		Get_Canpark(		reqData,	alpacaErrMsg,	"canpark");
-		Get_Cansetaltitude(	reqData,	alpacaErrMsg,	"cansetaltitude");
-		Get_Cansetazimuth(	reqData,	alpacaErrMsg,	"cansetazimuth");
-		Get_Cansetpark(		reqData,	alpacaErrMsg,	"cansetpark");
-		Get_Cansetshutter(	reqData,	alpacaErrMsg,	"cansetshutter");
-		Get_Canslave(		reqData,	alpacaErrMsg,	"canslave");
-		Get_Cansyncazimuth(	reqData,	alpacaErrMsg,	"cansyncazimuth");
-		Get_Shutterstatus(	reqData,	alpacaErrMsg,	"shutterstatus");
-		Get_Slaved(			reqData,	alpacaErrMsg,	"slaved");
-		Get_Slewing(		reqData,	alpacaErrMsg,	"slewing");
-		Get_PowerStatus(	reqData,	alpacaErrMsg,	"powerstatus");
-		Get_AuxiliaryStatus(reqData,	alpacaErrMsg,	"auxiliarystatus");
+	Get_Altitude(		reqData,	alpacaErrMsg,	"altitude");
+	Get_Athome(			reqData,	alpacaErrMsg,	"athome");
+	Get_Atpark(			reqData,	alpacaErrMsg,	"atpark");
+	Get_Azimuth(		reqData,	alpacaErrMsg,	"azimuth");
+	Get_Canfindhome(	reqData,	alpacaErrMsg,	"canfindhome");
+	Get_Canpark(		reqData,	alpacaErrMsg,	"canpark");
+	Get_Cansetaltitude(	reqData,	alpacaErrMsg,	"cansetaltitude");
+	Get_Cansetazimuth(	reqData,	alpacaErrMsg,	"cansetazimuth");
+	Get_Cansetpark(		reqData,	alpacaErrMsg,	"cansetpark");
+	Get_Cansetshutter(	reqData,	alpacaErrMsg,	"cansetshutter");
+	Get_Canslave(		reqData,	alpacaErrMsg,	"canslave");
+	Get_Cansyncazimuth(	reqData,	alpacaErrMsg,	"cansyncazimuth");
+	Get_Shutterstatus(	reqData,	alpacaErrMsg,	"shutterstatus");
+	Get_Slaved(			reqData,	alpacaErrMsg,	"slaved");
+	Get_Slewing(		reqData,	alpacaErrMsg,	"slewing");
+	Get_PowerStatus(	reqData,	alpacaErrMsg,	"powerstatus");
+	Get_AuxiliaryStatus(reqData,	alpacaErrMsg,	"auxiliarystatus");
 
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"SlewingRate-PWM",
-															cCurrentPWM,
-															INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"SlewingRate-PWM",
+														cCurrentPWM,
+														INCLUDE_COMMA);
 
 
-		//===============================================================
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"version",
-															gFullVersionString,
-															INCLUDE_COMMA);
+	//===============================================================
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"version",
+														gFullVersionString,
+														INCLUDE_COMMA);
 
 
-		GetStateString(cDomeState, stateString);
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"CurrentState",
-															stateString,
-															INCLUDE_COMMA);
+	GetStateString(cDomeState, stateString);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"CurrentState",
+														stateString,
+														INCLUDE_COMMA);
 
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"IdleTimeoutEnabled",
-															cEnableIdleMoveTimeout,
-															INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"IdleTimeoutEnabled",
+														cEnableIdleMoveTimeout,
+														INCLUDE_COMMA);
 
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"IdleTimeout_minutes",
-															cIdleMoveTimeoutMinutes,
-															INCLUDE_COMMA);
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"IdleTimeout_minutes",
+														cIdleMoveTimeoutMinutes,
+														INCLUDE_COMMA);
 
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"ROR_relay_delay_secs",
-															cRORrelayDelay_secs,
-															INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"ROR_relay_delay_secs",
+														cRORrelayDelay_secs,
+														INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 

@@ -41,6 +41,8 @@
 //*	Jun 18,	2023	<MLS> Added Get_CalibratorReady() for DeviceState
 //*	Jun 18,	2023	<MLS> Added Get_CoverMoving() for DeviceState
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content()
+//*	May 17,	2024	<MLS> Added http error 400 processing to covercalibraor driver
+//*	May 17,	2024	<MLS> CONFORMU-covercalibraor -> PASSED!!!!!!!!!!!!!!
 //*****************************************************************************
 
 
@@ -264,39 +266,42 @@ int					mySocket;
 	}
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
 
-	//*	send the response information
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ClientTransactionID",
-								gClientTransactionID,
-								INCLUDE_COMMA);
+	if (cSendJSONresponse)	//*	False for setupdialog and camera binary data
+	{
+		//*	send the response information
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ClientTransactionID",
+																reqData->ClientTransactionID,
+																INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ServerTransactionID",
-								gServerTransactionID,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Uint32(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ServerTransactionID",
+																gServerTransactionID,
+																INCLUDE_COMMA);
 
-	JsonResponse_Add_Int32(		mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorNumber",
-								alpacaErrCode,
-								INCLUDE_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ErrorNumber",
+																alpacaErrCode,
+																INCLUDE_COMMA);
 
-	JsonResponse_Add_String(	mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"ErrorMessage",
-								alpacaErrMsg,
-								NO_COMMA);
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(	mySocket,
+																reqData->jsonTextBuffer,
+																kMaxJsonBuffLen,
+																"ErrorMessage",
+																alpacaErrMsg,
+																NO_COMMA);
 
-	JsonResponse_Add_Finish(	mySocket,
-								reqData->jsonTextBuffer,
-								(cHttpHeaderSent == false));
-
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
+																reqData->httpRetCode,
+																reqData->jsonTextBuffer,
+																(cHttpHeaderSent == false));
+	}
 	//*	this is for the logging function
 	strcpy(reqData->alpacaErrMsg, alpacaErrMsg);
 	return(alpacaErrCode);
@@ -458,51 +463,68 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 
 
 //*****************************************************************************
+//*	Brightness=33
+//*****************************************************************************
 TYPE_ASCOM_STATUS	CalibrationDriver::Put_CalibratorOn(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 bool				brightnessFound;
 char				brightnessString[32];
 int					brightnessValue;
+bool				dataValid;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-	if (cCoverCalibrationProp.CalibratorState == kCalibrator_NotPresent)
-	{
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Calibrator not present");
-		CONSOLE_DEBUG(alpacaErrMsg);
-	}
-	else
-	{
-		//*	we have to find the "Brightness" string
-		brightnessFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Brightness",
-													brightnessString,
-													(sizeof(brightnessString) -1),
-													kArgumentIsNumeric);
+	CONSOLE_DEBUG(__FUNCTION__);
+	//*	we have to find the "Brightness" string
+	brightnessFound		=	GetKeyWordArgument(	reqData->contentData,
+												"Brightness",
+												brightnessString,
+												(sizeof(brightnessString) -1),
+												kArgumentIsNumeric);
 
-		if (brightnessFound)
+	dataValid	=	false;
+	if (brightnessFound)
+	{
+		if (IsValidNumericString(brightnessString))
 		{
-//			CONSOLE_DEBUG_W_NUM("new brightnessValue\t=", brightnessValue);
 			brightnessValue	=	atoi(brightnessString);
 			if ((brightnessValue >= 0) && (brightnessValue <= cCoverCalibrationProp.MaxBrightness))
 			{
-				alpacaErrCode	=	Calibrator_TurnOn(brightnessValue, alpacaErrMsg);
-				cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;
+				dataValid	=	true;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness out of range");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_ValueNotSet;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness not specified");
+			alpacaErrCode			=	kASCOM_Err_ValueNotSet;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness value is non-numeric");
 		}
 	}
+	else
+	{
+		alpacaErrCode			=	kASCOM_Err_ValueNotSet;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Brightness not specified");
+	}
+
+	if (cCoverCalibrationProp.CalibratorState == kCalibrator_NotPresent)
+	{
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Calibrator not present");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	else if (dataValid)
+	{
+		alpacaErrCode	=	Calibrator_TurnOn(brightnessValue, alpacaErrMsg);
+		cCoverCalibrationProp.CalibratorState	=	kCalibrator_Ready;
+	}
+	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -511,7 +533,7 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Put_CalibratorOff(TYPE_GetPutRequestData *r
 {
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cCoverCalibrationProp.CalibratorState == kCalibrator_NotPresent)
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;

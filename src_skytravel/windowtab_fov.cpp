@@ -29,8 +29,10 @@
 //*	Nov  4,	2022	<MLS> Added FOV Rescan button
 //*	Mar 11,	2023	<MLS> Added aperture to FOV display
 //*	Jun 30,	2023	<MLS> Added AlpacaProcessReadAllIdx_Camera()
+//*	May 23,	2024	<MLS> Added diagonal dimension in mm (calculated)
+//*	May 25,	2024	<MLS> Added ProcessMouseEvent(), ProcessLineSelect(), SetNewSelectedDevice()
+//*	May 25,	2024	<MLS> Line select now working in FOV window
 //*****************************************************************************
-
 
 #include	<sys/types.h>
 #include	<sys/stat.h>
@@ -117,7 +119,7 @@ int		textBoxOffsetX;
 int		iii;
 int		clmnHdrWidth;
 short	tabValue;
-short	tabDeltas[kMaxTabStops]	=	{250, 145, 65, 65, 110, 140, 150, 100, 199, 0, 0};
+short	tabDeltas[kMaxTabStops]	=	{250, 145, 70, 70, 70, 150, 140, 150, 100, 199, 0, 0};
 //short	tabArray[kMaxTabStops]	=	{250, 400, 500, 610, 750, 900, 1000, 1199, 0};
 short	tabArray[kMaxTabStops];
 int		clmTitleID;
@@ -160,7 +162,7 @@ char	textString[80];
 	//------------------------------------------
 	clmnHdr_xLoc	=	textBoxOffsetX;
 	iii				=	kFOVbox_ClmTitle1;
-	while (iii <= kFOVbox_ClmTitle9)
+	while (iii <= kFOVbox_ClmTitle10)
 	{
 		clmnHdrWidth	=	tabArray[iii - kFOVbox_ClmTitle1] - clmnHdr_xLoc;
 
@@ -183,8 +185,8 @@ char	textString[80];
 	SetWidgetText(		clmTitleID++,	"Camera");
 	SetWidgetText(		clmTitleID++,	"Image Size (pixels)");
 	SetWidgetText(		clmTitleID++,	"Pix Size");
+	SetWidgetText(		clmTitleID++,	"Diagonal");
 	SetWidgetText(		clmTitleID++,	"Aperture");
-//	SetWidgetText(		clmTitleID++,	"Image Size (microns)");
 	SetWidgetText(		clmTitleID++,	"Focal Len");
 	SetWidgetText(		clmTitleID++,	"FOV (degrees)");
 	SetWidgetText(		clmTitleID++,	"FOV (minutes)");
@@ -445,6 +447,9 @@ void	UpdateCameraData(TYPE_REMOTE_DEV *remoteDevice, TYPE_CameraFOV *cameraDataP
 	cameraDataPtr->ImgSizeY_microns	=	cameraDataPtr->CameraProp.CameraYsize
 										* cameraDataPtr->CameraProp.PixelSizeY;
 
+	cameraDataPtr->ImageDiagonal_mm	=	sqrt((cameraDataPtr->ImgSizeX_microns * cameraDataPtr->ImgSizeX_microns) +
+											(cameraDataPtr->ImgSizeY_microns * cameraDataPtr->ImgSizeY_microns))
+											/ 1000.0;
 //-	ReadCameraFOVfile(remoteDevice, cameraDataPtr);
 
 	//*	do we have a focal length?, calcualte FOV
@@ -656,7 +661,125 @@ void	WindowTabFOV::ProcessDoubleClick(	const int	widgetIdx,
 
 }
 
+//*****************************************************************************
+void	WindowTabFOV::ProcessMouseEvent(	const int	widgetIdx,
+											const int	event,
+											const int	xxx,
+											const int	yyy,
+											const int	flags)
+{
+//int		box_XXX;
+//int		box_YYY;
 
+	switch(event)
+	{
+		case cv::EVENT_MOUSEMOVE:
+			break;
+
+		case cv::EVENT_LBUTTONDOWN:
+//			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONDOWN", widgetIdx);
+			cLeftButtonDown	=	true;
+			break;
+
+		case cv::EVENT_LBUTTONUP:
+			CONSOLE_DEBUG_W_NUM("EVENT_LBUTTONUP", widgetIdx);
+			cLeftButtonDown	=	false;
+			ProcessLineSelect(widgetIdx);
+			break;
+
+//
+//		case cv::EVENT_RBUTTONDOWN:
+//			cRightButtonDown		=	true;
+//			break;
+//
+//		case cv::EVENT_MBUTTONDOWN:
+//			break;
+//
+//		case cv::EVENT_RBUTTONUP:
+//			cRightButtonDown		=	false;
+//			break;
+//
+//		case cv::EVENT_MBUTTONUP:
+//			break;
+//
+//		case cv::EVENT_LBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_RBUTTONDBLCLK:
+//			break;
+//
+//		case cv::EVENT_MBUTTONDBLCLK:
+//			break;
+//
+#if (CV_MAJOR_VERSION >= 3)
+		case cv::EVENT_MOUSEWHEEL:
+			break;
+		case cv::EVENT_MOUSEHWHEEL:
+			break;
+#endif
+		default:
+//			CONSOLE_DEBUG_W_NUM("UNKNOWN EVENT", event);
+			break;
+	}
+}
+
+//**************************************************************************************
+void	WindowTabFOV::ProcessLineSelect(int widgetIdx)
+{
+int		deviceIdx;
+int		adjustedIdx;
+//int		iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	if ((widgetIdx >= kFOVbox_CamChkBox1) && (widgetIdx <= kFOVbox_CamChkBox_Last))
+	{
+		adjustedIdx	=	widgetIdx - kFOVbox_CamChkBox1;
+		adjustedIdx	=	adjustedIdx / 2;
+		deviceIdx	=	adjustedIdx + cFirstLineIdx;
+
+		if ((deviceIdx >= 0) && (deviceIdx < kMaxAlpacaIPaddrCnt))
+		{
+			SetNewSelectedDevice(deviceIdx);
+//
+//			//*	clear out previous selections
+//			for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
+//			{
+//				gAlpacaUnitList[iii].lineSelected	=	false;
+//			}
+//			gAlpacaUnitList[deviceIdx].lineSelected	=	true;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("deviceIdx is out of bounds\t=", deviceIdx);
+		}
+//		UpdateOnScreenWidgetList();
+//		ForceWindowUpdate();
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("widgetIdx is out of range\t=", widgetIdx);
+	}
+}
+
+//*****************************************************************************
+void	WindowTabFOV::SetNewSelectedDevice(int deviceIndex)
+{
+int		iii;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+
+	if (deviceIndex >= 0)
+	{
+		//*	clear out previous selections
+		for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
+		{
+			cRemoteDeviceList[iii].lineSelected	=	false;
+		}
+		cRemoteDeviceList[deviceIndex].lineSelected	=	true;
+		UpdateOnScreenWidgetList();
+		ForceWindowUpdate();
+	}
+}
 
 //**************************************************************************************
 void	WindowTabFOV::ClearRemoteDeviceList(void)
@@ -774,13 +897,17 @@ int		myDevCount;
 
 //			inet_ntop(AF_INET, &(cRemoteDeviceList[iii].deviceAddress.sin_addr), ipAddrStr, INET_ADDRSTRLEN);
 
-		#if 1
 			strcpy(textString,	nameString);
 			strcat(textString,	"\t");
 			//------------------
 			sprintf(tempString,	"%4d x %4d\t%5.3f\t", 	cCameraData[iii].CameraProp.CameraXsize,
 														cCameraData[iii].CameraProp.CameraYsize,
 														cCameraData[iii].CameraProp.PixelSizeX);
+			strcat(textString,	tempString);
+
+			//------------------
+
+			sprintf(tempString,	"%5.2f\t",					cCameraData[iii].ImageDiagonal_mm);
 			strcat(textString,	tempString);
 			//------------------
 			sprintf(tempString,	"%4.1f\t%3.0f / F%3.2f\t",	cCameraData[iii].Aperture_mm,
@@ -798,23 +925,8 @@ int		myDevCount;
 			//------------------
 			sprintf(tempString,	"%6.4f",					cCameraData[iii].PixelScale);
 			strcat(textString,	tempString);
-		#else
-			sprintf(textString,
-					"%s\t%4d x %4d\t%5.3f\t%3.1f\t%3.0f / F%3.2f\t%3.2f x %3.2f\t%3.1f x %3.1f\t%6.4f",
-					nameString,
-					cCameraData[iii].CameraProp.CameraXsize,
-					cCameraData[iii].CameraProp.CameraYsize,
-					cCameraData[iii].CameraProp.PixelSizeX,
-					cCameraData[iii].Aperture_mm,
-					cCameraData[iii].FocalLen_mm,
-					cCameraData[iii].F_Ratio,
-					(cCameraData[iii].FOV_X_arcSeconds / 3600.0),
-					(cCameraData[iii].FOV_Y_arcSeconds / 3600.0),
-					(cCameraData[iii].FOV_X_arcSeconds / 60.0),
-					(cCameraData[iii].FOV_Y_arcSeconds / 60.0),
-					cCameraData[iii].PixelScale
-					);
-		#endif // 1
+
+
 			if ((cCameraData[iii].RighttAscen_Offset != 0) || (cCameraData[iii].Declination_Offset != 0))
 			{
 				sprintf(offsetsString,	"\t%6.3f x %6.3f", cCameraData[iii].RighttAscen_Offset, cCameraData[iii].Declination_Offset);
@@ -822,6 +934,17 @@ int		myDevCount;
 
 			}
 			SetWidgetText(textBoxId, textString);
+
+			//--------------------------------------------------------
+			//*	check for line selection
+			if (cRemoteDeviceList[iii].lineSelected == true)
+			{
+				SetWidgetLineSelect(textBoxId, true);
+			}
+			else
+			{
+				SetWidgetLineSelect(textBoxId, false);
+			}
 
 			myDevCount++;
 		}

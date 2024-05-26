@@ -32,7 +32,7 @@
 //*	Jul  4,	2022	<RNS> renamed .position field to .state
 //*	Jul  6,	2022	<MLS> Added Servo_check_motion_cfg()
 //*	Jul  7,	2022	<RNS> Added support for *_ENC_MAX: and encoderMaxRate
-//*	Oct 28,	2022	<RNS> Added support for absZero field 
+//*	Oct 28,	2022	<RNS> Added support for absZero field
 //****************************************************************************
 
 #include <stdio.h>

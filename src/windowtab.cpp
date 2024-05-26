@@ -110,6 +110,7 @@
 //*	Mar 27,	2024	<MLS> Added SetRunFastBackgroundMode()
 //*	Mar 28,	2024	<MLS> Added SetWidgetTextColor() with color index arg
 //*	Apr  1,	2024	<MLS> Added SetWebHelpURLstring()
+//*	May 22,	2024	<MLS> Added ClearWidgetImage()
 //*****************************************************************************
 
 
@@ -124,6 +125,7 @@
 
 #include	"commoncolor.h"
 #include	"helper_functions.h"
+#include	"opencv_utils.h"
 #include	"widget.h"
 #include	"windowtab.h"
 #include	"controller.h"
@@ -623,15 +625,22 @@ void	WindowTab::SetWidgetImage(const int widgetIdx, cv::Mat *argImagePtr)
 //	CONSOLE_DEBUG_W_HEX("argImagePtr\t=",	argImagePtr);
 	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
 	{
-		cWidgetList[widgetIdx].openCVimagePtr	=	argImagePtr;
-		cWidgetList[widgetIdx].widgetType		=	kWidgetType_Image;
-		cWidgetList[widgetIdx].needsUpdated		=	true;
+		if (IsOpenCVimageValid(__FUNCTION__, argImagePtr, true))
+		{
+			cWidgetList[widgetIdx].openCVimagePtr	=	argImagePtr;
+			cWidgetList[widgetIdx].widgetType		=	kWidgetType_Image;
+			cWidgetList[widgetIdx].needsUpdated		=	true;
+		}
+		else
+		{
+			CONSOLE_DEBUG("Invalid image")
+		}
 	}
-	if (argImagePtr == NULL)
-	{
-//		CONSOLE_DEBUG("argImagePtr is NULL!!!!!!!!!!!!!!!!!!!");
-//		CONSOLE_ABORT(__FUNCTION__);
-	}
+	//*	debugging
+//	if (argImagePtr != NULL)
+//	{
+//		DumpCVMatStruct(__FUNCTION__, argImagePtr, "Setting image ptr");
+//	}
 }
 #else
 //**************************************************************************************
@@ -646,6 +655,16 @@ void	WindowTab::SetWidgetImage(const int widgetIdx, IplImage *argImagePtr)
 	}
 }
 #endif // _USE_OPENCV_CPP_
+
+//**************************************************************************************
+void	WindowTab::ClearWidgetImage(const int widgetIdx)
+{
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if ((widgetIdx >= 0) && (widgetIdx < kMaxWidgets))
+	{
+		cWidgetList[widgetIdx].openCVimagePtr	=	NULL;
+	}
+}
 
 //**************************************************************************************
 void	WindowTab::SetWidgetTextColor(const int widgetIdx, cv::Scalar newtextColor)

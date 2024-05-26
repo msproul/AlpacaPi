@@ -33,8 +33,10 @@
 //*	Aug 23,	2022	<MLS> Added keeping track of max CPU temp
 //*	Dec 22,	2022	<MLS> Added WakeUpDiscoveryThread()
 //*	Feb 10,	2024	<MLS> Added GetLibraryInfo()
+//*	May 15,	2024	<MLS> Added _DEBUG_DISCOVERY_
 //*****************************************************************************
 
+//#define		_DEBUG_DISCOVERY_
 
 #include	<ctype.h>
 #include	<stdio.h>
@@ -245,7 +247,9 @@ char				errnoString[128];
 		}
 		while (1)
 		{
-//			CONSOLE_DEBUG(__FUNCTION__);
+		#ifdef _DEBUG_DISCOVERY_
+			CONSOLE_DEBUG(__FUNCTION__);
+		#endif
 			fromlen		=	sizeof(struct sockaddr_in);
 			bytesRead	=	recvfrom(	mySocket,
 										readBuf,
@@ -257,8 +261,10 @@ char				errnoString[128];
 			{
 				readBuf[bytesRead]	=	0;
 				inet_ntop(AF_INET, &(fromAddress.sin_addr), ipAddrSt, INET_ADDRSTRLEN);
+			#ifdef _DEBUG_DISCOVERY_
 				sprintf(responseBuff, "Request from:%s, %s", ipAddrSt, readBuf);
-//				CONSOLE_DEBUG(responseBuff);
+				CONSOLE_DEBUG(responseBuff);
+			#endif
 
 				validDiscoveryRequest	=	false;
 				//*	this was the original discovery query
@@ -285,7 +291,9 @@ char				errnoString[128];
 				if (validDiscoveryRequest)
 				{
 					sprintf(responseBuff, "{\"AlpacaPort\": %d}", gAlpacaListenPort);
-//					CONSOLE_DEBUG_W_STR("responseBuff\t=", responseBuff);
+				#ifdef _DEBUG_DISCOVERY_
+					CONSOLE_DEBUG_W_STR("responseBuff\t=", responseBuff);
+				#endif
 
 					bytesSent	=	sendto(mySocket, responseBuff, strlen(responseBuff), 0, (struct sockaddr *)&fromAddress, fromlen);
 					if (bytesSent < 0)
@@ -310,7 +318,9 @@ char				errnoString[128];
 		CONSOLE_DEBUG("Discovery listen port failed");
 		perror("Opening socket");
 	}
-//	CONSOLE_DEBUG("exit");
+#ifdef _DEBUG_DISCOVERY_
+	CONSOLE_DEBUG("exit");
+#endif
 	return(NULL);
 }
 
@@ -333,7 +343,9 @@ static void	UpdateRemoteList(TYPE_REMOTE_DEV *newRemoteDevice)
 int		iii;
 bool	newDevice;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_DISCOVERY_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 	newDevice	=	true;
 
 	//*	look to see if it is already in the list
@@ -413,7 +425,9 @@ int				iii;
 int				jjj;
 char			myVersionString[64];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_DISCOVERY_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 	memset((void *)&myRemoteDevice, 0, sizeof(TYPE_REMOTE_DEV));
 	memset((void *)myVersionString, 0, sizeof(myVersionString));
 
@@ -552,9 +566,11 @@ char				xmitBuffer[kReadBuffLen];
 int					setOptRetCode;
 char				errorString[64];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
-//	CONSOLE_DEBUG_W_NUM(	"kReadBuffLen        \t=",	kReadBuffLen);
-//	CONSOLE_DEBUG_W_SIZE(	"sizeof(returnedData)\t=",	sizeof(returnedData));
+#ifdef _DEBUG_DISCOVERY_
+	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG_W_NUM(	"kReadBuffLen        \t=",	kReadBuffLen);
+	CONSOLE_DEBUG_W_SIZE(	"sizeof(returnedData)\t=",	sizeof(returnedData));
+#endif
 
 	validData	=	false;
 	socket_desc	=	socket(AF_INET , SOCK_STREAM , 0);
@@ -647,7 +663,9 @@ SJP_Parser_t		jsonParser;
 char				ipString[32];
 char				errMsgString[64];
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+#ifdef _DEBUG_DISCOVERY_
+	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 
 	validData	=	GetJsonResponse(	&theDevice->deviceAddress,
 										theDevice->port,

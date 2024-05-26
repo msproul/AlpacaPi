@@ -4,6 +4,7 @@
 //*****************************************************************************
 //*	Jul  1,	2023	<MLS> Created common_AlpacaCmds.cpp
 //*	Jul  1,	2023	<MLS> Added gExtrasCmdTable
+//*	Apr 29,	2024	<MLS> Added "setupdialog" command
 //*****************************************************************************
 
 
@@ -34,12 +35,15 @@ TYPE_CmdEntry	gCommonCmdTable[]	=
 	{	"description",			kCmd_Common_description,		kCmdType_GET	},
 	{	"devicestate",			kCmd_Common_DeviceState,		kCmdType_GET	},
 	{	"disconnect",			kCmd_Common_Disconnect,			kCmdType_PUT	},
+	//--------------------------------------------------------------------------------------------------------
 
 	{	"driverinfo",			kCmd_Common_driverinfo,			kCmdType_GET	},
 	{	"driverversion",		kCmd_Common_driverversion,		kCmdType_GET	},
 	{	"interfaceversion",		kCmd_Common_interfaceversion,	kCmdType_GET	},
 	{	"name",					kCmd_Common_name,				kCmdType_GET	},
 	{	"supportedactions",		kCmd_Common_supportedactions,	kCmdType_GET	},
+
+	{	"setupdialog",			kCmd_Common_SetupDialog,		kCmdType_GET	},
 
 	//*	extras added by MLS
 	{	"--extras",				kCmd_Common_Extras,				kCmdType_GET	},

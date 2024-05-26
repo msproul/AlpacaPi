@@ -516,8 +516,8 @@ TYPE_ShutterStatus	newShutterStatus;
 	}
 }
 
-int	gClientID				=	1368;
-int	gClientTransactionID	=	0;
+uint32_t	gClientID				=	1368;
+uint32_t	gClientTransactionID	=	0;
 //*****************************************************************************
 //*	this is identical to AlpacaSendPutCmd but it sends it to the shutter device address
 //*****************************************************************************
