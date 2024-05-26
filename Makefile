@@ -1078,6 +1078,32 @@ pmc8	:											\
 					-o alpacapi-expsci
 
 
+
+######################################################################################
+#pragma mark make pmc8 explore scientific
+pmc8only	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+pmc8only	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+pmc8only	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_EXP_SCI_
+pmc8only	:											\
+					$(DRIVER_OBJECTS)				\
+					$(TELESCOPE_DRIVER_OBJECTS)		\
+					$(EXPSCI_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(IMU_OBJECTS)					\
+
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(TELESCOPE_DRIVER_OBJECTS)		\
+					$(EXPSCI_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(IMU_OBJECTS)					\
+					-lpthread						\
+					-o alpacapi-expsci
+
 ######################################################################################
 #pragma mark make pmc8 explore scientific
 pmpl	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
@@ -3007,14 +3033,14 @@ playerone	:										\
 ######################################################################################
 #pragma mark PlayerOne Camera
 #	make poz
+poz	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-poz	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_FilterWheel_SDK_Linux_V1.2.0/include
-poz	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
 poz	:		INCLUDES		+=	-I./PlayerOne/include_camera
+poz	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 poz	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 poz	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 poz	:												\
@@ -3668,9 +3694,8 @@ skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_FOCUSERS_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_OBS_CONDITIONS_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_ROTATOR_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SPECTROGRAPH_
+#skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SPECTROGRAPH_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SWITCHES_
-skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_SPECTROGRAPH_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_TELESCOPE_
 skycv4			:	DEFINEFLAGS		+=	-D_ENABLE_FITS_
 skycv4			:	DEFINEFLAGS		+=	-D_CONTROLLER_USES_ALPACA_
@@ -3684,13 +3709,11 @@ skycv4			:	INCLUDES		+=	-I$(SRC_SKYTRAVEL)
 skycv4			:										\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
-						$(SPECTROGRAPH_OBJECTS)			\
 						$(HELPER_OBJECTS)				\
 
 				$(LINK)  								\
 						$(CONTROLLER_OBJECTS)			\
 						$(SKYTRAVEL_OBJECTS)			\
-						$(SPECTROGRAPH_OBJECTS)			\
 						$(HELPER_OBJECTS)				\
 						$(OPENCV_LINK)					\
 						-lpthread						\

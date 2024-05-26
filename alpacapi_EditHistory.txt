@@ -3463,16 +3463,16 @@ cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcomplet
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
 History Comments found   = 3463 in 515 files
-Total lines              = 243890
+Total lines              = 243914
 Total comment Lines      = 39956 (16.4%)
 Total comments           = 44808 (18.4%)
 Total history comments   = 3463 (1.4%)
 Total C files            = 69
 Total C++ files          = 193
 Total H files            = 251
-Preprocssor cnt          = 7789
-Total SLOC               = 154997
-Total SLOC-Logical       = 119519
+Preprocssor cnt          = 7793
+Total SLOC               = 155018
+Total SLOC-Logical       = 119540
 Programmer comment summary
 MLS             = 3053
 TODO            =   11
