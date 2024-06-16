@@ -521,6 +521,7 @@ char	argString[64];
 		strcpy(asteroidData->StarData.longName, asteroidData->AsteroidName);
 
 		//(3) 	Orbit computer.
+
 		//(4) 	Absolute magnitude H, mag [see E. Bowell et al., pp. 549-554, in "Asteroids II", R. P. Binzel et al. (eds.), The University of Arizona Press, Tucson, 1989 and more recent Minor Planet Circulars]. Note that H may be given to 2 decimal places (e.g., 13.41), 1 decimal place (13.4) or as an integer (13), depending on its estimated accuracy. H is given to two decimal places for all unnumbered asteroids, even though it may be very poorly known.
 		ExtractTextField(lineBuff,	(43 - 1),	5,	argString, true);
 		if (strlen(argString) > 0)

@@ -269,10 +269,17 @@ char	tempstring[100];
 											"Altitude from GPS (feet)", &fitsStatus);
 
 	//-------------------------------------------------------------
+#ifdef _ENABLE_GPS_AVERAGE_
 	ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_average,
 									latString,
 									gNMEAdata.lon_average,
 									lonString);
+#else
+	ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_double,
+									latString,
+									gNMEAdata.lon_double,
+									lonString);
+#endif
 	strcpy(tempstring, latString);
 	strcat(tempstring, " / ");
 	strcat(tempstring, lonString);

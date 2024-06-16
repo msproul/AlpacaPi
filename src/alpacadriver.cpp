@@ -190,6 +190,7 @@
 //*	May 17,	2024	<MLS> Added features to allow returning http error codes like 400
 //*	May 18,	2024	<MLS> Added _DEBUG_MANAGEMENT_
 //*	May 18,	2024	<MLS> Fixed cSendJSONresponse bug, not initialized to true
+//*	Jun  1,	2024	<MLS> Global GPS now looks for Emlid and if found, uses that port
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -241,6 +242,7 @@
 #include	"observatory_settings.h"
 #include	"obsconditions_globals.h"
 #include	"cpu_stats.h"
+#include	"usbmanager.h"
 
 //#define _DEBUG_CONFORM_
 //#define	_SHOW_HTTP_DATA_
@@ -2571,7 +2573,7 @@ static void	SendHtml_CompiledInfo(const int socketFD)
 	SocketWriteData(socketFD,	__DATE__);
 	SocketWriteData(socketFD,	"\r\n<BR>");
 	SocketWriteData(socketFD,	"Written in C/C++\r\n<BR>");
-	SocketWriteData(socketFD,	"(C) 2019-2023 by Mark Sproul msproul@skychariot.com\r\n<BR>");
+	SocketWriteData(socketFD,	"(C) 2019-2024 by Mark Sproul msproul@skychariot.com\r\n<BR>");
 }
 
 //*****************************************************************************
@@ -4331,8 +4333,9 @@ static void	PrintHelp(const char *appName)
 	printf("\t%-20s\t%s\r\n",	"-e",				"Error logging, log errors commands to disk");
 #ifdef _ENABLE_GLOBAL_GPS_
 	printf("\t%-20s\t%s\r\n",	"-g",				"Enable GPS via serial port (/dev/ttyS0)");
-	printf("\t%-20s\t%s\r\n",	"-g9",				"Sets baud rate to 9600 (default)");
+	printf("\t%-20s\t%s\r\n",	"-g1",				"Sets baud rate to 19200");
 	printf("\t%-20s\t%s\r\n",	"-g4",				"Sets baud rate to 4800");
+	printf("\t%-20s\t%s\r\n",	"-g9",				"Sets baud rate to 9600 (default)");
 	printf("\t%-20s\t%s\r\n",	"-g4/dev/ttyUSB0",	"Sets baud rate to 4800 and port to /dev/ttyUSB0");
 #else
 	printf("\t%-20s\t%s\r\n",	"-g...",			"GPS support not enabled in this build");
@@ -4874,7 +4877,22 @@ int	imu_ReturnCode;
 #ifdef _ENABLE_GLOBAL_GPS_
 	if (gEnableGlobalGPS)
 	{
-		CONSOLE_DEBUG("Starting GPS thread");
+	bool	validUSBpath;
+	char	usbPath[64];
+
+//		CONSOLE_DEBUG("GPS is enabled");
+//		CONSOLE_DEBUG_W_STR("gGlobalGPSpath\t=", gGlobalGPSpath);
+		//*	start by looking for an Emilid GPS
+		validUSBpath	=	USB_GetPathFromID("Emlid", usbPath);
+//		CONSOLE_DEBUG_W_BOOL("validUSBpath\t=", validUSBpath);
+		if (validUSBpath)
+		{
+			strcpy(gGlobalGPSpath, usbPath);
+			gGlobalGPSbaudrate	=	1;
+		}
+//		CONSOLE_DEBUG_W_STR("gGlobalGPSpath\t=", gGlobalGPSpath);
+		CONSOLE_DEBUG_W_STR("Starting GPS thread on port ", gGlobalGPSpath);
+
 		GPS_StartThread(gGlobalGPSpath, gGlobalGPSbaudrate);
 	}
 #endif
@@ -5116,7 +5134,7 @@ int		cmdEnumValue;
 	}
 	return(cmdEnumValue);
 }
-#include	<ctype.h>
+
 //*****************************************************************************
 static void	GenerateInvertedCase(const char *charStr, char *invertedStr)
 {

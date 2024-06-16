@@ -33,8 +33,12 @@ void	Sub_local_day(		TYPE_SkyTime *timeptr);
 void	Compute_Timezone(	TYPE_LatLon *locptr, TYPE_SkyTime *timeptr);
 void	Local_Time(			TYPE_SkyTime *timeptr);
 void	CalanendarTime(		TYPE_SkyTime *timeptr);	//* compute dte and cent
+void	ProcessTimeAdjustmentChar(char theChar);
+void	SetCurrentTimeStruct(TYPE_SkyTime *timeptr);
 
 void	DumpTimeStruct(		TYPE_SkyTime *timeptr, const char *callingFunctionName);
+
+extern bool	gAutoAdvanceTime;
 
 #ifdef __cplusplus
 }

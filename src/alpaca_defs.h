@@ -97,6 +97,7 @@
 //*	Apr 29,	2024	<MLS> Build 177
 //*	May 15,	2024	<MLS> Added TYPE_GuideDirections enums
 //*	May 26,	2024	<MLS> Build 178
+//*	Jun 16,	2024	<MLS> Build 179 - pushed to github
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -116,7 +117,7 @@
 
 #define	kApplicationName		"AlpacaPi"
 #define	kVersionString			"V0.7.2"
-#define	kBuildNumber			178
+#define	kBuildNumber			179
 #define kAlpacaDiscoveryPORT	32227
 #define kAlpacaPiDefaultPORT	6800
 

@@ -32,6 +32,8 @@
 //*	May 23,	2024	<MLS> Added diagonal dimension in mm (calculated)
 //*	May 25,	2024	<MLS> Added ProcessMouseEvent(), ProcessLineSelect(), SetNewSelectedDevice()
 //*	May 25,	2024	<MLS> Line select now working in FOV window
+//*	May 27,	2024	<MLS> Cleaned up displayed device name
+//*	May 27,	2024	<MLS> Added HandleKeyDown() to FOV window
 //*****************************************************************************
 
 #include	<sys/types.h>
@@ -251,6 +253,79 @@ char	textString[80];
 	SetWidgetText(			kFOVbox_RescanButton,	"Rescan");
 
 	SetAlpacaLogoBottomCorner(kFOVbox_AlpacaLogo);
+}
+
+//*****************************************************************************
+void	WindowTabFOV::HandleKeyDown(const int keyPressed)
+{
+int		deviceIndex;
+int		iii;
+int		theExtendedChar;
+
+//	CONSOLE_DEBUG_W_HEX("keyPressed=", keyPressed);
+
+	//*	find a selected device
+	deviceIndex	=	-1;
+	for (iii=0; iii<kMaxCamaeraFOVcnt; iii++)
+	{
+		if (cRemoteDeviceList[iii].lineSelected)
+		{
+			deviceIndex	=	iii;
+			break;
+		}
+	}
+
+	theExtendedChar	=	keyPressed & 0x00ffff;
+	switch(theExtendedChar)
+	{
+		//*	return, open current selected entry
+		case 0x0d:
+		case 0xff8d:
+//			if ((deviceIndex >= 0) && (deviceIndex < gAlpacaUnitCnt))
+//			{
+//				CreateAlpacaUnitWindow(&gAlpacaUnitList[deviceIndex]);
+//			}
+			break;
+
+		//*	delete key, delete the current entry
+		case 0x0000ff:
+		case 0x00ffff:
+		case 0x0080ff:
+			break;
+
+		//*	up arrow key
+		case 0x00ff52:
+			deviceIndex	-=	1;
+			if (deviceIndex >= 0)
+			{
+				SetNewSelectedDevice(deviceIndex);
+			}
+			break;
+
+		//*	down arrow key
+		case 0x00ff54:
+			deviceIndex	+=	1;
+			if (deviceIndex >= 0)
+			{
+				SetNewSelectedDevice(deviceIndex);
+			}
+			break;
+
+		case 0xFFAB:
+		case '+':
+			gAlpacaUnitList[deviceIndex].displayGraph	=	true;
+			break;
+
+		case 0xFFAD:
+		case '-':
+			gAlpacaUnitList[deviceIndex].displayGraph	=	false;
+			break;
+
+		default:
+			CONSOLE_DEBUG_W_HEX("Ignored: keyPressed     \t=", keyPressed);
+			CONSOLE_DEBUG_W_HEX("Ignored: theExtendedChar\t=", theExtendedChar);
+			break;
+	}
 }
 
 //*****************************************************************************
@@ -740,13 +815,6 @@ int		adjustedIdx;
 		if ((deviceIdx >= 0) && (deviceIdx < kMaxAlpacaIPaddrCnt))
 		{
 			SetNewSelectedDevice(deviceIdx);
-//
-//			//*	clear out previous selections
-//			for (iii=0; iii<kMaxAlpacaIPaddrCnt; iii++)
-//			{
-//				gAlpacaUnitList[iii].lineSelected	=	false;
-//			}
-//			gAlpacaUnitList[deviceIdx].lineSelected	=	true;
 		}
 		else
 		{
@@ -863,8 +931,9 @@ char	nameString[128];
 char	textString[512];
 char	offsetsString[64];
 char	tempString[64];
-//char	ipAddrStr[32];
 int		myDevCount;
+bool	hostNameIsIncluded;
+int		hostNameLen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -877,19 +946,30 @@ int		myDevCount;
 
 		if ((textBoxId <= kFOVbox_CamChkBox_Last) && (cRemoteDeviceList[iii].validEntry))
 		{
+			//*	take care of the check box
 			SetWidgetChecked(checkBoxId, cCameraData[iii].FOVenabled);
-			//*	fill in the check box
-			if (cRemoteDeviceList[iii].alpacaDeviceNum > 0)
+
+
+			//*	figure out the name to display
+			hostNameLen	=	strlen(cRemoteDeviceList[iii].hostName);
+			if ((hostNameLen == 0) ||
+				(strncasecmp(cRemoteDeviceList[iii].hostName, cRemoteDeviceList[iii].deviceNameStr, hostNameLen) == 0))
 			{
-				sprintf(nameString, "%s/%d-%s",	cRemoteDeviceList[iii].hostName,
-												cRemoteDeviceList[iii].alpacaDeviceNum,
-												cRemoteDeviceList[iii].deviceNameStr);
+				strcpy(nameString, cRemoteDeviceList[iii].deviceNameStr);
 			}
 			else
 			{
 				sprintf(nameString, "%s-%s",	cRemoteDeviceList[iii].hostName,
 												cRemoteDeviceList[iii].deviceNameStr);
 			}
+			if (cRemoteDeviceList[iii].alpacaDeviceNum > 0)
+			{
+				//*	if the device number is not 0, we want to display it
+				sprintf(tempString, "%:%d",cRemoteDeviceList[iii].alpacaDeviceNum);
+				strcat(nameString, tempString);
+			}
+
+
 			if (strlen(nameString) > 25)
 			{
 				nameString[25]	=	0;

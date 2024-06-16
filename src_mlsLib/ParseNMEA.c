@@ -65,12 +65,17 @@
 //*	Apr 12,	2024	<MLS> Added timing tests to ComputeLatLonAverage()
 //*	Apr 13,	2024	<MLS> Added altitude to averaging logic
 //*	Apr 16,	2024	<MLS> Added GetGPSmodeString()
+//*	May 30,	2024	<MLS> Implementing GPS sentences from EMLID Reach RS2
+//*	May 30,	2024	<MLS> https://docs.emlid.com/reachrs3/specifications/nmea-format/
+//*	May 31,	2024	<MLS> Emlid Reach uses "$GNxxx" instead of "$GPxxx"
+//*	May 31,	2024	<MLS> Added FormatGoogleMapsRequest()
 //**************************************************************************************
 
 #include	<stdio.h>
 #include	<string.h>
 #include	<stdlib.h>
 #include	<ctype.h>
+#include	<math.h>
 
 #if defined(__unix__)
 	#include	<error.h>
@@ -81,7 +86,7 @@
 
 
 
-//#define	_ENABLE_GPS_DEBUGGING_
+#define	_ENABLE_GPS_DEBUGGING_
 //#define	_ENABLE_TIME_DEGBUG_
 #ifdef _ENABLE_GPS_DEBUGGING_
 	#define	_ENABLE_CONSOLE_DEBUG_
@@ -178,6 +183,46 @@ double	latLonDbl;
 
 	return(latLonDbl);
 }
+
+//*****************************************************************************
+void	FormatGoogleMapsRequest(char *urlString, double latValue, double lonValue)
+{
+char	northSouthChar;
+char	eastWestChar;
+
+	if (latValue >= 0.0)
+	{
+		northSouthChar	=	'N';
+	}
+	else
+	{
+		northSouthChar	=	'S';
+	}
+	if (lonValue >= 0.0)
+	{
+		eastWestChar	=	'E';
+	}
+	else
+	{
+		eastWestChar	=	'W';
+	}
+
+	sprintf(urlString,	"https://www.google.com/maps/place/%10.9f%c+%10.9f%c",
+						fabs(latValue),
+						northSouthChar,
+						fabs(lonValue),
+						eastWestChar);
+	CONSOLE_DEBUG_W_DBL("latValue\t=",	latValue);
+	CONSOLE_DEBUG_W_DBL("lonValue\t=",	lonValue);
+	CONSOLE_DEBUG(urlString);
+
+	sprintf(urlString,	"https://www.google.com/maps/place/%10.9f,%10.9f",
+						latValue,
+						lonValue);
+	CONSOLE_DEBUG(urlString);
+
+}
+
 
 //**************************************************************************************
 void	ParseNMEA_FormatLatLonStrings(double latValue, char *latString, double lonValue, char *lonString)
@@ -366,6 +411,7 @@ int	myValue;
 
 //**************************************************************************************
 //*	parse the NMEA time into seconds
+//**************************************************************************************
 static bool	ReturnNMEATime(char *theTimeString, unsigned long *rTime, TYPE_timeHHMMSS *timeHHMMSS)
 {
 bool			localValidFlag;
@@ -390,7 +436,7 @@ unsigned long	mySecondsValue;
 	}
 	else
 	{
-//		CONSOLE_DEBUG("Setting time invalid");
+		CONSOLE_DEBUG("Setting time invalid");
 		//*	not valid
 		mySecondsValue	=	0;
 		localValidFlag	=	false;
@@ -876,6 +922,7 @@ unsigned long	messageType;
 bool			processedOK;
 double			myLat_double;
 double			myLon_double;
+char			urlString[256];
 
 //	CONSOLE_DEBUG(theLine);
 
@@ -978,8 +1025,9 @@ double			myLon_double;
 
 		//---------------------------------------------------------------------
 		//*	$GPGGA,005604,4027.001,N,07428.737,W,1,05,2.4,10.3,M,-34.0,M,,*46
-		//case	0x50474741:	//='PGGA':			//	GPS		GPS Position-Past
-		case	'PGGA':		//='PGGA':			//	GPS		GPS Position-Past
+		case	'PGGA':			//	GPS		GPS Position-Past
+		//*	$GNGGA,122444.40,4121.6607679,N,07458.8238421,W,1,23,0.6,417.197,M,-32.723,M,0.0,*6E
+		case	'NGGA':			//	GPS		GPS Position-Past
 		{
 //			CONSOLE_DEBUG("PGGA");
 //			DumpNMEAargs(nmeaArgs);
@@ -1017,6 +1065,8 @@ double			myLon_double;
 			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
 			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
 #endif
+			FormatGoogleMapsRequest(urlString, theNmeaInfo->lat_double, theNmeaInfo->lon_double);
+//			CONSOLE_DEBUG(urlString);
 		#ifdef _ENABLE_LAT_LON_TRACKING_
 			TrackLatLonValues(theNmeaInfo);
 		#endif
@@ -1184,14 +1234,12 @@ double			myLon_double;
 		//			1     2 3       4 5        6 7     8     9
 		//	$gprmc,220535,a,2658.37,n,08008.26,w,000.8,117.5,1?
 		//	$GPRMC,005604,A,4027.001,N,07428.737,W,000.9,039.1,281197,012.7,W*79
-//		case	0x50524D43:	//='PRMC':					//		Recommended Minimum	Specific GPS/Transit Data
-		case	'PRMC':		//='PRMC':					//		Recommended Minimum	Specific GPS/Transit Data
+		case	'PRMC':			//		Recommended Minimum	Specific GPS/Transit Data
+		//	$GNRMC,122445.20,A,4121.6607688,N,07458.8238436,W,0.04,176.36,300524,,,A*5C
+		case	'NRMC':			//		Position, velocity, and time
 		{
 		int	magVarSign;
 
-		#ifdef _ENABLE_GPS_DEBUGGING_
-			CONSOLE_DEBUG_W_STR("$GPRMC", theLine);
-		#endif
 
 			strcpy(theNNptr->Time,			nmeaArgs[1].argString);	//	Is it Current Time? of time of fix?
 			strcpy(theNNptr->Lat,			nmeaArgs[3].argString);
@@ -1214,6 +1262,15 @@ double			myLon_double;
 																&theNmeaInfo->yyLat,
 																&theNmeaInfo->latitude,
 																&theNmeaInfo->longitude);
+			theNmeaInfo->lat_double	=	GetLatLonDouble(&theNmeaInfo->latitude);
+			theNmeaInfo->lon_double	=	GetLatLonDouble(&theNmeaInfo->longitude);
+			FormatGoogleMapsRequest(urlString, theNmeaInfo->lat_double, theNmeaInfo->lon_double);
+//			CONSOLE_DEBUG(urlString);
+		#ifdef _ENABLE_GPS_DEBUGGING_
+//			CONSOLE_DEBUG(theLine);
+//			CONSOLE_DEBUG_W_BOOL("validTime\t=",	theNmeaInfo->validTime);
+//			CONSOLE_DEBUG_W_LONG("gpsTime  \t=",	theNmeaInfo->gpsTime);
+		#endif
 			if (theNNptr->MagVarC[0] == 'E')
 			{
 				magVarSign	=	-1;
@@ -1239,15 +1296,15 @@ double			myLon_double;
 	#endif
 
 	#ifdef _ENABLE_GPS_DEBUGGING_
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Deg=", theNmeaInfo->latitude.Deg);
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Min=", theNmeaInfo->latitude.Min);
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Sec=", theNmeaInfo->latitude.Sec);
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Ten=", theNmeaInfo->latitude.Ten);
-
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Deg=", theNmeaInfo->longitude.Deg);
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Min=", theNmeaInfo->longitude.Min);
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Sec=", theNmeaInfo->longitude.Sec);
-			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Ten=", theNmeaInfo->longitude.Ten);
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Deg=", theNmeaInfo->latitude.Deg);
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Min=", theNmeaInfo->latitude.Min);
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Sec=", theNmeaInfo->latitude.Sec);
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->latitude.Ten=", theNmeaInfo->latitude.Ten);
+//
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Deg=", theNmeaInfo->longitude.Deg);
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Min=", theNmeaInfo->longitude.Min);
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Sec=", theNmeaInfo->longitude.Sec);
+//			CONSOLE_DEBUG_W_NUM("theNmeaInfo->longitude.Ten=", theNmeaInfo->longitude.Ten);
 
 	#endif
 			theNmeaInfo->validCseSpd	=	ReturnNMEASpeed(theNNptr->SpdOvrGrnd,"N", &theNmeaInfo->spd);	//	Knots, Convert to MPH
@@ -1350,8 +1407,11 @@ double			myLon_double;
 
 		//---------------------------------------------------------------------
 		//	$GPGSA,A,3,,03,15,18,19,27,31,,,,,,2.8,2.4,1.0*3E
-	//	case	0x50475341:	//='PGSA':		//	GPS DOP and Active Satellites
-		case	'PGSA':		//='PGSA':		//	GPS DOP and Active Satellites
+		case	'PGSA':					//	GPS DOP and Active Satellites
+		//	$GLGSA,A,3,73,74,75,84,85,,,,,,,,1.2,0.6,1.0*2E
+		case	'AGSA':					//	GPS DOP and Active Satellites
+		case	'BGSA':					//	GPS DOP and Active Satellites
+		case	'LGSA':					//	GPS DOP and Active Satellites
 			//*	arg	1	=	Mode, M= Manual, A=Automatic
 			//*	arg 2	=	Mode,	1=Fix not available
 			//*						2=2D
@@ -1413,8 +1473,13 @@ double			myLon_double;
 
 		//---------------------------------------------------------------------
 		//	$GPGSV
-		//case	0x50475356:	//='PGSV':		//	GPS Satellites in View
+		//	$GLGSV
+		//	$GAGSV
+		//	$GBGSV
 		case	'PGSV':		//	GPS Satellites in View
+		case	'LGSV':		//	GPS Satellites in View
+		case	'AGSV':		//	GPS Satellites in View
+		case	'BGSV':		//	GPS Satellites in View
 		{
 	#ifdef _ENABLE_SATELLITE_ALMANAC_
 		int 	ii;
@@ -1603,7 +1668,10 @@ double			myLon_double;
 
 		//	$GPVTG,,T,,M,,N,,K*4E
 		//	$GPVTG,89.68,T,,M,0.00,N,0.0,K*5F
+		//*	$GNVTG,176.36,T,,M,0.02,N,0.04,K,A*20
+
 		case	'PVTG':		//	Track Made Good and Ground Speed	//	Check This one
+		case	'NVTG':
 		{
 			strcpy(theNNptr->TMG,			nmeaArgs[1].argString);
 			strcpy(theNNptr->SpdOvrGrnd,	nmeaArgs[5].argString);	//	Knots
@@ -1652,7 +1720,9 @@ double			myLon_double;
 	//	case	'PZCD':
 
 		//*	$GPZDA
-		case	0x505A4441:	//='PZDA':		//	Time & Date
+		case	'PZDA':		//='PZDA':		//	Time & Date
+		//*	$GNZDA,122444.20,30,05,2024,00,00*7D
+		case	'NZDA':						//	Time & Date
 			{
 				strcpy(theNNptr->Time,		nmeaArgs[1].argString);
 			#ifdef __MAC__
@@ -1674,8 +1744,24 @@ double			myLon_double;
 	//	case	'PZTI':
 	//	case	'PZWP':
 	//	case	'PZZU':
+			break;
 
+		//---------------------------------------------------------------------
+		//*	EMLID Reach RS2 custom
+		//*	https://docs.emlid.com/reachrs3/specifications/nmea-format/
+		//*	$GNEBP,,,,,,M*13
+		case 'PEBP':		//*	RTK base position
+		case 'NEBP':		//*	RTK base position
+			break;
 
+		case 'NETC':		//*	Tilt compensation data
+		case 'PETC':		//*	Tilt compensation data
+			break;
+
+		//*	$GNGST,122444.20,5.800,,,,0.150,0.100,0.300*6B
+		case 'NGST':		//*	Position error statistics
+		case 'PGST':		//*	Position error statistics
+			break;
 
 		//---------------------------------------------------------------------
 		default:
@@ -1994,8 +2080,8 @@ bool			processedOK;
 				nmeaData->validData	=	true;
 				validString			=	true;
 			#ifdef _ENABLE_GPS_DEBUGGING_
-				printf("*******************************\n");
-				printf("NMEA=%s\n", theNMEAstring);
+//				printf("*******************************\n");
+//				printf("NMEA=%s\n", theNMEAstring);
 			//	DumpGPSdata(&gNMEAdata);
 			#endif
 			}
@@ -2149,10 +2235,12 @@ int				iii;
 char			theDateString[16];
 char			theTimeString[16];
 bool			allDigitsFlag;
-//TYPE_timeHHMMSS	timeHHMMSS;
 int				commaCntr;
 int				slen;
 
+#ifdef _ENABLE_GPS_DEBUGGING_
+//	CONSOLE_DEBUG(__FUNCTION__);
+#endif
 	validTime	=	false;
 	//*	make sure the line starts with a "$"
 	if (theNMEAstring[0] == '$')
@@ -2168,7 +2256,9 @@ int				slen;
 			if (calculatedChecksum == nmeaChecksum)
 			{
 				//	$GPRMC,105211,A,4056.1873,N,07434.4805,W,0.015,324.3,120517,14.2,W*42
-				if (strncmp(theNMEAstring, "$GPRMC", 6) == 0)
+				//*	Updated 5/31/2024 to accommodate $GNRMC from Emlid Reach RS2
+				if ((theNMEAstring[1] == 'G') &&
+					(strncmp(&theNMEAstring[3], "RMC", 3) == 0))
 				{
 					//*	we have a string that contains time and date
 					slen	=	strlen(theNMEAstring);
@@ -2234,7 +2324,7 @@ int				slen;
 
 						//------------------------------------------
 						//*	set the Linux time structure
-//$GPRMC,023420.000,A,4121.6625,N,07458.8289,W,0.53,2.19,110424,,,A*71
+						//$GPRMC,023420.000,A,4121.6625,N,07458.8289,W,0.53,2.19,110424,,,A*71
 					int	nemaYear;
 					int	nemaMonth;
 					int	nemaDay;
@@ -2253,12 +2343,26 @@ int				slen;
 					}
 					else
 					{
-					//	CONSOLE_DEBUG_W_STR("NOT", theNMEAstring);
+					#ifdef _ENABLE_GPS_DEBUGGING_
+						CONSOLE_DEBUG_W_STR("NOT", theNMEAstring);
+					#endif
 					}
 				}
 			}
+		#ifdef _ENABLE_GPS_DEBUGGING_
+			else
+			{
+				CONSOLE_DEBUG("Invalid checksum");
+			}
+		#endif
 		}
 	}
+#ifdef _ENABLE_GPS_DEBUGGING_
+	else
+	{
+		CONSOLE_DEBUG("String does not start with $");
+	}
+#endif
 	return(validTime);
 }
 

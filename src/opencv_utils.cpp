@@ -49,17 +49,25 @@ int		pixValue;
 uint8_t	*oldRowPtr;
 uint8_t	*rgbRowPtr;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	oldImgWidth			=	openCVImage->cols;
 	oldImgHeight		=	openCVImage->rows;
 	oldImgRowStepSize	=	openCVImage->step[0];
 	oldImgBytesPerPixel	=	openCVImage->step[1];
 
-	//*	create an RGB image of the same size
-	rgbOpenCVImage		=	new cv::Mat(cv::Size(	oldImgWidth,
-													oldImgHeight),
-													CV_8UC3);
+	if ((oldImgWidth > 0) && (oldImgHeight > 0))
+	{
+		//*	create an RGB image of the same size
+		rgbOpenCVImage		=	new cv::Mat(cv::Size(	oldImgWidth,
+														oldImgHeight),
+														CV_8UC3);
+	}
+	else
+	{
+		rgbOpenCVImage	=	NULL;
+	}
+
 	if (rgbOpenCVImage != NULL)
 	{
 		//*	double check the data buffers
@@ -74,11 +82,11 @@ uint8_t	*rgbRowPtr;
 			switch(oldImgBytesPerPixel)
 			{
 				case 1:
-							//		#if (CV_MAJOR_VERSION <= 3)
-							//			cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
-							//		#else
-							//			#warning "OpenCV convert from 8 bit to RGB not finished"
-							//		#endif
+					//		#if (CV_MAJOR_VERSION <= 3)
+					//			cv::cvtColor(*newOpenCVImage, *cDownLoadedImage, CV_GRAY2RGB);
+					//		#else
+					//			#warning "OpenCV convert from 8 bit to RGB not finished"
+					//		#endif
 					//*	copy the data over, pixel at a time
 					for (row = 0; row < oldImgHeight; row++)
 					{

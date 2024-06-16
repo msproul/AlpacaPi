@@ -35,6 +35,7 @@
 //*	Apr 22,	2024	<MLS> Finished Read/Write Offset
 //*	May 26,	2024	<MLS> Fixed common property "Name"  aka DeviceName
 //*	May 26,	2024	<MLS> Found new version of PlayerOne SDK V3.6.2
+//*	May 26,	2024	<MLS> Updated install_playerone.sh to handle new version
 //*****************************************************************************
 //https://player-one-astronomy.com/download/softwares/PlayerOne_Camera_SDK_Linux_V3.6.2.tar.gz
 

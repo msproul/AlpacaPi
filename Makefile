@@ -167,7 +167,7 @@ QHY_INCLUDE_DIR		=	./QHY/include
 
 ############################################
 #	QSI support
-QSI_INCLUDE_DIR		=	./qsiapi-7.6.0
+QSI_INCLUDE_DIR		=	./qsiapi-7.6.0/lib
 
 DEFINEFLAGS		+=	-D_ALPACA_PI_
 DEFINEFLAGS		+=	-D_INCLUDE_ALPACA_EXTENSIONS_
@@ -679,6 +679,41 @@ gpscam		:										\
 
 
 ######################################################################################
+#pragma mark make gps
+gps		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+gps		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
+gps		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_GPS_GRAPHS_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_ALTITUDE_TRACKING_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_LAT_LON_TRACKING_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_POSITION_ERROR_TRACKING_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_PDOP_TRACKING_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_TRAILS_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_ALMANAC_
+gps		:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_SENTANCE_TRACKING_
+gps		:										\
+					$(DRIVER_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					$(GPS_OBJECTS)					\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+
+		$(LINK)  									\
+					$(DRIVER_OBJECTS)				\
+					$(HELPER_OBJECTS)				\
+					$(GPS_OBJECTS)					\
+					$(SERIAL_OBJECTS)				\
+					$(SOCKET_OBJECTS)				\
+					$(ASI_CAMERA_OBJECTS)			\
+					$(OPENCV_LINK)					\
+					-ludev							\
+					-lusb-1.0						\
+					-lpthread						\
+					-o alpacapi
+
+
+######################################################################################
 #pragma mark make alpacapicv4  C++ linux-x86
 alpacapicv4		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 alpacapicv4		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
@@ -1035,7 +1070,8 @@ pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_QHY_
-pmc8	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
+pmc8	:		INCLUDES		+=	-I./PlayerOne/include_camera
+pmc8	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 #pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
 #pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GPS_GRAPHS_
 #pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ALTITUDE_TRACKING_
@@ -1113,7 +1149,8 @@ pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_EXP_SCI_
 pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
 pmpl	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-pmpl	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
+pmpl	:		INCLUDES		+=	-I./PlayerOne/include_camera
+pmpl	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 pmpl	:										\
 					$(DRIVER_OBJECTS)			\
 					$(CAMERA_DRIVER_OBJECTS)	\
@@ -2430,22 +2467,25 @@ qsicv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 qsicv4		:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 qsicv4		:		INCLUDES		+=	-I$(QSI_INCLUDE_DIR)
 qsicv4		:									\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)				\
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)				\
 					$(OPENCV_LINK)				\
 					-lcfitsio					\
 					-lqsiapi					\
 					-lftd2xx					\
-					-lusb-1.0					\
-					-ludev						\
 					-lpthread					\
 					-o alpacapi
+
+#					-lusb-1.0					\
+#					-ludev						\
 
 ######################################################################################
 #pragma mark make qsiimu
@@ -2599,8 +2639,8 @@ findercv4		:	DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 findercv4		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
-findercv4	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_FilterWheel_SDK_Linux_V1.2.0/include
-findercv4	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_Camera_SDK_Linux_V3.3.0/include
+findercv4	:		INCLUDES		+=	-I./PlayerOne/include_camera
+findercv4	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 findercv4		:								\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
@@ -2638,24 +2678,27 @@ findercv4		:								\
 #pragma mark Switch - C++ Raspberry pi
 #	make attic
 attic		:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
-#attic		:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
-#attic		:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
-#attic		:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
-#attic		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
-#attic		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
-#attic		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
-#attic		:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
 attic		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
 attic		:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_RPI_
 attic		:		DEFINEFLAGS		+=	-D_ENABLE_8RELAY_DIN_
 attic		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 attic		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_GPS_GRAPHS_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_ALTITUDE_TRACKING_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_LAT_LON_TRACKING_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_POSITION_ERROR_TRACKING_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_PDOP_TRACKING_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_TRAILS_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_SATELLITE_ALMANAC_
+attic		:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_SENTANCE_TRACKING_
 attic		:										\
 					$(DRIVER_OBJECTS)				\
 					$(SWITCH_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
+					$(GPS_OBJECTS)					\
 
 			$(LINK)  								\
 					$(DRIVER_OBJECTS)				\
@@ -2663,6 +2706,7 @@ attic		:										\
 					$(SERIAL_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(SWITCH_DRIVER_OBJECTS)		\
+					$(GPS_OBJECTS)					\
 					$(OPENCV_LINK)					\
 					-lwiringPi						\
 					-lpthread						\
@@ -3008,7 +3052,8 @@ atik	:											\
 #	make playerone
 playerone	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
 playerone	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
-playerone	:		INCLUDES		+=	-I./PlayerOne/PlayerOne_FilterWheel_SDK_Linux_V1.2.0/include
+playerone	:		INCLUDES		+=	-I./PlayerOne/include_camera
+playerone	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 playerone	:										\
 					$(DRIVER_OBJECTS)				\
 					$(FITLERWHEEL_DRIVER_OBJECTS)	\
@@ -3036,6 +3081,7 @@ playerone	:										\
 poz	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
+poz	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
 poz	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
@@ -3061,6 +3107,7 @@ poz	:												\
 					$(LIVE_WINDOW_OBJECTS)			\
 					$(OPENCV_LINK)					\
 					-L$(PLAYERONE_LIB)				\
+					$(ASI_CAMERA_OBJECTS)			\
 					-lPlayerOnePW					\
 					-lPlayerOneCamera				\
 					-ludev							\
@@ -3457,6 +3504,8 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)fits_opencv.o					\
 				$(OBJECT_DIR)HipparcosCatalog.o				\
 				$(OBJECT_DIR)julianTime.o					\
+				$(OBJECT_DIR)KeplerEquations.o				\
+				$(OBJECT_DIR)milkyway.o						\
 				$(OBJECT_DIR)moonphase.o					\
 				$(OBJECT_DIR)NASA_moonphase.o				\
 				$(OBJECT_DIR)NGCcatalog.o					\
@@ -3492,6 +3541,7 @@ SKYTRAVEL_OBJECTS=											\
 				$(OBJECT_DIR)windowtab_skytravel.o			\
 				$(OBJECT_DIR)windowtab_startup.o			\
 				$(OBJECT_DIR)windowtab_starlist.o			\
+				$(OBJECT_DIR)windowtab_solarsystem.o		\
 				$(OBJECT_DIR)windowtab_STsettings.o			\
 				$(OBJECT_DIR)windowtab_sw_versions.o		\
 				$(OBJECT_DIR)windowtab_telescope.o			\
@@ -4029,6 +4079,39 @@ si			:			$(SKYIMAGE_OBJECTS)					\
 						-lcfitsio							\
 						-o skyimage
 
+
+######################################################################################
+CPU_OBJECTS=											\
+				$(OBJECT_DIR)cpu_stats.o				\
+
+######################################################################################
+#make cpu
+cpu	:	DEFINEFLAGS		+=	-D_INCLUDE_MAIN_CPU_STATS_
+cpu	:											\
+						$(CPU_OBJECTS)			\
+						$(HELPER_OBJECTS)		\
+
+				$(LINK)  						\
+						$(CPU_OBJECTS)			\
+						$(HELPER_OBJECTS)		\
+						-o cpustats
+
+
+######################################################################################
+MILKYWAY_OBJECTS=											\
+				$(OBJECT_DIR)milkyway.o				\
+
+######################################################################################
+#	make milkyway
+milkyway	:	DEFINEFLAGS		+=	-D_INCLUDE_MILKYWAY_MAIN_
+milkyway	:									\
+						$(MILKYWAY_OBJECTS)		\
+						$(HELPER_OBJECTS)		\
+
+				$(LINK)  						\
+						$(MILKYWAY_OBJECTS)		\
+						$(HELPER_OBJECTS)		\
+						-o milkyway
 
 ######################################################################################
 #pragma mark clean
@@ -5253,6 +5336,16 @@ $(OBJECT_DIR)skytravel_main.o :			$(SRC_SKYTRAVEL)skytravel_main.cpp	\
 										$(SRC_SKYTRAVEL)windowtab_skytravel.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)skytravel_main.cpp -o$(OBJECT_DIR)skytravel_main.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)windowtab_solarsystem.o :	$(SRC_SKYTRAVEL)windowtab_solarsystem.cpp	\
+										$(SRC_SKYTRAVEL)windowtab_solarsystem.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)windowtab_solarsystem.cpp -o$(OBJECT_DIR)windowtab_solarsystem.o
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)KeplerEquations.o :		$(SRC_SKYTRAVEL)KeplerEquations.cpp	\
+										$(SRC_SKYTRAVEL)KeplerEquations.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)KeplerEquations.cpp -o$(OBJECT_DIR)KeplerEquations.o
+
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)windowtab_telescope.o :	$(SRC_DIR)windowtab_telescope.cpp	\
@@ -5381,6 +5474,10 @@ $(OBJECT_DIR)OpenNGC.o :				$(SRC_SKYTRAVEL)OpenNGC.c	\
 										$(SRC_SKYTRAVEL)OpenNGC.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)OpenNGC.c -o$(OBJECT_DIR)OpenNGC.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)milkyway.o :				$(SRC_SKYTRAVEL)milkyway.cpp	\
+										$(SRC_SKYTRAVEL)milkyway.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_SKYTRAVEL)milkyway.cpp -o$(OBJECT_DIR)milkyway.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)StarCatalogHelper.o :		$(SRC_SKYTRAVEL)StarCatalogHelper.c	\

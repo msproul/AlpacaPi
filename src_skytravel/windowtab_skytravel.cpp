@@ -18,6 +18,7 @@
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
+//*	Dec 28,	2020	<MLS> Re-discovered skytravel source code on an old computer
 //*	Dec 29,	2020	<MLS> Created windowtab_skytravel.cpp
 //*	Dec 30,	2020	<MLS> Standard star data display starting to work
 //*	Jan  2,	2021	<MLS> Double click centers display
@@ -119,6 +120,13 @@
 //*	Jul 23,	2023	<MLS> Fixed startup color bug by calling Set_Skycolor() from constructor
 //*	Aug 24,	2023	<MLS> Added ellipse drawing for OpenNGC objects major/minor axis
 //*	Aug 25,	2023	<MLS> Ellipse angle working properly
+//*	May 29,	2024	<MLS> Added DrawOutlines()
+//*	May 29,	2024	<MLS> Added support for MilkyWay outlines
+//*	May 31,	2024	<MLS> Added filled polygons to Milkyway display options
+//*	May 31,	2024	<MLS> ';' toggles Milkyway filled polygons, not perfect
+//*	Jun  1,	2024	<MLS> MilkyWay is now outlined in white
+//*	Jun  9,	2024	<MLS> Added planet size drawing in PlotSkyObjects()
+//*	Jun 11,	2024	<MLS> Changed cAutoAdvanceTime to global, gAutoAdvanceTime
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
@@ -172,6 +180,7 @@
 #include	"aavso_data.h"
 #include	"RemoteImage.h"
 #include	"eph.h"
+#include	"milkyway.h"
 
 #include	"windowtab.h"
 #include	"windowtab_skytravel.h"
@@ -210,6 +219,7 @@ double	gSlitWidth_inches			=	41.0;
 double	gSlitBottom_degrees			=	25.0;
 double	gSlitTop_degrees			=	100.0;
 double	gDomeAzimuth_degrees		=	90.0;
+bool	gAutoAdvanceTime			=	true;
 
 
 SkyTravelDispOptions	gST_DispOptions;
@@ -370,7 +380,7 @@ int		startupWidgetIdx;
 	memset(&gCurrentSkyTime,	0, sizeof(TYPE_SkyTime));
 	memset(&cCurrLatLon,		0, sizeof(TYPE_LatLon));
 
-	cAutoAdvanceTime			=	true;
+	gAutoAdvanceTime			=	true;
 	cLastUpdateTime_ms			=	0;
 	cLastRedrawTime_ms			=	0;
 	cLastRemoteImageUpdate_ms	=	0;
@@ -450,6 +460,7 @@ int		startupWidgetIdx;
 	gST_DispOptions.LineWidth_ConstOutlines		=	1;
 	gST_DispOptions.LineWidth_GridLines			=	1;
 	gST_DispOptions.LineWidth_NGCoutlines		=	1;
+	gST_DispOptions.LineWidth_MilkyWay			=	1;
 
 	cElev0			=	kHALFPI / 2;		//* 45 degrees
 	cAz0			=	-PI / 3.0;			//* 60 degrees (ca. eastnortheast)
@@ -499,7 +510,11 @@ int		startupWidgetIdx;
 	}
 
 	BuildConstellationData();
+	//------------------------------------------------------------------
+	gMilkyWay_outlines	=	Milkyway_ReadOutlines("d3-celestial/data/milkyway.json", &gMilkyWay_outlineCnt);
+//	CONSOLE_DEBUG_W_LONG("gMilkyWay_outlineCnt\t=", gMilkyWay_outlineCnt);
 
+	//------------------------------------------------------------------
 	//*	try the OpenNGC catalog first
 	gNGCobjectPtr	=	Read_OpenNGC_StarCatalog(&gNGCobjectCount);
 	if (gNGCobjectPtr == NULL)
@@ -507,33 +522,44 @@ int		startupWidgetIdx;
 		gNGCobjectPtr	=	ReadNGCStarCatalog(&gNGCobjectCount);
 	}
 //	CONSOLE_DEBUG_W_LONG("gNGCobjectCount\t=",	gNGCobjectCount);
-
 	gOpenNGC_outlines	=	Read_OpenNGC_Outline_catgen(&gOpenNGC_outlineCnt);
 
+	//------------------------------------------------------------------
 	gYaleStarDataPtr	=	ReadYaleStarCatalog(&gYaleStarCount);
 
+	//------------------------------------------------------------------
 	gMessierObjectPtr	=	ReadMessierData(		"skytravel_data/",	kDataSrc_Messier,	&gMessierObjectCount);
+
+	//------------------------------------------------------------------
 	gDraperObjectPtr	=	ReadHenryDraperCatalog(	"skytravel_data/",	kDataSrc_Draper,	&gDraperObjectCount);
+
+
 #ifdef _ENABLE_HYG_
+	//------------------------------------------------------------------
 	gHYGObjectPtr		=	ReadHYGdata(			"skytravel_data/",	kDataSrc_HYG,		&gHYGObjectCount);
 #endif // _ENABLE_HYG_
 
+	//------------------------------------------------------------------
 	gConstOutlinePtr	=	ReadConstellationOutlines("skytravel_data/constOutlines.txt", &gConstOutlineCount);
 
-	gAAVSOalertsPtr		=	ReadAAVSO_TargetData(&gAAVSOalertsCnt);
-//	CONSOLE_DEBUG_W_LONG("gAAVSOalertsCnt\t=", gAAVSOalertsCnt);
-//	CONSOLE_ABORT(__FUNCTION__);
-
+	//------------------------------------------------------------------
 	gHipObjectPtr		=	ReadHipparcosStarCatalog(&gHipObjectCount);
 	if (gHipObjectPtr != NULL)
 	{
 		ReadCommonStarNames(gHipObjectPtr, gHipObjectCount);
 	}
 
+	//------------------------------------------------------------------
 	//*	read the SAO database
 	gSAOobjectPtr		=	SAO_ReadFile(&gSAOobjectCount);
 //	CONSOLE_DEBUG_W_HEX("gSAOobjectPtr\t=",		gSAOobjectPtr);
 //	CONSOLE_DEBUG_W_LONG("gSAOobjectCount\t=",	gSAOobjectCount);
+
+	//------------------------------------------------------------------
+	gAAVSOalertsPtr		=	ReadAAVSO_TargetData(&gAAVSOalertsCnt);
+//	CONSOLE_DEBUG_W_LONG("gAAVSOalertsCnt\t=", gAAVSOalertsCnt);
+//	CONSOLE_ABORT(__FUNCTION__);
+
 
 #define	kMaxPolarAlignCenterPts		200
 	//*	read the special.txt file
@@ -827,6 +853,7 @@ int		buttonStartX;
 	SetWidgetHelpText(	kSkyTravel_Btn_CommonStarNames,	"Toggle Common star names display");
 	SetWidgetHelpText(	kSkyTravel_Btn_ConstOutline,	"Toggle Constellation outlines");
 	SetWidgetHelpText(	kSkyTravel_Btn_Constellations,	"Toggle Constellations");
+	SetWidgetHelpText(	kSkyTravel_Btn_MilkyWayDisp,	"Toggle MilkyWay outlines");
 	SetWidgetHelpText(	kSkyTravel_Btn_NGC,				"Toggle NGC display");
 	SetWidgetHelpText(	kSkyTravel_Btn_Earth,			"Toggle Earth display");
 	SetWidgetHelpText(	kSkyTravel_Btn_Grid,			"Toggle Grid display");
@@ -879,6 +906,7 @@ int		buttonStartX;
 	SetWidgetText(		kSkyTravel_Btn_OrigDatabase,	"$");
 	SetWidgetText(		kSkyTravel_Btn_ConstOutline,	"O");
 	SetWidgetText(		kSkyTravel_Btn_Constellations,	"?");
+	SetWidgetText(		kSkyTravel_Btn_MilkyWayDisp,	"W");
 	SetWidgetText(		kSkyTravel_Btn_NGC,				"G");
 	SetWidgetText(		kSkyTravel_Btn_Earth,			"E");
 	SetWidgetText(		kSkyTravel_Btn_Grid,			"#");
@@ -971,6 +999,7 @@ int		buttonStartX;
 //**************************************************************************************
 void WindowTabSkyTravel::ActivateWindow(void)
 {
+	UpdateButtonStatus();
 #if defined(_ENABLE_REMOTE_GAIA_)
 	SetWidgetText(		kSkyTravel_SQL_database,		gSQLsever_Database);
 #endif
@@ -994,9 +1023,10 @@ struct tm			siderealTime;
 	gettimeofday(&currentTimeVal, NULL);
 	if (cForceClockUpdate || (currentTimeVal.tv_sec != cPreviousClockUpdateTVsecs))
 	{
-
-		if (cAutoAdvanceTime)
+		if (gAutoAdvanceTime)
 		{
+			SetCurrentTime();
+
 			gettimeofday(&currentTimeVal, NULL);
 			FormatTimeString(&currentTimeVal, utcTimeString);
 
@@ -1017,7 +1047,7 @@ struct tm			siderealTime;
 									gCurrentSkyTime.local_hour);
 		}
 		SetWidgetText(kSkyTravel_UTCtime, textBuff);
-
+//		CONSOLE_DEBUG(textBuff);
 		cPreviousClockUpdateTVsecs	=	currentTimeVal.tv_sec;
 		ForceWindowUpdate();
 	}
@@ -1118,22 +1148,9 @@ struct tm			siderealTime;
 #endif // _ENABLE_REMOTE_GAIA_
 
 
-	if (cAutoAdvanceTime)
-	{
-		deltaMilliSecs		=	currentMilliSecs - cLastUpdateTime_ms;
-	//	if ((deltaMilliSecs > 60000) || ((deltaMilliSecs > 15000) && (cView_angle_Rads <= 0.4)))	//*	view angle in radians
-		if ((deltaMilliSecs > 60000) || ((deltaMilliSecs > 30000) && (cView_angle_Rads <= 0.4)))	//*	view angle in radians
-		{
-			//*	this makes it real time.
-			SetCurrentTime();
-			ForceWindowUpdate();
-			cLastUpdateTime_ms		=	millis();
-//			CONSOLE_DEBUG_W_NUM("deltaMilliSecs\t=", deltaMilliSecs);
-		}
-	}
-
 	//-----------------------------------------------------------
 	//*	check on remote imaging
+	//*	remote imaging refers to downloading an image from stsci.edu or other image source
 	deltaMilliSecs		=	currentMilliSecs - cLastRemoteImageUpdate_ms;
 	if (deltaMilliSecs >= 2000)
 	{
@@ -1196,6 +1213,7 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 
 	SetWidgetChecked(		kSkyTravel_Btn_ConstOutline,	cDispOptions.dispConstOutlines);
 	SetWidgetChecked(		kSkyTravel_Btn_Constellations,	cDispOptions.dispConstellations);
+	SetWidgetChecked(		kSkyTravel_Btn_MilkyWayDisp,	cDispOptions.dispMilkyWayOutline);
 	SetWidgetChecked(		kSkyTravel_Btn_NGC,				cDispOptions.dispNGC);
 	SetWidgetChecked(		kSkyTravel_Btn_Messier,			cDispOptions.dispMessier);
 	SetWidgetChecked(		kSkyTravel_Btn_YaleCat,			cDispOptions.dispYale);
@@ -1211,7 +1229,7 @@ void	WindowTabSkyTravel::UpdateButtonStatus(void)
 
 	SetWidgetChecked(		kSkyTravel_Btn_MagnitudeDisp,	gST_DispOptions.DispMagnitude);
 
-	SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		cAutoAdvanceTime);
+	SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		gAutoAdvanceTime);
 
 	SetWidgetChecked(		kSkyTravel_Btn_Chart,			cChartMode);
 	SetWidgetChecked(		kSkyTravel_Btn_Earth,			cDispOptions.dispEarth);
@@ -1261,6 +1279,7 @@ bool	WindowTabSkyTravel::ProcessSingleCharCmd(const int cmdChar)
 {
 bool	charWasProcessed;
 bool	controlKeyDown;
+double	newView_angle;
 
 //	CONSOLE_DEBUG_W_HEX("keyPressed\t=", cmdChar);
 	controlKeyDown	=	false;
@@ -1290,6 +1309,7 @@ bool	controlKeyDown;
 			cDispOptions.dispMessier			=	false;
 			cDispOptions.dispNames				=	false;
 			cDispOptions.dispNGC				=	false;
+			cDispOptions.dispSAO				=	false;
 			cDispOptions.dispSpecialObjects		=	kSpecialDisp_Off;
 			cDispOptions.dispSymbols			=	false;
 			cDispOptions.dispYale				=	false;
@@ -1302,6 +1322,7 @@ bool	controlKeyDown;
 			UpdateButtonStatus();
 			break;
 
+		//*	adjust the magnitude limit for what gets displayed
 		case '`':
 			gST_DispOptions.MagnitudeMode		=	kMagnitudeMode_Specified;
 			if (controlKeyDown)
@@ -1337,77 +1358,22 @@ bool	controlKeyDown;
 			cDispOptions.dispSAO	=	!cDispOptions.dispSAO;
 			break;
 
+		case '=':	//*	reset the clock to now
 		case '<':	//*	Back one hour
-			cAutoAdvanceTime	=	false;
-			Sub_hour(&gCurrentSkyTime);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case '>':	//*	Forward one hour
-			cAutoAdvanceTime	=	false;
-			Add_hour(&gCurrentSkyTime);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case '[':	//*	Back one day
-			cAutoAdvanceTime	=	false;
-			Sub_day(&gCurrentSkyTime);
-			DumpTimeStruct(&gCurrentSkyTime, "Back one day");
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case ']':	//*	Forward one day
-			cAutoAdvanceTime	=	false;
-			Add_day(&gCurrentSkyTime);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case '{':	//*	Back one month
-			cAutoAdvanceTime	=	false;
-			Sub_month(&gCurrentSkyTime);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case '}':	//*	Forward one month
-			cAutoAdvanceTime	=	false;
-			Add_month(&gCurrentSkyTime);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case '(':	//*	Back one year
-			cAutoAdvanceTime	=	false;
-			Sub_year(&gCurrentSkyTime, 1);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case ')':	//*	Forward one year
-			cAutoAdvanceTime	=	false;
-			Add_year(&gCurrentSkyTime, 1);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case '9':	//*	Back one minute
-			cAutoAdvanceTime	=	false;
-			Sub_min(&gCurrentSkyTime);
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			ForceWindowUpdate();
-			break;
-
 		case '0':	//*	Forward one minute
-			cAutoAdvanceTime	=	false;
-			Add_min(&gCurrentSkyTime);
+			ProcessTimeAdjustmentChar(cmdChar  & 0x07f);
+			gAutoAdvanceTime	=	false;
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			ForceWindowUpdate();
 			break;
-
 
 		case '.':
 			gST_DispOptions.DispMagnitude		=	!gST_DispOptions.DispMagnitude;
@@ -1466,12 +1432,12 @@ bool	controlKeyDown;
 			break;
 
 		case '@':
-			cAutoAdvanceTime	=	!cAutoAdvanceTime;
-			if (cAutoAdvanceTime)
+			gAutoAdvanceTime	=	!gAutoAdvanceTime;
+			if (gAutoAdvanceTime)
 			{
 				SetCurrentTime();
 			}
-			SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		cAutoAdvanceTime);
+			SetWidgetChecked(		kSkyTravel_Btn_AutoAdvTime,		gAutoAdvanceTime);
 			cForceClockUpdate	=	true;		//*	force clock on screen to update
 			break;
 
@@ -1578,7 +1544,6 @@ bool	controlKeyDown;
 			SetWidgetChecked(		kSkyTravel_Btn_CommonStarNames,	cDispOptions.dispCommonStarNames);
 			break;
 
-
 		case 'N': 	//*	toggle NAMES
 			cDispOptions.dispNames	=	!cDispOptions.dispNames;
 			SetWidgetChecked(		kSkyTravel_Btn_Names,	cDispOptions.dispNames);
@@ -1653,6 +1618,13 @@ bool	controlKeyDown;
 			cAz0	=	kHALFPI - kEPSILON;
 			break;
 
+		case 'W':	//*	toggle MilkyWay display
+			cDispOptions.dispMilkyWayOutline	=	!cDispOptions.dispMilkyWayOutline;
+			break;
+		case ';':	//*	toggle MilkyWay display
+			cDispOptions.dispMilkyWayFilled	=	!cDispOptions.dispMilkyWayFilled;
+			break;
+
 		case 'y':	//*	Toggle HYG catalog
 			cDispOptions.dispHYG_all	=	!cDispOptions.dispHYG_all;
 			break;
@@ -1698,10 +1670,6 @@ bool	controlKeyDown;
 			gCurrentSkyTime.local_time_flag	^=	1;
 			break;
 
-		case '=':	//*	reset the clock to now
-			SetCurrentTime();
-			cForceClockUpdate	=	true;		//*	force clock on screen to update
-			break;
 
 ////			{
 ////			int	ii;
@@ -1726,6 +1694,32 @@ bool	controlKeyDown;
 		case '/':
 			CenterOnDomeSlit();
 			charWasProcessed			=	false;
+			break;
+
+		//*	flat earth view, north pole at the center, zoomed all the way out
+		case '_':
+			newView_angle	=	RADIANS(kMaxViewAngle_Degrees);
+			cElev0			=	RADIANS(gObseratorySettings.Latitude_deg);
+			//*	these values were determined by testing, not sure how they are derived
+			cAz0			=	0.0007317573150906753198797;
+			cRa0			=	1.3105927892006148383075015;
+			cDecl0			=	1.5702432849567986572481004;
+
+//			cAz0			=	0.0;
+//			cElev0			=	RADIANS(gObseratorySettings.Latitude_deg);
+//			cRa0			=	0.0;
+//			cDecl0			=	0.0;
+
+			SetView_Angle(newView_angle);
+//			CONSOLE_DEBUG_W_DBL("newView_angle\t=", newView_angle);
+//			CONSOLE_DEBUG_W_DBL("cAz0         \t=", cAz0);
+//			CONSOLE_DEBUG_W_DBL("cAz0         \t=", DEGREES(cAz0));
+//			CONSOLE_DEBUG_W_DBL("cElev0       \t=", cElev0);
+//			CONSOLE_DEBUG_W_DBL("cElev0       \t=", DEGREES(cElev0));
+//			CONSOLE_DEBUG_W_DBL("cRa0         \t=", cRa0);
+//			CONSOLE_DEBUG_W_DBL("cRa0         \t=", DEGREES(cRa0));
+//			CONSOLE_DEBUG_W_DBL("cDecl0       \t=", cDecl0);
+//			CONSOLE_DEBUG_W_DBL("cDecl0       \t=", DEGREES(cDecl0));
 			break;
 
 		case 0x10FFE3:	//*	the control key, ignore it
@@ -1823,6 +1817,7 @@ char	searchText[128];
 		case kSkyTravel_Btn_Plus:				ProcessSingleCharCmd('+');	break;	//*	zoom in
 		case kSkyTravel_Btn_Minus:				ProcessSingleCharCmd('-');	break;	//*	zoom out
 		case kSkyTravel_Btn_Constellations:		ProcessSingleCharCmd('?');	break;
+		case kSkyTravel_Btn_MilkyWayDisp:		ProcessSingleCharCmd('W');	break;
 		case kSkyTravel_Btn_AutoAdvTime:		ProcessSingleCharCmd('@');	break;
 		case kSkyTravel_Btn_AAVSOalerts:		ProcessSingleCharCmd('a');	break;
 		case kSkyTravel_Btn_Ecliptic:			ProcessSingleCharCmd('C');	break;
@@ -2621,25 +2616,8 @@ void	WindowTabSkyTravel::SetSkyDisplaySize(short xSize, short ySize)
 //*********************************************************************
 void	WindowTabSkyTravel::SetCurrentTime(void)
 {
-struct timeval	currentTimeVal;
-struct tm		*linuxTime;
-
 //	CONSOLE_DEBUG(__FUNCTION__);
-
-	gettimeofday(&currentTimeVal, NULL);
-
-	linuxTime	=	gmtime(&currentTimeVal.tv_sec);
-//	CONSOLE_DEBUG_W_LONG("currentTimeVal.tv_sec=", currentTimeVal.tv_sec);
-
-
-	gCurrentSkyTime.year	=	(1900 + linuxTime->tm_year);
-	gCurrentSkyTime.month	=	(1 + linuxTime->tm_mon);
-	gCurrentSkyTime.day		=	linuxTime->tm_mday;
-	gCurrentSkyTime.hour	=	linuxTime->tm_hour;
-	gCurrentSkyTime.min		=	linuxTime->tm_min;
-	gCurrentSkyTime.sec		=	linuxTime->tm_sec;
-
-	CalanendarTime(&gCurrentSkyTime);
+	SetCurrentTimeStruct(&gCurrentSkyTime);
 
 }
 
@@ -2872,6 +2850,31 @@ short		iii;
 //	DRAW HERE
 
 	//*--------------------------------------------------------------------------------
+	//*	these are outlines for the milkyway
+	if (gMilkyWay_outlines != NULL)
+	{
+		//*	draw the filed areas first
+		//*	if we are zoomed in too far, dont draw the polygons
+		if (cDispOptions.dispMilkyWayFilled && (cView_angle_Rads > 0.25))
+		{
+			DrawPolygons(gMilkyWay_outlines, gMilkyWay_outlineCnt);
+		}
+
+		if (cDispOptions.dispMilkyWayOutline)
+		{
+			LLG_PenSize(gST_DispOptions.LineWidth_MilkyWay);
+			DrawOutlines(gMilkyWay_outlines, gMilkyWay_outlineCnt, W_DARKGRAY);
+		}
+	}
+
+	//*--------------------------------------------------------------------------------
+	if (cDispOptions.dispNGC)
+	{
+		//*	these are outlines from OpenNGC
+		DrawOpenNGC_Outlines();
+	}
+
+	//*--------------------------------------------------------------------------------
 	//*--------------------------------------------------------------------------------
 	//*--------------------------------------------------------------------------------
 	//*	the first group of things should NOT be drawn when we are mouse dragging
@@ -2957,11 +2960,6 @@ short		iii;
 
 		PlotObjectsByDataSource(cDispOptions.dispNGC,	gNGCobjectPtr,		gNGCobjectCount);
 		PlotObjectsByDataSource(cDispOptions.dispSAO,	gSAOobjectPtr,		gSAOobjectCount);
-	}
-	if (cDispOptions.dispNGC)
-	{
-		//*	these are outlines from OpenNGC
-		DrawOpenNGC_Outlines();
 	}
 
 
@@ -3050,7 +3048,7 @@ short		iii;
 
 
 
-	PlotSkyObjects(cPlanets, gPlanet_names, planet_shapes, kPlanetObjectCnt);	//* planets
+	PlotSkyObjects(cPlanets, gPlanet_names, gPlanet_shapes, kPlanetObjectCnt);	//* planets
 
 	LLG_SetColor(W_BLACK);
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -3174,7 +3172,7 @@ void	WindowTabSkyTravel::ResetView(void)
 	cDecl0									=	0.0;
 
 	//*	set auto advance time to on
-	cAutoAdvanceTime						=	true;
+	gAutoAdvanceTime						=	true;
 	SetCurrentTime();
 	cForceClockUpdate						=	true;		//*	force clock on screen to update
 	cPreviousClockUpdateTVsecs				=	0;
@@ -3198,6 +3196,8 @@ void	WindowTabSkyTravel::ResetView(void)
  	cDispOptions.dispMessier				=	true;
 	cDispOptions.dispNames					=	true;
 	cDispOptions.dispNGC					=	true;
+	cDispOptions.dispMilkyWayOutline		=	true;
+	cDispOptions.dispMilkyWayFilled			=	false;
 	cDispOptions.dispSAO					=	true;
 	cDispOptions.dispSpecialObjects			=	kSpecialDisp_All;
  	cDispOptions.dispSymbols				=	true;
@@ -3682,8 +3682,10 @@ int					nameLen;
 				}
 				jjj++;
 			}
+
+			//------------------------------------------------------------------------------------
 			//*	only draw the names of the outlines if the constellations are NOT displayed
-			if (cDispOptions.dispConstellations == false)
+			if (cDispOptions.dispNames && (cDispOptions.dispConstellations == false))
 			{
 				//*	only draw the name if we drew at least 1/4 of the points
 				if (pointsDrawnCnt >= (totalPts / 4))
@@ -3841,29 +3843,33 @@ short				deltaPixels;
 				}
 			}
 
+			//---------------------------------------------------------------------
 			//*	Now draw the constellation name
-//			CONSOLE_DEBUG_W_STR("myConstPtr->constellationName\t=",myConstPtr->constellationName);
-			nameLen	=	strlen(myConstPtr->constellationName);
-			if (nameLen > 0)
+			//CONSOLE_DEBUG_W_STR("myConstPtr->constellationName\t=",myConstPtr->constellationName);
+			if (cDispOptions.dispNames)
 			{
-				if (fabs(myConstPtr->rtAscension) > 0.0)
+				nameLen	=	strlen(myConstPtr->constellationName);
+				if (nameLen > 0)
 				{
-					ptInView		=	GetXYfromRA_Decl(	myConstPtr->rtAscension,
-															myConstPtr->declination,
-															&pt_XX,
-															&pt_YY);
-					if (ptInView)
+					if (fabs(myConstPtr->rtAscension) > 0.0)
 					{
-						//*	check the view angle to see how big to make the font
-						DrawConstellationNameByViewAngle(	(pt_XX - (nameLen * 6)),
-															pt_YY,
-															myConstPtr->constellationName);
+						ptInView		=	GetXYfromRA_Decl(	myConstPtr->rtAscension,
+																myConstPtr->declination,
+																&pt_XX,
+																&pt_YY);
+						if (ptInView)
+						{
+							//*	check the view angle to see how big to make the font
+							DrawConstellationNameByViewAngle(	(pt_XX - (nameLen * 6)),
+																pt_YY,
+																myConstPtr->constellationName);
+						}
 					}
-				}
-				else
-				{
-					CONSOLE_DEBUG_W_STR("No center point for", myConstPtr->constellationName);
-					CONSOLE_ABORT(__FUNCTION__);
+					else
+					{
+						CONSOLE_DEBUG_W_STR("No center point for", myConstPtr->constellationName);
+						CONSOLE_ABORT(__FUNCTION__);
+					}
 				}
 			}
 		}
@@ -5097,7 +5103,7 @@ int		myLineSpacing;
 				myYcoord		+=	myLineSpacing;
 				if (!isalpha(theStar->spectralClass))
 				{
-					DumpCelestDataStruct(__FUNCTION__, theStar);
+//					DumpCelestDataStruct(__FUNCTION__, theStar);
 				}
 			}
 		}
@@ -7798,6 +7804,29 @@ bool			drawInFillFlag;
 	}
 }
 
+//*****************************************************************************
+//*	must be in this order
+//*	enum{MON,SUN,MER,VEN,MAR,JUP,SAT,URA,NEP,PLU,GEOMON};
+//*	values are in arc seconds
+//*	obtained from
+//*		https://en.wikipedia.org/wiki/Angular_diameter
+//*	value for Pluto  https://en.wikipedia.org/wiki/Pluto
+//*****************************************************************************
+static double	gPlanetDiameter[]	=
+{
+	0.0,	//*	MON
+	0.0,	//*	SUN
+	4.5,	//*	MER
+	9.7,	//*	VEN
+	3.5,	//*	MAR
+	29.8,	//*	JUP
+	14.5,	//*	SAT
+	3.3,	//*	URA
+	2.2,	//*	NEP
+	0.11,	//*	PLU
+	0.0	//*	GEOMON
+
+};
 
 //*****************************************************************************
 //	plot from an unsorted (in declination) list of objects pointed to
@@ -7848,10 +7877,10 @@ int				myColor;
 		case kZodiacCount:	myColor	=	W_LIGHTMAGENTA;	break;	//* zodiac sign names
 		default:			myColor	=	W_WHITE;		break;
 	}
-	LLG_SetColor(myColor);
 
 	for (iii=objCnt-1; iii>=0; iii--)
 	{
+		LLG_SetColor(myColor);
 		objectptr[iii].curXX	=	-100;
 		objectptr[iii].curYY	=	-100;
 
@@ -7931,6 +7960,7 @@ int				myColor;
 							if (cDispOptions.dispSymbols)	//* symbols except if moon or sun
 							{
 							short	planetScale;
+
 								if (cView_angle_Rads <= 0.1)
 								{
 									planetScale	=	3;
@@ -7943,14 +7973,49 @@ int				myColor;
 								{
 									planetScale	=	1;
 								}
-								DrawVector(myColor, xcoord, ycoord, planetScale, shapes[iii]);
+								if (objectptr[iii].dataSrc == kDataSrc_Planets)
+								{
+								double	planetDiam_arc_secs;
+								int		planetColor;
+
+									planetColor			=	myColor;
+									planetDiam_arc_secs	=	gPlanetDiameter[iii];
+									if (planetDiam_arc_secs > 0.0)
+									{
+									double	planetDiam_degrees;
+									double	planetDiam_Radians;
+									int		diameterPixels;
+									int		radiusPixels;
+
+										planetDiam_degrees	=	planetDiam_arc_secs / 3600.0;
+										planetDiam_Radians	=	RADIANS(planetDiam_degrees);
+										diameterPixels		=	(planetDiam_Radians / cView_angle_Rads) * cWind_width;
+										radiusPixels		=	diameterPixels / 2;
+										if (radiusPixels < 1)
+										{
+											radiusPixels	=	1;
+										}
+
+										LLG_FillEllipse(xcoord, ycoord, radiusPixels, radiusPixels);
+
+										if (radiusPixels > 30)
+										{
+											planetColor	=	W_BLACK;
+										}
+										LLG_SetColor(planetColor);
+									}
+									DrawVector(planetColor, xcoord, ycoord, planetScale, shapes[iii]);
+								}
+								else
+								{
+									DrawVector(myColor, xcoord, ycoord, planetScale, shapes[iii]);
+								}
 
 								if (cView_angle_Rads < 0.4)
 								{
 									//*	if we are this far zoomed in, show the name as well
 									LLG_DrawCString(xcoord + 18, ycoord, name[iii]);
 								}
-
 							}
 							else if (cDispOptions.dispNames)	//* names except if moon or sun
 							{
@@ -8881,7 +8946,23 @@ bool	foundIt;
 			SetMaximumViewAngle(0.03);
 		}
 	}
-
+	//*	alternate way of specifying an SAO object
+	if (strncasecmp(objectName, "SAO", 3) == 0)
+	{
+		CONSOLE_DEBUG_W_STR("Looking in SAO for", objectName);
+		foundIt	=	SearchSkyObjectsDataListByNumber(	gSAOobjectPtr,
+														gSAOobjectCount,
+														kDataSrc_SAO,
+														"SAO",
+														objectName);
+		if (foundIt)
+		{
+			cDispOptions.dispSAO	=	true;
+			strcpy(cFoundDatabase, "SAO catalog");
+			//*	make sure we can see the data base
+			SetMaximumViewAngle(0.03);
+		}
+	}
 
 	//-------------------------------------------------------------------------------
 	//*	look in the default star list
@@ -9629,39 +9710,138 @@ int		theAsteroidColor;
 	return(numDrawn);
 }
 
+//#define	_USE_COLORS_FOR_MILKYWAY_
+
+#ifdef _USE_COLORS_FOR_MILKYWAY_
+	int		gColorsByLevel[]	=	{ W_WHITE, W_RED, W_GREEN, W_BLUE, W_CYAN, W_MAGENTA, W_YELLOW};
+#endif
+
+
 //********************************************************************
-int	WindowTabSkyTravel::DrawOpenNGC_Outlines(void)
+int	WindowTabSkyTravel::DrawPolygons(TYPE_OutlineData *outLineArray, long outLineCount)
+{
+#define	kMaxPolyCount	5500
+#if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+cv::Point	pt1;
+cv::Point	ptList[kMaxPolyCount];
+cv::Point	pointLoc;
+int			iii;
+int			pointCntr;
+short		pt_XX;
+short		pt_YY;
+bool		ptInView;
+//bool		polyIsOnScreen;
+bool		drawPolygon;
+cv::Scalar	milkyWayColor;
+int			levelID;
+int			colorLevel;
+int			polygonsDrawn;
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	pointCntr		=	0;
+	polygonsDrawn	=	0;
+//	polyIsOnScreen	=	true;
+	for (iii=0; iii<outLineCount; iii++)
+	{
+		levelID		=	outLineArray[iii].level;
+		ptInView	=	GetXYfromRA_Decl(	outLineArray[iii].ra_rad,
+											outLineArray[iii].decl_rad,
+											&pt_XX,
+											&pt_YY);
+//		if (ptInView != true)
+//		{
+//			polyIsOnScreen	=	false;
+//		}
+		//*	look for the start of a new polygon
+		if (outLineArray[iii].flag == 0)
+		{
+			//*	if we have accumulated a polygon, time to draw it
+			if (pointCntr > 0)
+			{
+				drawPolygon	=	true;
+				if ((pointCntr > 500) && (levelID == 1))
+				{
+					drawPolygon	=	false;
+				}
+//				if (pointCntr > 4000)
+//				{
+//					drawPolygon	=	false;
+//				}
+
+				if (drawPolygon)
+				{
+				#ifdef _USE_COLORS_FOR_MILKYWAY_
+					milkyWayColor	=	LLG_GetColor(gColorsByLevel[levelID]);
+				#else
+					colorLevel		=	levelID * 40;
+					milkyWayColor	=	CV_RGB(colorLevel, colorLevel, colorLevel);
+				#endif
+					cv::fillConvexPoly(	*cOpenCV_Image,
+										ptList,						//	const CvPoint* pts,
+										pointCntr,					//	pointCntrint npts,
+										milkyWayColor,				//	color
+										8,							//	int line_type CV_DEFAULT(8),
+										0);							//	int shift CV_DEFAULT(0));
+					polygonsDrawn++;
+				}
+			}
+			//*	reset for the next one
+			pointCntr		=	0;
+//			polyIsOnScreen	=	true;
+		}
+		else if ((pt_XX > 0) || (pt_YY > 0))
+//		else if ((pt_XX != 0) && (pt_YY != 0))
+		{
+			if (pointCntr < kMaxPolyCount)
+			{
+				ptList[pointCntr].x	=	pt_XX;
+				ptList[pointCntr].y	=	pt_YY;
+				pointCntr++;
+			}
+		}
+	}
+
+#else
+	#warning "DrawPolygons() not implemented"
+#endif // defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
+	return(polygonsDrawn);
+}
+
+//********************************************************************
+int	WindowTabSkyTravel::DrawOutlines(TYPE_OutlineData *outLineArray, long outLineCount, const int color)
 {
 int		numDrawn;
 int		iii;
-short	pt_XX, pt_YY;
+short	pt_XX;
+short	pt_YY;
 bool	drawFlag;
 bool	ptInView;
+int		myColorID;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	numDrawn	=	0;
 
-	if (gOpenNGC_outlines != NULL)
+	if (outLineArray != NULL)
 	{
 		if (cNightMode)
 		{
 			LLG_SetColor(W_DARKRED);
+			myColorID	=	W_DARKRED;
 		}
 		else
 		{
-			LLG_SetColor(W_VDARKGRAY);
-		//	LLG_SetColor(W_PINK);
+			LLG_SetColor(color);
+			myColorID	=	color;
 		}
-		LLG_PenSize(gST_DispOptions.LineWidth_NGCoutlines);
 		drawFlag	=	false;
-		for (iii=0; iii<gOpenNGC_outlineCnt; iii++)
+		for (iii=0; iii<outLineCount; iii++)
 		{
-			ptInView		=	GetXYfromRA_Decl(	gOpenNGC_outlines[iii].ra_rad,
-													gOpenNGC_outlines[iii].decl_rad,
+			ptInView		=	GetXYfromRA_Decl(	outLineArray[iii].ra_rad,
+													outLineArray[iii].decl_rad,
 													&pt_XX,
 													&pt_YY);
-			if (gOpenNGC_outlines[iii].flag == 0)
+			if (outLineArray[iii].flag == 0)
 			{
 				drawFlag	=	false;
 			}
@@ -9670,6 +9850,38 @@ bool	ptInView;
 			{
 				if (drawFlag)
 				{
+				#ifdef _USE_COLORS_FOR_MILKYWAY_
+					if (outLineArray[iii].level > 0)
+					{
+					int	levelID;
+					int	colorNum;
+
+						levelID	=	outLineArray[iii].level;
+						if ((levelID >= 0) && (levelID <= 5))
+						{
+							colorNum	=	gColorsByLevel[levelID];
+							LLG_SetColor(colorNum);
+						}
+						else
+						{
+							CONSOLE_DEBUG_W_NUM("levelID\t=", levelID);
+							LLG_SetColor(W_WHITE);
+						}
+					}
+					else
+					{
+						LLG_SetColor(myColorID);
+					}
+				#else
+					if (outLineArray[iii].level == 1)
+					{
+						LLG_SetColor(W_WHITE);
+					}
+					else
+					{
+						LLG_SetColor(myColorID);
+					}
+				#endif // _USE_COLORS_FOR_MILKYWAY_
 					LLG_LineTo(pt_XX, pt_YY);
 				}
 				else
@@ -9691,6 +9903,22 @@ bool	ptInView;
 //		CONSOLE_DEBUG("Nothing to draw");
 	}
 //	CONSOLE_DEBUG_W_NUM("numDrawn\t=", numDrawn);
+	return(numDrawn);
+}
+
+
+
+//********************************************************************
+int	WindowTabSkyTravel::DrawOpenNGC_Outlines(void)
+{
+int		numDrawn;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	LLG_PenSize(gST_DispOptions.LineWidth_NGCoutlines);
+//	numDrawn	=	DrawOutlines(gOpenNGC_outlines, gOpenNGC_outlineCnt, W_VDARKGRAY);
+	numDrawn	=	DrawOutlines(gOpenNGC_outlines, gOpenNGC_outlineCnt, W_DARKGREEN);
+
 	return(numDrawn);
 }
 

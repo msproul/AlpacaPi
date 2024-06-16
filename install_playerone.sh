@@ -1,4 +1,10 @@
 #!/bin/bash
+####################################################################
+#	Script to download and install PlayerOne drivers
+#	for camera and filterwheel
+####################################################################
+#**	May 26,	2024	<MLS> Major amount of work getting install to work on a fresh system
+####################################################################
 clear
 echo "Installing support for PlayerOne cameras and filterwheels"
 
@@ -43,8 +49,6 @@ fi
 
 if [ -d $PLAYERONE_DIR ]
 then
-
-
 	###############################################################################################
 	echo "Deleting old versions"
 	rm -v $LIB_DIR/libPlayerOneCamera*

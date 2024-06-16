@@ -85,8 +85,11 @@ long				gConstStarCount		=	0;
 TYPE_CelestData		*gNGCobjectPtr		=	NULL;
 long				gNGCobjectCount		=	0;
 
-TYPE_OpenNGCoutline	*gOpenNGC_outlines	=	NULL;
+TYPE_OutlineData	*gOpenNGC_outlines	=	NULL;
 long				gOpenNGC_outlineCnt	=	0;
+
+TYPE_OutlineData	*gMilkyWay_outlines	=	NULL;
+long				gMilkyWay_outlineCnt=	0;
 
 TYPE_CelestData		*gSAOobjectPtr		=	NULL;
 long				gSAOobjectCount		=	0;

@@ -56,7 +56,7 @@ TYPE_NMEAInfoStruct		gNMEAdata;		//*	from ParseNMEA.h
 
 static pthread_t		gGPSdataThreadID;
 static char				gSerialPortPath[64];
-static char				gSerialPortSpeed	=	'9';	//*	9 for 9600, 4 for 4800
+static char				gSerialPortSpeedChar	=	'9';	//*	9 for 9600, 4 for 4800, 1 for 19200
 #define	kBuffSize	100
 
 //**************************************************************************************
@@ -72,6 +72,7 @@ char		theChar;
 char		nmeaLineBuff[256];
 struct stat	fileStatus;
 int			returnCode;
+int			gpsSpeed;
 //uint32_t	lastGrapicsSave_ms;
 //uint32_t	current_ms;
 //uint32_t	delta_ms;
@@ -110,17 +111,16 @@ int			returnCode;
 		return(NULL);
 	}
 
-	if (gSerialPortSpeed == '4')
+	switch(gSerialPortSpeedChar)
 	{
-		CONSOLE_DEBUG("Setting baud rate for GPS to B4800");
-		Serial_Set_Attribs(serialFD, B4800, 0);  // set speed to 4800 bps, 8n1 (no parity)
+		case '1':	gpsSpeed	=	B19200;	break;
+		case '4':	gpsSpeed	=	B4800;	break;
+		case '9':	gpsSpeed	=	B9600;	break;
+		default:	gpsSpeed	=	B4800;	break;
 	}
-	else
-	{
-		//*	default is 9600 because Raspberry Pi GPS board is 9600
-		CONSOLE_DEBUG("Setting baud rate for GPS to B9600");
-		Serial_Set_Attribs(serialFD, B9600, 0);  // set speed to 4800 bps, 8n1 (no parity)
-	}
+	CONSOLE_DEBUG_W_HEX("gpsSpeed\t=", gpsSpeed);
+	Serial_Set_Attribs(serialFD, gpsSpeed, 0);  // set speed to 4800 bps, 8n1 (no parity)
+
 	Serial_Set_Blocking(serialFD, true);
 	nmeaSentenceCnt	=	0;
 	ccc				=	0;
@@ -181,9 +181,11 @@ int			returnCode;
 }
 
 //*****************************************************************************
-void	GPS_StartThread(const char *serialPortPathArg, const char baudRate)
+void	GPS_StartThread(const char *serialPortPathArg, const char baudRateChar)
 {
 int		threadErr;
+
+	CONSOLE_DEBUG(__FUNCTION__);
 
 #ifdef _ENABLE_GPS_GRAPHS_
 	CreateGPSgrapicsDirectory();
@@ -198,8 +200,8 @@ int		threadErr;
 		strcpy(gSerialPortPath, "/dev/ttyS0");
 	}
 	//*	save the baud rate indicator
-	gSerialPortSpeed	=	baudRate;
-	threadErr	=	pthread_create(&gGPSdataThreadID, NULL, &GPS_Thread, NULL);
+	gSerialPortSpeedChar	=	baudRateChar;
+	threadErr				=	pthread_create(&gGPSdataThreadID, NULL, &GPS_Thread, NULL);
 	if (threadErr != 0)
 	{
 		CONSOLE_DEBUG_W_NUM("pthread_create() returned error#", threadErr);

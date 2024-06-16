@@ -2783,8 +2783,9 @@ void	WindowTab::LLG_FillRect(int left, int top, int width, int height)
 #endif // _USE_OPENCV_CPP_
 }
 
-//*********************************************************************
-void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius, const double angle_deg)
+//*****************************************************************************
+void	WindowTab::LLG_FillEllipse(	const int xCenter, const int yCenter, const int xRadius, const int yRadius, const double angle_deg)
+//void	WindowTab::LLG_FillEllipse(int xCenter, int yCenter, int xRadius, int yRadius, const double angle_deg)
 {
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
@@ -2906,7 +2907,7 @@ void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 			CONSOLE_DEBUG_W_NUM("yCenter\t=", yCenter);
 			CONSOLE_DEBUG_W_NUM("xRadius\t=", xRadius);
 			CONSOLE_DEBUG_W_NUM("yRadius\t=", yRadius);
-			CONSOLE_ABORT("Invalid arguments");
+//			CONSOLE_ABORT("Invalid arguments");
 		}
 	}
 	else
@@ -2939,7 +2940,7 @@ void	WindowTab::LLG_FrameEllipse(int xCenter, int yCenter, int xRadius, int yRad
 		}
 		else
 		{
-			CONSOLE_ABORT("Invalid arguments");
+//			CONSOLE_ABORT("Invalid arguments");
 		}
 	}
 	else

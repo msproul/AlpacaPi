@@ -3,11 +3,14 @@
 //*	uses Van Flandern paper on low-precision formula for
 //*	planetary positions - The Astrophysical Journal
 //*	Supplemental Series, 41:391-411, 1979 Nov
+//*	https://ui.adsabs.harvard.edu/abs/1979ApJS...41..391V/abstract
 //*****************************************************************************
 //*	Edit history
+//*	<MLS> = Mark Sproul
 //*****************************************************************************
 //*	Written by Frank Covets and Clif Ashcraft
-//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
+//*	May  1,	1996	<MLS> Received SkyTravel source code from Clif
+//*	May  2,	1996	<MLS> Starting on SkyTravel for Frank and Clif
 //*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
 //*	Jan  2,	2021	<MLS> More formatting cleanup
 //*****************************************************************************

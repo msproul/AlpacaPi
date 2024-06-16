@@ -888,6 +888,7 @@ void	Controller::GetStartUpData(void)
 {
 bool	validData;
 bool	enableReadAllDebug	=	false;
+bool	unitIsOnLine		=	true;		//*	assume it is on line
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG_W_STR("Reading startup information for", cWindowName);
@@ -910,31 +911,38 @@ bool	enableReadAllDebug	=	false;
 		{
 			CONSOLE_DEBUG("Read failure - supportedactions");
 			cReadFailureCnt++;
+			unitIsOnLine	=	false;
 		}
 //		CONSOLE_DEBUG_W_BOOL("cHas_readall      \t=", cHas_readall);
 //		CONSOLE_DEBUG_W_BOOL("cHas_DeviceState  \t=", cHas_DeviceState);
 //		CONSOLE_DEBUG_W_BOOL("enableReadAllDebug\t=", enableReadAllDebug);
-		//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
-		if (cHas_readall)
+		if (unitIsOnLine)
 		{
-			CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
-			CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
-			CONSOLE_DEBUG_W_NUM("cAlpacaDevNum       \t=", cAlpacaDevNum);
-			validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum, enableReadAllDebug);
-			CONSOLE_DEBUG_W_BOOL("AlpacaGetStatus_ReadAll() returned\t=", validData);
+			//*	AlpacaGetSupportedActions() sets the cHas_readall appropriately
+			if (cHas_readall)
+			{
+				CONSOLE_DEBUG("Calling AlpacaGetStatus_ReadAll()");
+				CONSOLE_DEBUG_W_STR("cAlpacaDeviceTypeStr\t=", cAlpacaDeviceTypeStr);
+				CONSOLE_DEBUG_W_NUM("cAlpacaDevNum       \t=", cAlpacaDevNum);
+				validData	=	AlpacaGetStatus_ReadAll(cAlpacaDeviceTypeStr, cAlpacaDevNum, enableReadAllDebug);
+				CONSOLE_DEBUG_W_BOOL("AlpacaGetStatus_ReadAll() returned\t=", validData);
+			}
+			else
+			{
+				validData	=	AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
+				validData	=	AlpacaGetStartupData_OneAAT();
+			}
+			AlpacaGetCapabilities();
+			AlpacaGetStartupData();	//*	to be deleted/removed once GetStartUpData_SubClass() is fully implemented
 		}
-		else
-		{
-			validData	=	AlpacaGetCommonProperties_OneAAT(cAlpacaDeviceTypeStr);
-			validData	=	AlpacaGetStartupData_OneAAT();
-		}
-		AlpacaGetCapabilities();
-		AlpacaGetStartupData();	//*	to be deleted/removed once GetStartUpData_SubClass() is fully implemented
 	}
-	GetStartUpData_SubClass();
-	UpdateSupportedActions();
-	UpdateStartupData();
-	UpdateOnlineStatus();
+	if (unitIsOnLine)
+	{
+		GetStartUpData_SubClass();
+		UpdateSupportedActions();
+		UpdateStartupData();
+		UpdateOnlineStatus();
+	}
 }
 
 //*****************************************************************************
@@ -3319,7 +3327,7 @@ void	Controller::SetWidgetText(const int tabNum, const int widgetIdx, const char
 		}
 		else
 		{
-			CONSOLE_DEBUG("cWindowTabs[tabNum] is NULL")
+			CONSOLE_DEBUG_W_STR("cWindowTabs[tabNum] is NULL; newText\t=", newText)
 		}
 	}
 	else

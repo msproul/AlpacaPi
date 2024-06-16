@@ -61,9 +61,15 @@ enum
 	kSkyT_Settings_GridOutline,
 
 	kSkyT_Settings_LineWidthTitle,
+
+	kSkyT_Settings_LineW_MilkyWay,
+	kSkyT_Settings_LineW_MilkyWay1,
+	kSkyT_Settings_LineW_MilkyWay2,
+
 	kSkyT_Settings_LineW_Const,
 	kSkyT_Settings_LineW_Const1,
 	kSkyT_Settings_LineW_Const2,
+
 	kSkyT_Settings_LineW_ConstOutlines,
 	kSkyT_Settings_LineW_ConstOutlines1,
 	kSkyT_Settings_LineW_ConstOutlines2,

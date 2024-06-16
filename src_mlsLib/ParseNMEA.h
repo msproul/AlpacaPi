@@ -380,6 +380,7 @@ int		GetMaxSatSignalStrength(void);
 double	GetLatLonDouble(LatLonType *latLonPtr);
 void	ParseNMEA_FormatLatLonStrings(double latValue, char *latString, double lonValue, char *lonString);
 void	GetGPSmodeString(char gpsMode1, char gpsMode2, char *modeString);
+void	FormatGoogleMapsRequest(char *urlString, double latValue, double lonValue);
 
 extern	int					gTimeAdjustmentCount;	//*	number of times we have adjusted the time
 extern	int					gTimeAdjustmentAhead;

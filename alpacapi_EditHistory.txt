@@ -1,4 +1,4 @@
-History Comments found =3463 in 515 files
+History Comments found =3502 in 522 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -27,18 +27,19 @@ PDS_ReadNASAfiles.c:52   	//*	Apr 15,	1993	Received Vol 2001-2013 of Magellan Mi
 PDS_ReadNASAfiles.c:53   	//*	Apr 15,	1993	Received Vol 2001-2013 of Viking Orbiter of Mars
 ParseNMEA.c:10           	//*	Apr 14,	1996	<KAS> Put the boxes for the Heads-Up-Display into a Dialog Box template
 ParseNMEA.c:11           	//*	Apr 19,	1996	<KAS> Separated NMEA and APRS Parse Routines
-eph.c:10                 	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
-StarData.c:7             	//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
+eph.c:12                 	//*	May  1,	1996	<MLS> Received SkyTravel source code from Clif
+eph.c:13                 	//*	May  2,	1996	<MLS> Starting on SkyTravel for Frank and Clif
+StarData.c:7             	//*	May  2,	1996	<MLS> Starting on SkyTravel for Frank and Clif
 ParseNMEA.c:12           	//*	Dec 11,	1996	<KAS> Removed UpdateHUDdisplay to a different file
 ParseNMEA.c:13           	//*	Dec 26,	1996	<KAS> Dave VanHorn dvanhron@cedar.net
 ParseNMEA.c:14           	//*	Dec 26,	1996	<KAS> PNI Compass, same as Jameco
 ParseNMEA.c:15           	//*	Dec 26,	1996	<KAS> Talked them into RAW data output
 StarData.c:8             	//*	Nov 18,	1999	<MLS> restarting efforts
-eph.c:11                 	//*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
+eph.c:14                 	//*	Nov 20,	1999	<MLS> Minor formatting cleanup to improve readability
 StarData.c:9             	//*	Nov 20,	1999	<MLS> major re-writing and re-organization
 ParseNMEA.c:16           	//*	Feb  6,	2001	<MLS> ReturnNMEAAltitude - Modified to use ATOF instead of ATOL
 ParseNMEA.c:17           	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentences
-ParseNMEA.c:1828         	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentenses
+ParseNMEA.c:1914         	//*	Jan 12,	2002	<KAS> Started adding Magellan Proprietary Sentenses
 ParseNMEA.c:18           	//*	May 20,	2002	<KAS> Started working on adaptive beaconing and corner pegging
 ParseNMEA.c:19           	//*	Sep 16,	2004	<MLS> Added support for $GPNVP for special Korean GPS, requested by customer
 ParseNMEA.c:20           	//*	Nov 17,	2004	<MLS> Started separating out NMEA parsing into smaller more manageable routines
@@ -52,7 +53,7 @@ ParseNMEA.c:24           	//*	Nov 21,	2012	<MLS> Added GetCurrentLatLon_Strings(
 ConsoleDebug.h:9         	//*	Nov 30,	2012	<MLS> Added CONSOLE_ERROR macros, same as CONSOLE_DEBUG but always print
 ParseNMEA.c:25           	//*	Dec  5,	2012	<MLS> Check for max SNR value from satellite GSV string
 ParseNMEA.c:26           	//*	Dec  5,	2012	<MLS> Added GetMaxSatSignalStrength()
-ParseNMEA.c:1492         	//*	Dec  5,	2012	<MLS> Check for max snr value from satellite GSV string
+ParseNMEA.c:1557         	//*	Dec  5,	2012	<MLS> Check for max snr value from satellite GSV string
 ParseNMEA.c:27           	//*	Jan  2,	2013	<MLS> Added LatLonType argument to ReturnNMEALatLon()
 ParseNMEA.h:12           	//*	Jan  2,	2013	<MLS> Added LatLonType to TYPE_NMEAInfoStruct
 ParseNMEA.c:28           	//*	Mar 12,	2013	<MLS> Added support for separate test program,
@@ -69,7 +70,7 @@ VectorMath.c:11          	//*	Mar 15,	2015	<MLS> Added Matrix_Determinant()
 VectorMath.c:12          	//*	Mar 15,	2015	<MLS> Added Matrix_Inverse()
 VectorMath.c:13          	//*	Mar 15,	2015	<MLS> Added Matrix_Transpose()
 ParseNMEA.c:30           	//*	Oct  3,	2016	<MLS> Updating to be a general purpose GPS parser
-ParseNMEA.c:1372         	//*	Oct  3,	2016	TODO: Compare this with MacAPRS code
+ParseNMEA.c:1432         	//*	Oct  3,	2016	TODO: Compare this with MacAPRS code
 ParseNMEA.h:13           	//*	Oct  3,	2016	<MLS> Added TYPE_timeHHMMSS
 ParseNMEA.h:14           	//*	Oct  3,	2016	<MLS> Added _ENABLE_SATELLITE_ALMANAC_ to save on memory if not needed
 NMEA_helper.c:9          	//*	Oct  4,	2016	<MLS> Created NMEA_helper.c to avoid duplication
@@ -105,7 +106,7 @@ GPS_graph.c:12           	//*	Apr 25,	2017	<MLS> Added Legend to satellite posit
 ParseNMEA.c:41           	//*	Apr 25,	2017	<MLS> Added _ENABLE_PDOP_TRACKING_
 GPS_graph.c:13           	//*	May  3,	2017	<MLS> Added plotting of altitude over time
 ParseNMEA.c:42           	//*	May  3,	2017	<MLS> Added _ENABLE_ALTITUDE_TRACKING_
-ParseNMEA.c:1829         	//*	May  3,	2017	<MLS> Copying Magellan code from MacAPRS
+ParseNMEA.c:1915         	//*	May  3,	2017	<MLS> Copying Magellan code from MacAPRS
 ParseNMEA.c:43           	//*	May  4,	2017	<MLS> Added parsing for ($PMGLF), no documentation on what it is
 ParseNMEA.c:44           	//*	May  4,	2017	<MLS> Added parsing for GPS sensor temp ($PGRMT)
 GPS_graph.c:14           	//*	May  9,	2017	<MLS> Added sat numbers on almanac
@@ -1076,12 +1077,13 @@ alpacadriver.cpp:115     	//*	Dec 28,	2020	<MLS> Finished making all Alpaca erro
 controller_focus.cpp:31  	//*	Dec 28,	2020	<MLS> Added ZeroMotorValues()
 moonlite_com.c:32        	//*	Dec 28,	2020	<MLS> Added MoonLite_SetCurrentPosition()
 windowtab_nitecrawler.cpp:27	//*	Dec 28,	2020	<MLS> Added ZERO button to zero Rotator and Aux values
+windowtab_skytravel.cpp:21	//*	Dec 28,	2020	<MLS> Re-discovered skytravel source code on an old computer
 controller.cpp:46        	//*	Dec 29,	2020	<MLS> Added SetWidgetImage()
 StarData.c:10            	//*	Dec 29,	2020	<MLS> Starting to integrate SkyTravel into AlpacaPi
 windowtab_image.cpp:21   	//*	Dec 29,	2020	<MLS> Created windowtab_image.cpp
-windowtab_skytravel.cpp:21	//*	Dec 29,	2020	<MLS> Created windowtab_skytravel.cpp
+windowtab_skytravel.cpp:22	//*	Dec 29,	2020	<MLS> Created windowtab_skytravel.cpp
 windowtab.cpp:33         	//*	Dec 30,	2020	<MLS> Added HandleKeyDown()
-windowtab_skytravel.cpp:22	//*	Dec 30,	2020	<MLS> Standard star data display starting to work
+windowtab_skytravel.cpp:23	//*	Dec 30,	2020	<MLS> Standard star data display starting to work
 controller.cpp:47        	//*	Dec 31,	2020	<MLS> Added DisplayButtonHelpText()
 NGCcatalog.c:4           	//*	Dec 31,	2020	<MLS> Migrating NGCcatalog.c for using in AlpacaPi
 SkyStruc.h:8             	//*	Dec 31,	2020	<MLS> had to change char to int8_t to keep Raspberry-Pi g++ compiler happy
@@ -1097,45 +1099,45 @@ lx200_com.c:22           	//*	Jan  1,	2021	<MLS> Using a thread to handle LX2000
 lx200_com.h:4            	//*	Jan  1,	2021	<MLS> Created lx200_com.h
 windowtab.cpp:37         	//*	Jan  1,	2021	<MLS> Added flag needsUpdated for selective updating
 windowtab.cpp:38         	//*	Jan  1,	2021	<MLS> Added FrameEllipse()
-eph.c:12                 	//*	Jan  2,	2021	<MLS> More formatting cleanup
+eph.c:15                 	//*	Jan  2,	2021	<MLS> More formatting cleanup
 lx200_com.c:23           	//*	Jan  2,	2021	<MLS> Fixed 0->24 hour bug in handling of Right Ascension
-windowtab_skytravel.cpp:23	//*	Jan  2,	2021	<MLS> Double click centers display
-windowtab_skytravel.cpp:24	//*	Jan  2,	2021	<MLS> Double click in LX200 RA/DEC box centers on scope
-windowtab_skytravel.cpp:2503	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
+windowtab_skytravel.cpp:24	//*	Jan  2,	2021	<MLS> Double click centers display
+windowtab_skytravel.cpp:25	//*	Jan  2,	2021	<MLS> Double click in LX200 RA/DEC box centers on scope
+windowtab_skytravel.cpp:2498	//*	Jan  2,	2021	<MLS> Added fix to displayed cursor RA to make sure its > 0
 lx200_com.c:24           	//*	Jan  3,	2021	<MLS> Added error msg to LX200_StartThread()
 lx200_com.c:25           	//*	Jan  3,	2021	<MLS> Added bounds checking to RA/DEC values rcvd from LX200
 lx200_com.c:26           	//*	Jan  3,	2021	<MLS> Added LX200_SyncScope()
 lx200_com.c:27           	//*	Jan  3,	2021	<MLS> Sync working with TSC telescope controller
 StarData.c:11            	//*	Jan  3,	2021	<MLS> Added ReadTSCfile() & ParseOneLineOfTSCdata()
-windowtab_skytravel.cpp:25	//*	Jan  3,	2021	<MLS> Added DrawGreatCircle() & DrawNorthSouthLine()
-windowtab_skytravel.cpp:26	//*	Jan  3,	2021	<MLS> Rewrote DrawGrid()
-windowtab_skytravel.cpp:27	//*	Jan  3,	2021	<MLS> Added support for Messier objects via Messier.tsc file
-windowtab_skytravel.cpp:28	//*	Jan  3,	2021	<MLS> Changed old GreatCircle() to DrawHorizon()
-windowtab_skytravel.cpp:29	//*	Jan  3,	2021	<MLS> Planet symbols now scale with zoom level
+windowtab_skytravel.cpp:26	//*	Jan  3,	2021	<MLS> Added DrawGreatCircle() & DrawNorthSouthLine()
+windowtab_skytravel.cpp:27	//*	Jan  3,	2021	<MLS> Rewrote DrawGrid()
+windowtab_skytravel.cpp:28	//*	Jan  3,	2021	<MLS> Added support for Messier objects via Messier.tsc file
+windowtab_skytravel.cpp:29	//*	Jan  3,	2021	<MLS> Changed old GreatCircle() to DrawHorizon()
+windowtab_skytravel.cpp:30	//*	Jan  3,	2021	<MLS> Planet symbols now scale with zoom level
 windowtab.cpp:39         	//*	Jan  4,	2021	<MLS> Added ForceUpdate()
 windowtab.cpp:40         	//*	Jan  4,	2021	<MLS> Added ProcessMouseLeftButtonDown() & ProcessMouseLeftButtonDragged()
-windowtab_skytravel.cpp:30	//*	Jan  4,	2021	<MLS> Added DrawDomeSlit() & DrawHorizontalArc()
-windowtab_skytravel.cpp:31	//*	Jan  4,	2021	<MLS> Made change to DrawEcliptic to allow display at all zoom levels
+windowtab_skytravel.cpp:31	//*	Jan  4,	2021	<MLS> Added DrawDomeSlit() & DrawHorizontalArc()
+windowtab_skytravel.cpp:32	//*	Jan  4,	2021	<MLS> Made change to DrawEcliptic to allow display at all zoom levels
 ConstellationData.c:6    	//*	Jan  5,	2021	<MLS> Added ReadConstellationOutlines()
 ConstellationData.c:7    	//*	Jan  5,	2021	<MLS> Reading data from https://www.iau.org/public/themes/constellations/
 ConstellationData.h:8    	//*	Jan  5,	2021	<MLS> Created ConstellationData.h
 windowtab.cpp:41         	//*	Jan  5,	2021	<MLS> Added RunBackgroundTasks()
 windowtab.cpp:42         	//*	Jan  5,	2021	<MLS> Added LLD_PenSize()
-windowtab_skytravel.cpp:32	//*	Jan  5,	2021	<MLS> Added DrawConstellationOutLines()
-windowtab_skytravel.cpp:33	//*	Jan  5,	2021	<MLS> Added another zoom level
+windowtab_skytravel.cpp:33	//*	Jan  5,	2021	<MLS> Added DrawConstellationOutLines()
+windowtab_skytravel.cpp:34	//*	Jan  5,	2021	<MLS> Added another zoom level
 controller.cpp:50        	//*	Jan  6,	2021	<MLS> Started on text input field
 controller.cpp:51        	//*	Jan  6,	2021	<MLS> Added HandleKeyDownInTextWidget()
 controller.cpp:52        	//*	Jan  6,	2021	<MLS> Added GetWidgetText()
 StarData.c:12            	//*	Jan  6,	2021	<MLS> Added DumpCelestDataStruct() for debugging
 windowtab.cpp:43         	//*	Jan  6,	2021	<MLS> Added GetWidgetText()
-windowtab_skytravel.cpp:34	//*	Jan  6,	2021	<MLS> Added NGC and IC search support
-windowtab_skytravel.cpp:35	//*	Jan  6,	2021	<MLS> Manually added Draco to Constellation line table
+windowtab_skytravel.cpp:35	//*	Jan  6,	2021	<MLS> Added NGC and IC search support
+windowtab_skytravel.cpp:36	//*	Jan  6,	2021	<MLS> Manually added Draco to Constellation line table
 ConstellationData.c:8    	//*	Jan  7,	2021	<MLS> Created ConstellationData.c
 ConstellationData.c:9    	//*	Jan  7,	2021	<MLS> Downloaded much better constellation data
 ConstellationData.c:10   	//*	Jan  7,	2021	<MLS> From https://github.com/dcf21/constellation-stick-figures
-windowtab_skytravel.cpp:36	//*	Jan  7,	2021	<MLS> Added DrawConstellationVectors()
-windowtab_skytravel.cpp:37	//*	Jan  7,	2021	<MLS> Added GetXYfromAz_Elev()
-windowtab_skytravel.cpp:38	//*	Jan  8,	2021	<MLS> Added DrawVerticalArc()
+windowtab_skytravel.cpp:37	//*	Jan  7,	2021	<MLS> Added DrawConstellationVectors()
+windowtab_skytravel.cpp:38	//*	Jan  7,	2021	<MLS> Added GetXYfromAz_Elev()
+windowtab_skytravel.cpp:39	//*	Jan  8,	2021	<MLS> Added DrawVerticalArc()
 controllerAlpaca.cpp:29  	//*	Jan  9,	2021	<MLS> Added new version of AlpacaGetStatus_ReadAll()
 controllerAlpaca.cpp:30  	//*	Jan  9,	2021	<MLS> Added new version of AlpacaGetSupportedActions()
 controller_skytravel.cpp:9	//*	Jan  9,	2021	<MLS> Created controller_skytravel.cpp
@@ -1251,15 +1253,15 @@ controller_focus.cpp:32  	//*	Jan 26,	2021	<MLS> Updated several routine names
 controller_skytravel.cpp:13	//*	Jan 26,	2021	<MLS> Added SetDomeIPaddress() & SetTelescopeIPaddress()
 controller_skytravel.cpp:14	//*	Jan 26,	2021	<MLS> SkyTravel can choose which dome/telescope to sync with
 windowtab_deviceselect.cpp:21	//*	Jan 26,	2021	<MLS> Created windowtab_deviceselect.cpp
-windowtab_skytravel.cpp:39	//*	Jan 26,	2021	<MLS> Removed support for direct LX200 comm, using Alpaca instead
+windowtab_skytravel.cpp:40	//*	Jan 26,	2021	<MLS> Removed support for direct LX200 comm, using Alpaca instead
 domedriver.cpp:70        	//*	Jan 27,	2021	<MLS> Added Added Put_PowerOn(), Put_PowerOff() & SetPower()
 domedriver.cpp:71        	//*	Jan 27,	2021	<MLS> Added Added Put_AuxiliaryOn(), Put_AuxiliaryOff() & SetAuxiliary
 windowtab_dome.cpp:28    	//*	Jan 28,	2021	<MLS> Added -20,-10,-5,-1,+1,+5,+10,+20 buttons
 windowtab_dome.cpp:29    	//*	Jan 28,	2021	<MLS> Added MoveDomeByAmount()
 cameradriver.cpp:132     	//*	Jan 29,	2021	<MLS> Finished Alpaca rgb image array support (Send_imagearray_rgb24())
 controller_camera.cpp:50 	//*	Jan 29,	2021	<MLS> Added support for RANK=3 in DownloadImage_imagearray()
-windowtab_skytravel.cpp:40	//*	Jan 29,	2021	<MLS> Finished removing all LX200 direct comm code
-windowtab_skytravel.cpp:41	//*	Jan 29,	2021	<MLS> Added auto time update option
+windowtab_skytravel.cpp:41	//*	Jan 29,	2021	<MLS> Finished removing all LX200 direct comm code
+windowtab_skytravel.cpp:42	//*	Jan 29,	2021	<MLS> Added auto time update option
 alpaca_defs.h:17         	//*	Jan 30,	2021	<MLS> Added TYPE_ImageArray structure
 controllerAlpaca.cpp:33  	//*	Jan 30,	2021	<MLS> Added AlpacaGetImageArray()
 lx200_com.c:29           	//*	Jan 30,	2021	<MLS> Added _ENABLE_LX200_COM_ compile flag
@@ -1316,16 +1318,16 @@ windowtab_moon.cpp:22    	//*	Feb 14,	2021	<MLS> Added moon image, will add phas
 telescopedriver.cpp:44   	//*	Feb 15,	2021	<MLS> Added Telescope_MoveAxis()
 telescopedriver_lx200.cpp:38	//*	Feb 15,	2021	<MLS> Working on telescope commands Telescope_*()
 telescopedriver_lx200.cpp:39	//*	Feb 15,	2021	<MLS> SUPPORTED: LX200 telescope mount
-windowtab_skytravel.cpp:42	//*	Feb 15,	2021	<MLS> Added SyncTelescopeToCenter() & SlewTelescopeToCenter()
-windowtab_skytravel.cpp:43	//*	Feb 15,	2021	<MLS> Added separate flag for dome slit display
+windowtab_skytravel.cpp:43	//*	Feb 15,	2021	<MLS> Added SyncTelescopeToCenter() & SlewTelescopeToCenter()
+windowtab_skytravel.cpp:44	//*	Feb 15,	2021	<MLS> Added separate flag for dome slit display
 windowtab.cpp:51         	//*	Feb 16,	2021	<MLS> Added SetHelpTextBoxColor()
 ConstellationData.c:11   	//*	Feb 18,	2021	<MLS> Constellation vectors now using proper Precessed RA/DEC values
 controller_camera.cpp:52 	//*	Feb 18,	2021	<MLS> Added Added AlpacaGetStatus_Gain() & AlpacaGetStatus_Exposure()
 HipparcosCatalog.c:9     	//*	Feb 18,	2021	<MLS> Added support for common star names
 HipparcosCatalog.c:10    	//*	Feb 18,	2021	<MLS> Added ReadCommonStarNames()
-windowtab_skytravel.cpp:44	//*	Feb 18,	2021	<MLS> Added display of Hipparcos numbers at high zoom level
-windowtab_skytravel.cpp:45	//*	Feb 18,	2021	<MLS> Added DrawCommonStarNames()
-windowtab_skytravel.cpp:46	//*	Feb 18,	2021	<MLS> Added SetView_Index()
+windowtab_skytravel.cpp:45	//*	Feb 18,	2021	<MLS> Added display of Hipparcos numbers at high zoom level
+windowtab_skytravel.cpp:46	//*	Feb 18,	2021	<MLS> Added DrawCommonStarNames()
+windowtab_skytravel.cpp:47	//*	Feb 18,	2021	<MLS> Added SetView_Index()
 controller.cpp:59        	//*	Feb 19,	2021	<MLS> Added ClearCapabilitiesList() & AddCapability()
 controller.cpp:60        	//*	Feb 19,	2021	<MLS> Added UpdateCapabilityList()
 windowtab_capabilities.cpp:21	//*	Feb 19,	2021	<MLS> Created windowtab_capabilities.cpp
@@ -1338,7 +1340,7 @@ cameradriver_QHY.cpp:35  	//*	Feb 20,	2021	<MLS> QHY Color image working
 controller.cpp:61        	//*	Feb 20,	2021	<MLS> Added ReadOneDriverCapability()
 controller_dome.cpp:40   	//*	Feb 20,	2021	<MLS> Added compile time option for slit tracker tabs
 controller_dome.cpp:41   	//*	Feb 20,	2021	<MLS> Added capability list to dome controller
-windowtab_skytravel.cpp:47	//*	Feb 20,	2021	<MLS> Added display of NGC/IC numbers at high zoom level
+windowtab_skytravel.cpp:48	//*	Feb 20,	2021	<MLS> Added display of NGC/IC numbers at high zoom level
 cameradriver.cpp:134     	//*	Feb 21,	2021	<MLS> Added AddReadoutModeToList()
 cameradriver.cpp:135     	//*	Feb 21,	2021	<MLS> Read_Readoutmodes() no longer virtual
 cameradriver.cpp:136     	//*	Feb 21,	2021	<MLS> Deleted SetImageTypeIndex() & XlateAlpacaImgIdxToIntImgType()
@@ -1363,12 +1365,12 @@ cameradriver_TOUP.cpp:44 	//*	Mar  1,	2021	<PDB> Camera working in 16bit mode, r
 obsconditionsdriver.cpp:37	//*	Mar  1,	2021	<MLS> Added GetSensorEnum() & GetSensorInfo()
 obsconditionsdriver.cpp:38	//*	Mar  1,	2021	<MLS> Added Put_AveragePeriod()
 obsconditionsdriver.cpp:39	//*	Mar  1,	2021	<MLS> CONFORM-observingconditions -> PASSED!!!!!!!!!!!!!!!!!!!!!
-windowtab_skytravel.cpp:48	//*	Mar  2,	2021	<MLS> Fixed bug in SyncTelescopeToCenter()
+windowtab_skytravel.cpp:49	//*	Mar  2,	2021	<MLS> Fixed bug in SyncTelescopeToCenter()
 cameradriver.cpp:138     	//*	Mar  3,	2021	<MLS> Added SetLastExposureInfo()
 MessierData.c:7          	//*	Mar  3,	2021	<MLS> Added ReadMessierData()
 MessierData.c:8          	//*	Mar  3,	2021	<MLS> Added ReadMessierCatalog() & ParseOneLineMessierCatalog()
 StarData.c:13            	//*	Mar  4,	2021	<MLS> Added ReadHYGdata() & ParseOneLineHYGdata()
-windowtab_skytravel.cpp:49	//*	Mar  4,	2021	<MLS> Added HYG data base which include HD stars (Henry Draper)
+windowtab_skytravel.cpp:50	//*	Mar  4,	2021	<MLS> Added HYG data base which include HD stars (Henry Draper)
 domedriver_rpi.cpp:29    	//*	Mar  5,	2021	<MLS> Started working on commutator power on/off
 domedriver_rpi.cpp:30    	//*	Mar  5,	2021	<MLS> Added _ENABLE_COMMUTATOR_POWER_
 StarData.c:14            	//*	Mar  5,	2021	<MLS> Added ReadHenryDraperCatalog() & ParseOneLineHenryDraperData()
@@ -1378,9 +1380,9 @@ cpu_stats.c:9            	//*	Mar  8,	2021	<MLS> Added ReadUSBfsMemorySetting()
 discoverythread.c:23     	//*	Mar  9,	2021	<MLS> Moved FindDeviceInList() to discoverythread.c
 windowtab_fov.cpp:21     	//*	Mar  9,	2021	<MLS> Created windowtab_fov.cpp
 windowtab_fov.cpp:22     	//*	Mar  9,	2021	<MLS> Field of View window fully working
-windowtab_skytravel.cpp:50	//*	Mar  9,	2021	<MLS> Added DrawTelescopeFOV()
-windowtab_skytravel.cpp:51	//*	Mar  9,	2021	<MLS> Camera Field Of View overlay on star map working
-windowtab_skytravel.cpp:52	//*	Mar 11,	2021	<MLS> Clif suggested a different way of drawing the FOV
+windowtab_skytravel.cpp:51	//*	Mar  9,	2021	<MLS> Added DrawTelescopeFOV()
+windowtab_skytravel.cpp:52	//*	Mar  9,	2021	<MLS> Camera Field Of View overlay on star map working
+windowtab_skytravel.cpp:53	//*	Mar 11,	2021	<MLS> Clif suggested a different way of drawing the FOV
 cameradriver.cpp:140     	//*	Mar 13,	2021	<MLS> Added "saveallimages" command, logic was already in place
 cameradriver.cpp:141     	//*	Mar 13,	2021	<MLS> Added Put_SaveAllImages()
 controller_skytravel.cpp:16	//*	Mar 13,	2021	<MLS> Added AlpacaGetStartupData_Camera()
@@ -1443,7 +1445,7 @@ alpacadriver.cpp:122     	//*	Apr  8,	2021	<MLS> Added GetMyHostName()
 controller_image.cpp:13  	//*	Apr  8,	2021	<MLS> Added CopyImageToLiveImage()
 aavso_data.c:31          	//*	Apr 10,	2021	<MLS> Created aavso_data.c
 aavso_data.c:32          	//*	Apr 10,	2021	<MLS> AAVSO TargetTool objects displayed
-windowtab_skytravel.cpp:53	//*	Apr 10,	2021	<MLS> Added support for AAVSO Target Tool Alerts
+windowtab_skytravel.cpp:54	//*	Apr 10,	2021	<MLS> Added support for AAVSO Target Tool Alerts
 aavso_data.c:33          	//*	Apr 11,	2021	<MLS> Working on AAVSO TargetTool read logic
 cameradriver_FLIR.cpp:40 	//*	Apr 14,	2021	<MLS> Working on FLIR single frame mode
 cameradriver_FLIR.cpp:41 	//*	Apr 14,	2021	<MLS> Added _FLIR_SINGLE_FRAME_
@@ -1493,11 +1495,11 @@ cameradriver.cpp:153     	//*	Jun 24,	2021	<MLS> Added AlpacaConnect() & AlpacaD
 cameradriver.cpp:154     	//*	Jun 24,	2021	<MLS> Reset a bunch of camera properties on DisConnect to make CONFORM happy
 switchdriver.cpp:39      	//*	Jun 24,	2021	<MLS> CONFORM-switch -> PASSED!!!!!!!!!!!!!!!!!!!!!
 switchdriver_rpi.cpp:32  	//*	Jun 24,	2021	<MLS> Updated SetSwitchValue() to handle on/off values
-windowtab_skytravel.cpp:54	//*	Jun 26,	2021	<MLS> Fixed bug in old style constellation drawing, only showed up in 32 bit
+windowtab_skytravel.cpp:55	//*	Jun 26,	2021	<MLS> Fixed bug in old style constellation drawing, only showed up in 32 bit
 windowtab_starlist.cpp:21	//*	Jun 30,	2021	<MLS> Created windowtab_aavsolist.cpp
 windowtab_STsettings.cpp:22	//*	Jul  5,	2021	<MLS> Added star count table to settings tab
-windowtab_skytravel.cpp:55	//*	Jul  6,	2021	<MLS> Added forceNumber option to DrawGreatCircle()
-windowtab_skytravel.cpp:56	//*	Jul  6,	2021	<MLS> Added South Pole circles
+windowtab_skytravel.cpp:56	//*	Jul  6,	2021	<MLS> Added forceNumber option to DrawGreatCircle()
+windowtab_skytravel.cpp:57	//*	Jul  6,	2021	<MLS> Added South Pole circles
 SkyStruc.h:10            	//*	Jul  9,	2021	<MLS> Finished converting all start data to globals
 windowtab_STsettings.cpp:23	//*	Jul 17,	2021	<MLS> Added double click to SkyTravelSettings window
 controller.cpp:65        	//*	Jul 18,	2021	<MLS> Added DrawWidgetScrollBar()
@@ -1508,16 +1510,16 @@ windowtab_starlist.cpp:22	//*	Jul 18,	2021	<MLS> aavso list starting to work
 aavso_data.c:34          	//*	Aug  9,	2021	<MLS> Fixed bug in alert count
 controller.cpp:66        	//*	Aug  9,	2021	<MLS> Used try/catch for the first time (in ~Controller())
 windowtab.cpp:55         	//*	Aug  9,	2021	<MLS> Added ProcessMouseWheelMoved()
-windowtab_skytravel.cpp:57	//*	Aug  9,	2021	<MLS> Added ProcessMouseWheelMoved(), adjusts view level
-windowtab_skytravel.cpp:58	//*	Aug  9,	2021	<MLS> Updated Search_and_plot() to handle unsorted data
+windowtab_skytravel.cpp:58	//*	Aug  9,	2021	<MLS> Added ProcessMouseWheelMoved(), adjusts view level
+windowtab_skytravel.cpp:59	//*	Aug  9,	2021	<MLS> Updated Search_and_plot() to handle unsorted data
 ConsoleDebug.h:15        	//*	Aug 10,	2021	<MLS> Added CONSOLE_DEBUG_W_LHEX()	long hex
-windowtab_skytravel.cpp:59	//*	Aug 10,	2021	<MLS> Changed most of the cView_index checks to cView_angle_Rads
-windowtab_skytravel.cpp:60	//*	Aug 10,	2021	<MLS> Added Center_RA_DEC()
+windowtab_skytravel.cpp:60	//*	Aug 10,	2021	<MLS> Changed most of the cView_index checks to cView_angle_Rads
+windowtab_skytravel.cpp:61	//*	Aug 10,	2021	<MLS> Added Center_RA_DEC()
 windowtab_starlist.cpp:23	//*	Aug 10,	2021	<MLS> Double Click now moves the star to the center
 controller.cpp:67        	//*	Aug 11,	2021	<MLS> Added SetCurrentTab()
 windowtab.cpp:56         	//*	Aug 11,	2021	<MLS> Added SetCurrentTab()
-windowtab_skytravel.cpp:61	//*	Aug 11,	2021	<MLS> Added Center_CelestralObject()
-windowtab_skytravel.cpp:62	//*	Aug 12,	2021	<MLS> Added SetAAVSOdisplayFlag()
+windowtab_skytravel.cpp:62	//*	Aug 11,	2021	<MLS> Added Center_CelestralObject()
+windowtab_skytravel.cpp:63	//*	Aug 12,	2021	<MLS> Added SetAAVSOdisplayFlag()
 alpacadriver.cpp:124     	//*	Aug 20,	2021	<MLS> Started testing with Peter's cross platform CONFORM
 discoverythread.c:24     	//*	Aug 20,	2021	<MLS> Added debugging code for new universal CONFORM program from Peter
 discoverythread.c:25     	//*	Aug 23,	2021	<MLS> Changed discovery response string from "alpacaport" to "AlpacaPort"
@@ -1529,8 +1531,8 @@ polaralign.cpp:24        	//*	AUg 27,	2021	<MLS> Center of circle from PolarAlig
 controller.cpp:68        	//*	Aug 28,	2021	<MLS> R-Pi == CV_EVENT_MOUSEHWHEEL instead of CV_EVENT_MOUSEWHEEL
 windowtab.cpp:57         	//*	Aug 31,	2021	<MLS> Added fontIndex arg to DrawCString()
 SkyTravelTimeRoutines.c:4	//*	Sep  1,	2021	<MLS> Added DumpTimeStruct()
-windowtab_skytravel.cpp:63	//*	Sep  1,	2021	<MLS> Changed '<' / '>' to be +/- for changing hour
-windowtab_skytravel.cpp:64	//*	Sep  1,	2021	<MLS> Changed '[' / ']' to be +/- for changing day
+windowtab_skytravel.cpp:64	//*	Sep  1,	2021	<MLS> Changed '<' / '>' to be +/- for changing hour
+windowtab_skytravel.cpp:65	//*	Sep  1,	2021	<MLS> Changed '[' / ']' to be +/- for changing day
 alpacadriver.cpp:125     	//*	Sep  2,	2021	<MLS> Started adding bandwidth statistics
 alpacadriver.cpp:126     	//*	Sep  2,	2021	<MLS> Added BandWidthStatsInit()
 alpacadriver.h:31        	//*	Sep  2,	2021	<MLS> Added _ENABLE_BANDWIDTH_LOGGING_
@@ -1552,9 +1554,9 @@ controller_switch.cpp:35 	//*	Sep  8,	2021	<MLS> Working on supporting "canWrite
 sendrequest_lib.c:39     	//*	Sep  8,	2021	<MLS> Added "Connection: close" as per suggestion from Patrick Chevalley
 windowtab.cpp:58         	//*	Sep  8,	2021	<MLS> Added AlpacaSetConnected()
 windowtab.cpp:59         	//*	Sep  9,	2021	<MLS> Added SetUpConnectedIndicator()
-windowtab_skytravel.cpp:65	//*	Sep  9,	2021	<MLS> Changed '{' / '}' to be +/- for changing month
+windowtab_skytravel.cpp:66	//*	Sep  9,	2021	<MLS> Changed '{' / '}' to be +/- for changing month
 controller_starlist.cpp:22	//*	Sep 12,	2021	<MLS> Combined AAVSO list with starlist
-windowtab_skytravel.cpp:66	//*	Sep 12,	2021	<MLS> Added variable line widths of grids, constellations / outlines
+windowtab_skytravel.cpp:67	//*	Sep 12,	2021	<MLS> Added variable line widths of grids, constellations / outlines
 windowtab_starlist.cpp:26	//*	Sep 12,	2021	<MLS> Merged aavso list with starlist
 windowtab_STsettings.cpp:24	//*	Sep 12,	2021	<MLS> Added settings for line widths
 windowtab_STsettings.cpp:25	//*	Sep 12,	2021	<MLS> Added reset-to-default button
@@ -1580,36 +1582,36 @@ ucac4_data.c:30          	//*	OCt 22,	2021	<MLS> Created ucac4_data.c
 SkyDisplayStruct.h:2     	//*	Oct 23,	2021	<MLS> Added .dispMagnitude option
 SkyStruc.h:11            	//*	Oct 23,	2021	<MLS> Added spectralClass to star structure (O,B,A,F,G,K,M)
 StarData.c:17            	//*	Oct 23,	2021	<MLS> Added magnitude processing to ParseOneLineHYGdata()
-windowtab_skytravel.cpp:67	//*	Oct 23,	2021	<MLS> Added display of real magnitude of the star
-windowtab_skytravel.cpp:68	//*	Oct 23,	2021	<MLS> Added ProcessSingleCharCmd()
+windowtab_skytravel.cpp:68	//*	Oct 23,	2021	<MLS> Added display of real magnitude of the star
+windowtab_skytravel.cpp:69	//*	Oct 23,	2021	<MLS> Added ProcessSingleCharCmd()
 windowtab_starlist.cpp:28	//*	Oct 23,	2021	<MLS> Added SetColumnOneTitle()
 StarData.c:18            	//*	Oct 24,	2021	<MLS> Added parsing of spectral class to Henry Draper catalog
-windowtab_skytravel.cpp:69	//*	Oct 24,	2021	<MLS> Added DrawStarFancy()
-windowtab_skytravel.cpp:70	//*	Oct 24,	2021	<MLS> Stars now colored based on spectral class O,B,A,F,G,K,M
-windowtab_skytravel.cpp:71	//*	Oct 24,	2021	<MLS> Night mode now works nicely
-windowtab_skytravel.cpp:72	//*	Oct 24,	2021	<MLS> Added "$" command for original database toggle
+windowtab_skytravel.cpp:70	//*	Oct 24,	2021	<MLS> Added DrawStarFancy()
+windowtab_skytravel.cpp:71	//*	Oct 24,	2021	<MLS> Stars now colored based on spectral class O,B,A,F,G,K,M
+windowtab_skytravel.cpp:72	//*	Oct 24,	2021	<MLS> Night mode now works nicely
+windowtab_skytravel.cpp:73	//*	Oct 24,	2021	<MLS> Added "$" command for original database toggle
 YaleStarCatalog.c:4      	//*	Oct 24,	2021	<MLS> Now parsing spectral class from Yale Catalog
 controller.cpp:79        	//*	Oct 25,	2021	<MLS> Added ActivateWindow()
-windowtab_skytravel.cpp:73	//*	Oct 25,	2021	<MLS> Added ZoomViewAngle()
-windowtab_skytravel.cpp:74	//*	Oct 25,	2021	<MLS> Trying to eliminate all references to cView_index
+windowtab_skytravel.cpp:74	//*	Oct 25,	2021	<MLS> Added ZoomViewAngle()
+windowtab_skytravel.cpp:75	//*	Oct 25,	2021	<MLS> Trying to eliminate all references to cView_index
 controller_constList.cpp:22	//*	Oct 26,	2021	<MLS> Created controller_constList.cpp
-windowtab_skytravel.cpp:75	//*	Oct 26,	2021	<MLS> Added SetMinimumViewAngle() & SetMaximumViewAngle()
-windowtab_skytravel.cpp:76	//*	Oct 26,	2021	<MLS> Deleted SetView_Index()
+windowtab_skytravel.cpp:76	//*	Oct 26,	2021	<MLS> Added SetMinimumViewAngle() & SetMaximumViewAngle()
+windowtab_skytravel.cpp:77	//*	Oct 26,	2021	<MLS> Deleted SetView_Index()
 windowtab_starlist.cpp:29	//*	Oct 26,	2021	<MLS> Added magnitude to star list display
 ConstellationData.c:13   	//*	Oct 27,	2021	<MLS> Fixed bug in constellation center calcs caused by negative RA values
 windowtab_constList.cpp:21	//*	Oct 27,	2021	<MLS> Created windowtab_constList.cpp
-windowtab_skytravel.cpp:77	//*	Oct 28,	2021	<MLS> Added '(' / ')' for plus minus Year, '0' / '9 for minute
-windowtab_skytravel.cpp:78	//*	Oct 28,	2021	<MLS> Verified that eclipse stuff still works
+windowtab_skytravel.cpp:78	//*	Oct 28,	2021	<MLS> Added '(' / ')' for plus minus Year, '0' / '9 for minute
+windowtab_skytravel.cpp:79	//*	Oct 28,	2021	<MLS> Verified that eclipse stuff still works
 windowtab_STsettings.cpp:26	//*	Oct 28,	2021	<MLS> Added day/night sky option, blue sky during the day
 windowtab.cpp:60         	//*	Oct 29,	2021	<MLS> Added FloodFill()
-windowtab_skytravel.cpp:79	//*	Oct 30,	2021	<MLS> Moved moon drawing code to separate routine: DrawMoon()
+windowtab_skytravel.cpp:80	//*	Oct 30,	2021	<MLS> Moved moon drawing code to separate routine: DrawMoon()
 moonphase.c:12           	//*	Oct 31,	2021	<MLS> Added GetMoonPhaseForSpecifiedTime()
-windowtab_skytravel.cpp:80	//*	Nov  1,	2021	<MLS> All dependencies on cView_index resolved, used for display only
+windowtab_skytravel.cpp:81	//*	Nov  1,	2021	<MLS> All dependencies on cView_index resolved, used for display only
 helper_functions.c:3     	//*	Nov  8,	2021	<MLS> Added FormatHHMMSSdd()
 GaiaData.c:9             	//*	Nov  9,	2021	<MLS> Created GaiaData.c
-windowtab_skytravel.cpp:81	//*	Nov  9,	2021	<MLS> Working on Gaia star catalog support
+windowtab_skytravel.cpp:82	//*	Nov  9,	2021	<MLS> Working on Gaia star catalog support
 GaiaData.h:7             	//*	Nov 10,	2021	<MLS> Created GaiaData.h
-windowtab_skytravel.cpp:82	//*	Nov 10,	2021	<MLS> Added _ENABLE_GAIA_
+windowtab_skytravel.cpp:83	//*	Nov 10,	2021	<MLS> Added _ENABLE_GAIA_
 GaiaData.c:10            	//*	Nov 11,	2021	<MLS> Working on extraction
 cameradriver.cpp:158     	//*	Nov 12,	2021	<MLS> Modified code to start using SetLastExposureInfo()
 cameradriver.cpp:159     	//*	Nov 12,	2021	<MLS> Fixed bug in live mode that image start time did not get set properly
@@ -1621,8 +1623,8 @@ RemoteImage.cpp:21       	//*	Nov 13,	2021	<MLS> Created RemoteImage.cpp
 RemoteImage.cpp:22       	//*	Nov 13,	2021	<MLS> SDSS image retrieval working
 RemoteImage.cpp:23       	//*	Nov 13,	2021	<MLS> stsci.edu image retrieval working
 windowtab.cpp:61         	//*	Nov 13,	2021	<MLS> Added ProcessDoubleClick_RtBtn()
-windowtab_skytravel.cpp:83	//*	Nov 13,	2021	<MLS> Added support for getting remote images from SDSS
-windowtab_skytravel.cpp:84	//*	Nov 13,	2021	<MLS> Added DrawScale(), "scale of miles" indicator, chart mode only
+windowtab_skytravel.cpp:84	//*	Nov 13,	2021	<MLS> Added support for getting remote images from SDSS
+windowtab_skytravel.cpp:85	//*	Nov 13,	2021	<MLS> Added DrawScale(), "scale of miles" indicator, chart mode only
 controller_skytravel.cpp:18	//*	Nov 14,	2021	<MLS> Added remote data window tab
 windowtab_RemoteData.cpp:21	//*	Nov 14,	2021	<MLS> Created windowtab_RemoteData.cpp
 controller_camera.cpp:56 	//*	Nov 16,	2021	<MLS> fitsview now handles color fits images (8 bit)
@@ -1667,11 +1669,11 @@ controllerImageArray.cpp:24	//*	Dec 18,	2021	<MLS> Proved that the simulators ar
 controllerImageArray.cpp:25	//*	Dec 18,	2021	<MLS> Spoke to Peter in the UK about it (peter@peterandjill.co.uk)
 windowtab_alpacalist.cpp:26	//*	Dec 18,	2021	<MLS> Added inverted sort order to alpaca device list
 windowtab_camera.cpp:37  	//*	Dec 18,	2021	<MLS> Double click in the title bar causes connect to be sent
-windowtab_skytravel.cpp:85	//*	Dec 18,	2021	<MLS> Added SearchSkyObjectsDataListByNumber()
-windowtab_skytravel.cpp:86	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsDataListByShortName()
-windowtab_skytravel.cpp:87	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsDataListByLongName()
-windowtab_skytravel.cpp:88	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsConstellations()
-windowtab_skytravel.cpp:89	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsConstOutlines()
+windowtab_skytravel.cpp:86	//*	Dec 18,	2021	<MLS> Added SearchSkyObjectsDataListByNumber()
+windowtab_skytravel.cpp:87	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsDataListByShortName()
+windowtab_skytravel.cpp:88	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsDataListByLongName()
+windowtab_skytravel.cpp:89	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsConstellations()
+windowtab_skytravel.cpp:90	//*	Dec 19,	2021	<MLS> Added SearchSkyObjectsConstOutlines()
 alpaca_defs.h:29         	//*	Dec 20,	2021	<MLS> Build 125
 cameradriver.cpp:162     	//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_Raw8() -- working
 cameradriver.cpp:163     	//*	Dec 20,	2021	<MLS> Added BuildBinaryImage_Raw16() -- working
@@ -1688,15 +1690,15 @@ cameradriver.cpp:166     	//*	Dec 28,	2021	<MLS> Added GetPrecentCompleted() det
 alpacadriver.cpp:130     	//*	Dec 29,	2021	<MLS> Fixed argument buffer overflow bug in GetKeyWordArgument()
 AsteroidData.c:12        	//*	Dec 29,	2021	<MLS> Added ReadAsteroidDataAstorb()
 AsteroidData.c:13        	//*	Dec 29,	2021	<MLS> With the help of Clif, we have the code working, now lets test it.
-windowtab_skytravel.cpp:90	//*	Dec 29,	2021	<MLS> Added DrawAsteroids()
+windowtab_skytravel.cpp:91	//*	Dec 29,	2021	<MLS> Added DrawAsteroids()
 AsteroidData.c:14        	//*	Dec 30,	2021	<MLS> Added UpdateAsteroidEphemeris()
 julianTime.c:12          	//*	Dec 30,	2021	<MLS> Added Julian_GetUTCfromJulian()
-windowtab_skytravel.cpp:91	//*	Dec 30,	2021	<MLS> Added DrawStarFancy_Label()
-windowtab_skytravel.cpp:92	//*	Dec 30,	2021	<MLS> Added DrawAsteroidFancy()
+windowtab_skytravel.cpp:92	//*	Dec 30,	2021	<MLS> Added DrawStarFancy_Label()
+windowtab_skytravel.cpp:93	//*	Dec 30,	2021	<MLS> Added DrawAsteroidFancy()
 AsteroidData.c:15        	//*	Dec 31,	2021	<MLS> Got asteroid calculations 95% correct (matching Lowell)
 julianTime.c:13          	//*	Dec 31,	2021	<MLS> Added Julian_CalcMJDFromDate()
 SkyTravelConstants.h:4   	//*	Dec 31,	2021	<MLS> Updated ecliptic angle used by skytravel
-windowtab_skytravel.cpp:93	//*	Dec 31,	2021	<MLS> Added SearchAsteroids()
+windowtab_skytravel.cpp:94	//*	Dec 31,	2021	<MLS> Added SearchAsteroids()
 windowtab_STsettings.cpp:29	//*	Dec 31,	2021	<MLS> Added Asteroid count display to settings window
 servo_mount.c:77         	//*	Ju1  1,	2022	<RNS> Moved low-level motor routines to Motion_ lib
 servo_mount.c:78         	//*	Ju1  2,	2022	<RNS> Ported Mount_ code to new Motion_ lib routines
@@ -1727,7 +1729,7 @@ GaiaSQL.cpp:24           	//*	Jan  8,	2022	<MLS> Dynamic purge of SQL data worki
 skytravel_main.cpp:25    	//*	Jan  8,	2022	<MLS> Added support for remote Gaia SQL access
 controller_GaiaRemote.cpp:21	//*	Jan  9,	2022	<MLS> Created controller_GaiaRemote.cpp
 windowtab_GaiaRemote.cpp:21	//*	Jan  9,	2022	<MLS> Created windowtab_GaiaRemote.cpp
-windowtab_skytravel.cpp:94	//*	Jan  9,	2022	<MLS> Changed minimum view angle to 0.01 degrees
+windowtab_skytravel.cpp:95	//*	Jan  9,	2022	<MLS> Changed minimum view angle to 0.01 degrees
 helper_functions.c:4     	//*	Jan 10,	2022	<MLS> Added FormatTimeString_Local()
 SkyTravelConstants.h:5   	//*	Jan 10,	2022	<MLS> Changed JD2000 from 2451544 to 2451544.5
 windowtab_GaiaRemote.cpp:22	//*	Jan 10,	2022	<MLS> Gaia remote list window fully working
@@ -1735,20 +1737,20 @@ GaiaSQL.cpp:25           	//*	Jan 12,	2022	<MLS> Added CalcRA_DEC_Distance_Deg()
 Makefile:50              	#++	Jan 13,	2022	<MLS> Added _ENABLE_ASTEROIDS_
 cameradriver_fits.cpp:86 	//*	Jan 15,	2022	<MLS> Fixed bug in FITS header filter wheel name
 GaiaSQL.cpp:26           	//*	Jan 16,	2022	<MLS> Now sorting Gaia remote data to speed up drawing
-windowtab_skytravel.cpp:95	//*	Jan 16,	2022	<MLS> Sorting of Gaia remote data made big difference in zoom in/out speed
+windowtab_skytravel.cpp:96	//*	Jan 16,	2022	<MLS> Sorting of Gaia remote data made big difference in zoom in/out speed
 alpaca_defs.h:33         	//*	Jan 17,	2022	<MLS> Build 127
 helper_functions.c:5     	//*	Jan 18,	2022	<MLS> Moved FormatTime routines to helper_functions
 Makefile:51              	#++	Jan 18,	2022	<MLS> Added fitsview to makefile
 shutterdriver.cpp:29     	//*	Jan 18,	2022	<MLS> Changing shutter to be more like dome
-windowtab_skytravel.cpp:96	//*	Jan 18,	2022	<MLS> Changed star drawing order so the dense catalogs are on the bottom
+windowtab_skytravel.cpp:97	//*	Jan 18,	2022	<MLS> Changed star drawing order so the dense catalogs are on the bottom
 GaiaSQL.cpp:27           	//*	Jan 19,	2022	<MLS> Added SQL logging
 helper_functions.c:6     	//*	Jan 19,	2022	<MLS> Added FormatDateTimeString_Local()
 windowtab_RemoteData.cpp:23	//*	Jan 19,	2022	<MLS> Added SQL logging enable/disable
-windowtab_skytravel.cpp:97	//*	Jan 22,	2022	<MLS> Fixed bug when drawing stars with negative magnitudes
+windowtab_skytravel.cpp:98	//*	Jan 22,	2022	<MLS> Fixed bug when drawing stars with negative magnitudes
 YaleStarCatalog.c:5      	//*	Jan 22,	2022	<MLS> Getting rid of leading digits in Yale star name
-windowtab_skytravel.cpp:98	//*	Jan 23,	2022	<MLS> Added user settable parameters for star size calculations (cFaintLimit_B)
-windowtab_skytravel.cpp:99	//*	Jan 23,	2022	<MLS> Control and mouse wheel adjust Faint Limit (cFaintLimit_B)
-windowtab_skytravel.cpp:4197	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
+windowtab_skytravel.cpp:99	//*	Jan 23,	2022	<MLS> Added user settable parameters for star size calculations (cFaintLimit_B)
+windowtab_skytravel.cpp:100	//*	Jan 23,	2022	<MLS> Control and mouse wheel adjust Faint Limit (cFaintLimit_B)
+windowtab_skytravel.cpp:4203	//*	Jan 23,	2022	<MLS> No longer precessing Messier objects data
 AsteroidData.c:20        	//*	Jan 24,	2022	<MLS> Asteroids without magnitude now default to 10
 windowtab.cpp:62         	//*	Jan 24,	2022	<MLS> Added flags argument to ProcessMouseWheelMoved()
 GaiaSQL.cpp:28           	//*	Jan 25,	2022	<MLS> Changed UpdateSkyTravelView() to use degrees
@@ -1757,9 +1759,9 @@ alpaca_defs.h:34         	//*	Jan 28,	2022	<MLS> Build 128
 windowtab_STsettings.cpp:30	//*	Jan 29,	2022	<MLS> Added special list count display to settings window
 OpenNGC.c:21             	//*	Feb  3,	2022	<MLS> Created OpenNGC.c
 OpenNGC.c:22             	//*	Feb  3,	2022	<MLS> OpenNGC star data working
-windowtab_skytravel.cpp:100	//*	Feb  3,	2022	<MLS> Added support for OpenNGC catalog
+windowtab_skytravel.cpp:101	//*	Feb  3,	2022	<MLS> Added support for OpenNGC catalog
 OpenNGC.c:23             	//*	Feb  4,	2022	<MLS> Added Read_OpenNGC_Outline_catgen()
-windowtab_skytravel.cpp:101	//*	Feb  4,	2022	<MLS> Added DrawOpenNGC_Outlines()
+windowtab_skytravel.cpp:102	//*	Feb  4,	2022	<MLS> Added DrawOpenNGC_Outlines()
 controller_skytravel.h:3 	//*	Feb 10,	2022	<MLS> Added GaiaRequestMode
 windowtab_RemoteData.cpp:24	//*	Feb 10,	2022	<MLS> Added 1x1, 3x1, and 3x3 gaia request modes
 GaiaSQL.cpp:30           	//*	Feb 11,	2022	<MLS> Added CheckSQLconfiguration()
@@ -1772,7 +1774,7 @@ alpaca_defs.h:36         	//*	Feb 18,	2022	<MLS> Version V0.5.0-beta
 alpaca_defs.h:37         	//*	Feb 18,	2022	<MLS> Build 130
 controller.cpp:86        	//*	Feb 18,	2022	<MLS> Added DrawWidgetBackground()
 windowtab_camera.cpp:39  	//*	Feb 18,	2022	<MLS> Added SetCameraLogo()
-windowtab_skytravel.cpp:102	//*	Feb 18,	2022	<MLS> SkyTravel working with OpenCV-C++
+windowtab_skytravel.cpp:103	//*	Feb 18,	2022	<MLS> SkyTravel working with OpenCV-C++
 nitecrawler_image.c:7    	//*	Feb 19,	2022	<MLS> Moonlite logos working with C++ version of openCV
 windowtab_nitecrawler.cpp:28	//*	Feb 19,	2022	<MLS> Added DrawRotatorCompass()
 controller.cpp:87        	//*	Feb 20,	2022	<MLS> Added a bunch of Low Level Drawing commands LLG_....
@@ -1835,7 +1837,7 @@ alpacadriver.cpp:132     	//*	Apr  7,	2022	<MLS> Added _ENABLE_QSI_
 cameradriver_QSI.cpp:31  	//*	Apr  7,	2022	<MLS> Created cameradriver_QSI.cpp
 cameradriver_QSI.h:19    	//*	Apr  7,	2022	<MLS> Created cameradriver_QSI.h
 servo_mc_core.c:26       	//*	Apr  7,	2022	<RNS> Pulled out the note/receipt utils to make a test program
-windowtab_skytravel.cpp:103	//*	Apr  7,	2022	<MLS> ProcessMouseEvent() ignores nearest object when mouse drag in progress
+windowtab_skytravel.cpp:104	//*	Apr  7,	2022	<MLS> ProcessMouseEvent() ignores nearest object when mouse drag in progress
 cameradriver_QSI.cpp:32  	//*	Apr  8,	2022	<MLS> Got QSI library to compile and install
 managementdriver.cpp:35  	//*	Apr  8,	2022	<MLS> Removed double quotes in version string, JSON doesn't like it
 servo_mc_core.c:27       	//*	Apr  8,	2022	<RNS> Note/receipt now debugged, should support both host endians
@@ -1901,7 +1903,7 @@ servo_std_defs.h:28      	//*	Apr 29,	2022	<RNS> Moved in common defines used in
 servo_std_defs.h:29      	//*	Apr 29,	2022	<RNS> Updated arcsec/sec
 servo_time.h:25          	//*	Apr 29,	2022	<RNS> added local typedefs and fixed macros back to functions
 servo_mount.c:28         	//*	Apr 30,	2022	<RNS> rewrote flip routine to use only hour angles in calcs
-windowtab_skytravel.cpp:104	//*	Apr 30,	2022	<MLS> Added Messier objects to FindObjectNearCursor()
+windowtab_skytravel.cpp:105	//*	Apr 30,	2022	<MLS> Added Messier objects to FindObjectNearCursor()
 servo_mount_cfg.c:29     	//*	May  1,	2022	<RNS> Removed support for split and alt-azi mounts
 alpaca_defs.h:44         	//*	May  2,	2022	<MLS> Build 138
 i2c_bno055.h:13          	//*	May  2,	2022	<MLS> Updated prototypes, if no args, must have (void)
@@ -2077,7 +2079,7 @@ servo_mount_cfg.c:44     	//*	May 26,	2022	<MLS> Updated test code to print out 
 servo_time.c:39          	//*	May 26,	2022	<MLS> Moved enum defs to .h file for AlpacaPi
 servo_time.h:32          	//*	May 26,	2022	<MLS> Made gServoLocalCfg global so it can be accessed by AlpacaPi
 telescopedriver_servo.cpp:37	//*	May 26,	2022	<MLS> Added html output of current configuration
-windowtab_skytravel.cpp:105	//*	May 26,	2022	<MLS> Removed support for reading GAIA data directly
+windowtab_skytravel.cpp:106	//*	May 26,	2022	<MLS> Removed support for reading GAIA data directly
 Makefile:14              	#++	May 27,	2022	<RNS> Added support for servo_time unit test
 Makefile:15              	#++	May 27,	2022	<RNS> Added support for test_cop
 servo_mount.c:56         	//*	May 27,	2022	<MLS> Deleted gServoRa & gServoDec, now part of gMountConfig
@@ -2094,6 +2096,7 @@ telescopedriver.cpp:55   	//*	May 28,	2022	<MLS> Added cDriverSupports_LimitSwit
 telescopedriver.cpp:56   	//*	May 28,	2022	<MLS> Added Telescope_GetLimitSwitchStatus()
 controller_telescope.cpp:25	//*	May 29,	2022	<MLS> Added telescope settings tab
 controller_tscope_common.cpp:23	//*	May 29,	2022	<MLS> Parsing more fields in AlpacaProcessReadAll_Telescope()
+outlinedata.h:2          	//*	May 29,	2022	<MLS> Created outlinedata.h
 servo_mount.c:58         	//*	May 29,	2022	<RNS> Fixed bug ind _unpark(), gMountAction must be set to stopped
 servo_rc_utils.c:43      	//*	May 29,	2022	<RNS> Enhanced unit _TEST_ to have better test coverage for debug
 servo_rc_utils.c:44      	//*	May 29,	2022	<RNS> Created Workaround to RC buffer lazy bit7 issue
@@ -2176,7 +2179,7 @@ helper_functions.c:8     	//*	Jun 14,	2022	<MLS> Added tolowerStr()
 windowtab_teleSettings.cpp:24	//*	Jun 14,	2022	<MLS> DoesRefraction button now working properly
 telescopedriver.cpp:63   	//*	Jun 15,	2022	<MLS> Updated Telescope_GetPhysicalSideOfPier() to know about IMU
 windowtab_fov.cpp:27     	//*	Jun 15,	2022	<MLS> Added FOV Reload button
-windowtab_skytravel.cpp:106	//*	Jun 15,	2022	<MLS> Added camera name to telescope display if enough room
+windowtab_skytravel.cpp:107	//*	Jun 15,	2022	<MLS> Added camera name to telescope display if enough room
 helper_functions.c:9     	//*	Jun 17,	2022	<MLS> Added AsciiToDouble()
 i2c_bno055.c:19          	//*	Jun 17,	2022	<MLS> Added BNO055_Init()
 i2c_bno055.c:20          	//*	Jun 17,	2022	<MLS> Added BNO055__SetDebug()
@@ -2204,7 +2207,7 @@ sidereal.c:31            	//*	Jun 20,	2022	<RNS> Fixed some logic bug and a poin
 telescopedriver_servo.cpp:43	//*	Jun 20,	2022	<MLS> Added UpdateSlewingProperty()
 servo_mount.c:74         	//*	Jun 21,	2022	<RNS> Fixed incorret variable ref and conversion in move_to_static()
 sidereal.c:32            	//*	Jun 21,	2022	<RNS> Added the check for sidereal day rollover
-windowtab_skytravel.cpp:107	//*	Jun 21,	2022	<MLS> Changed logic for clock update so it happens at beginning of the second
+windowtab_skytravel.cpp:108	//*	Jun 21,	2022	<MLS> Changed logic for clock update so it happens at beginning of the second
 Makefile:16              	#++	Jun 24,	2022	<RNS> Added -Wextra to CFLAGS
 servo_mount.c:75         	//*	Jun 24,	2022	<RNS> Added routines _is_TTP(), _get_lst(), _get_HA()
 servo_mount.h:38         	//*	Jun 24,	2022	<RNS> Added routines _is_TTP(), _get_lst(), _get_HA()
@@ -2326,14 +2329,14 @@ telescopedriver_servo.cpp:48	//*	Jul 20,	2022	<RNS> Removed LST calcs, not neede
 controller_tasktiming.cpp:21	//*	Jul 21,	2022	<MLS> Created controller_tasktiming.cpp
 controller_tasktiming.cpp:22	//*	Jul 21,	2022	<MLS> Added TaskTiming_Init(), TaskTiming_SetName()
 controller_tasktiming.cpp:23	//*	Jul 21,	2022	<MLS> Added TaskTiming_Start(), TaskTiming_Stop()
-windowtab_skytravel.cpp:108	//*	Jul 21,	2022	<MLS> Added _USE_LARGE_FONT_FOR_PUBLICATION_ for GAIA paper
+windowtab_skytravel.cpp:109	//*	Jul 21,	2022	<MLS> Added _USE_LARGE_FONT_FOR_PUBLICATION_ for GAIA paper
 servo_mount.c:93         	//*	Jul 22,	2022	<RNS> Fixed incorrect direction sign in flip_coordins
 cameradriver_fits.cpp:87 	//*	Jul 25,	2022	<MLS> Added WriteFITS_IMUinfo()
 cameradriver_save.cpp:37 	//*	Jul 25,	2022	<MLS> Increased # of decimal points in WriteIMUtextFile()
 StarData.c:19            	//*	Aug  1,	2022	<MLS> Added magnitude to special.txt parsing
 SAO_stardata.c:6         	//*	Aug  2,	2022	<MLS> Created SAO_stardata.c
 SkyStruc.h:12            	//*	Aug  2,	2022	<MLS> Added kDataSrc_SAO
-windowtab_skytravel.cpp:109	//*	Aug  2,	2022	<MLS> Added SAO star catalog
+windowtab_skytravel.cpp:110	//*	Aug  2,	2022	<MLS> Added SAO star catalog
 filterwheeldriver.cpp:45 	//*	AUg  5,	2022	<MLS> Added Get_Readall() to filterwheel driver
 discoverythread.c:32     	//*	Aug  6,	2022	<MLS> Added CPU temp logging
 helper_functions.c:11    	//*	Aug  6,	2022	<MLS> Added GetMinutesSinceMidnight()
@@ -2351,8 +2354,8 @@ i2c_bno055.c:551         	//*	Aug 26,	2022	<MLS> This was bit 3, the correct bit
 alpacadriver.cpp:137     	//*	Aug 28,	2022	<MLS> Now recognize the "POST" command, ignore for now.
 domedriver.cpp:78        	//*	Aug 29,	2022	<MLS> Added logic to keep track of last time any movement was made
 alpaca_defs.h:57         	//*	Aug 30,	2022	<MLS> Build 149
-windowtab_skytravel.cpp:110	//*	Sep  3,	2022	<MLS> Fixed bug in SearchSkyObjectsDataListByNumber() that made HIP search not work
-windowtab_skytravel.cpp:111	//*	Sep  3,	2022	<MLS> Added SAO star catalog to search routine
+windowtab_skytravel.cpp:111	//*	Sep  3,	2022	<MLS> Fixed bug in SearchSkyObjectsDataListByNumber() that made HIP search not work
+windowtab_skytravel.cpp:112	//*	Sep  3,	2022	<MLS> Added SAO star catalog to search routine
 controllerAlpaca.cpp:41  	//*	Sep  4,	2022	<MLS> Added Alpaca_GetRemoteCPUinfo()
 controllerAlpaca.cpp:42  	//*	Sep  4,	2022	<MLS> Added UpdateAboutBoxRemoteDevice()
 controllerAlpaca.cpp:43  	//*	Sep  5,	2022	<MLS> About box now updated to display specs of remote device
@@ -2413,8 +2416,8 @@ cameradriver.cpp:180     	//*	Sep 29,	2022	<MLS> Added SetImageDataDirectory()
 windowtab_iplist.cpp:26  	//*	Sep 29,	2022	<MLS> Added dynamic display CPU temp when mouse is moved over graph
 windowtab_iplist.cpp:27  	//*	Sep 30,	2022	<MLS> Added HandleMouseMovedInGraph()
 cameradriver_ASI.cpp:83  	//*	Oct  1,	2022	<MLS> Changed CreateCameraObjects_ASI() to return camera count
-windowtab_skytravel.cpp:112	//*	Oct  2,	2022	<MLS> Cleaned up button setting code in SetupWindowControls()
-windowtab_skytravel.cpp:113	//*	Oct  2,	2022	<MLS> Added which SQL database in use to main display
+windowtab_skytravel.cpp:113	//*	Oct  2,	2022	<MLS> Cleaned up button setting code in SetupWindowControls()
+windowtab_skytravel.cpp:114	//*	Oct  2,	2022	<MLS> Added which SQL database in use to main display
 controller_obsconditions.cpp:22	//*	Oct  3,	2022	<MLS> Fixed connection status for observing conditions window
 windowtab.cpp:72         	//*	Oct  4,	2022	<MLS> Added HandleSpecialKeys()
 windowtab.cpp:73         	//*	Oct  4,	2022	<MLS> Moved a bunch of the list stuff to the main windowtab.cpp class
@@ -2422,7 +2425,7 @@ windowtab.cpp:74         	//*	Oct  4,	2022	<MLS> Added page-up, page-down and ho
 windowtab_iplist.cpp:28  	//*	Oct  4,	2022	<MLS> Added scrolling to IP list
 alpaca_defs.h:61         	//*	Oct  5,	2022	<MLS> Build 152
 cameradriver_save.cpp:38 	//*	Oct  5,	2022	<MLS> Added ReadIMUdata()
-windowtab_skytravel.cpp:114	//*	Oct  5,	2022	<MLS> Added HandleSpecialKeys() to skytravel window
+windowtab_skytravel.cpp:115	//*	Oct  5,	2022	<MLS> Added HandleSpecialKeys() to skytravel window
 controller.cpp:93        	//*	Oct  7,	2022	<MLS> Added UpdateCapabilityListID()
 controller_rotator.cpp:21	//*	Oct  7,	2022	<MLS> Created controller_rotator.cpp
 fitsview.c:14            	//*	Oct  7,	2022	<MLS> Image scaling for large image display working w/ openCV C++
@@ -2488,7 +2491,7 @@ windowtab.cpp:77         	//*	Oct 21,	2022	<MLS> Added SetupWindowBottomBoxes()
 windowtab.cpp:78         	//*	Oct 21,	2022	<MLS> Updated all windowtabs to use SetupWindowBottomBoxes()
 windowtab.cpp:79         	//*	Oct 21,	2022	<MLS> Removed SetIPaddressBoxes() use SetupWindowBottomBoxes() instead
 windowtab.cpp:80         	//*	Oct 21,	2022	<MLS> Removed SetAlpacaLogo()
-controller.cpp:1770      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
+controller.cpp:1778      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
 cameradriver_fits.cpp:91 	//*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
 spectrodriver.cpp:27     	//*	Oct 25,	2022	<MLS> Added Get_PropertyInfo()
 controllerAlpaca.cpp:46  	//*	Oct 26,	2022	<MLS> Fixed return data valid bug in AlpacaGetStringValue()
@@ -2671,7 +2674,7 @@ rotatordriver_sim.cpp:26 	//*	Mar  2,	2023	<MLS> CONFORMU-rotatordriver_sim -> P
 switchdriver_sim.cpp:25  	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.cpp
 switchdriver_sim.h:11    	//*	Mar  2,	2023	<MLS> Created switchdriver_sim.h
 alpacadriver.cpp:157     	//*	Mar  3,	2023	<MLS> Added ProcessAlpacaCommand()
-alpacadriver.cpp:4086    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
+alpacadriver.cpp:4088    	//*	Mar  3,	2023	<MLS> Make CONFORMU happy, check for valid device number
 alpacadriver_helper.c:13 	//*	Mar  3,	2023	<MLS> Added FindDeviceTypeByStringLowerCase()
 calibration_sim.cpp:20   	//*	Mar  3,	2023	<MLS> Created calibration_sim.cpp
 cameradriver_SONY.cpp:1295	//*	Mar  3,	2023	<MLS> this line caused a compile err
@@ -2728,7 +2731,7 @@ windowtab_time.cpp:21    	//*	Mar 17,	2023	<MLS> Created windowtab_time.cpp
 windowtab_time.cpp:22    	//*	Mar 17,	2023	<MLS> Added UpdateTime()
 skytravel_main.cpp:28    	//*	Mar 20,	2023	<MLS> Made cCurrentSkyTime global (gCurrentSkyTime) so others could use it
 windowtab_skytravel.h:4  	//*	Mar 20,	2023	<MLS> Moved cCurrentSkyTime to skytravel_main.cpp and renamed it gCurrentSkyTime
-windowtab_skytravel.cpp:115	//*	Mar 22,	2023	<MLS> Added ConvertAzEl_to_RaDec()
+windowtab_skytravel.cpp:116	//*	Mar 22,	2023	<MLS> Added ConvertAzEl_to_RaDec()
 calibrationdriver.cpp:37 	//*	Mar 25,	2023	<MLS> Added aperture setting to Alpaca definition
 calibrationdriver.cpp:38 	//*	Mar 25,	2023	<MLS> Added Get_Aperture() & Put_Aperture()
 calibrationdriver.cpp:39 	//*	Mar 25,	2023	<MLS> Added Get_CanAdjustAperture()
@@ -2780,7 +2783,7 @@ cameradriver.cpp:198     	//*	May 26,	2023	<MLS> Added Get_SavedImages()
 controller.cpp:100       	//*	May 26,	2023	<MLS> Added ShowWindow() & HideWindow()
 alpaca_defs.h:77         	//*	May 27,	2023	<MLS> Added SavedImageCnt to Camera Properties
 cameradriver.cpp:199     	//*	May 27,	2023	<MLS> Removed all references to sidebar option, always enabled
-windowtab_skytravel.cpp:116	//*	May 27,	2023	<MLS> Added parallax to label display
+windowtab_skytravel.cpp:117	//*	May 27,	2023	<MLS> Added parallax to label display
 windowtab_STsettings.cpp:35	//*	May 27,	2023	<MLS> Added Parallax display option
 windowtab_moon.cpp:26    	//*	May 28,	2023	<MLS> Added MoonDirQsortProc() to sort the file names
 controllerAlpaca.cpp:51  	//*	May 29,	2023	<MLS> Fixed bug in Alpaca_GetTemperatureLog(), un-initialized variable
@@ -2875,7 +2878,7 @@ windowtab_camcooler.cpp:22	//*	Jun 18,	2023	<MLS> Added DeviceState to cam coole
 windowtab_camera.cpp:47  	//*	Jun 18,	2023	<MLS> Added DeviceState to camera
 windowtab_camsettings.cpp:29	//*	Jun 18,	2023	<MLS> Added DeviceState to camsettings
 windowtab_drvrInfo.cpp:23	//*	Jun 18,	2023	<MLS> Added DeviceState to driver info
-windowtab_skytravel.cpp:117	//*	Jun 18,	2023	<MLS> Fixed bug in SearchSkyObjectsDataListByNumber for non-numeric values
+windowtab_skytravel.cpp:118	//*	Jun 18,	2023	<MLS> Fixed bug in SearchSkyObjectsDataListByNumber for non-numeric values
 controller.cpp:102       	//*	Jun 19,	2023	<MLS> Added TYPE_REMOTE_DEV to Controller constructor
 controller.cpp:103       	//*	Jun 19,	2023	<MLS> Added more valid widget checking
 controller_covercalib.cpp:25	//*	Jun 19,	2023	<MLS> Updated constructor to use TYPE_REMOTE_DEV
@@ -3053,11 +3056,11 @@ domedriver.cpp:84        	//*	Jul 17,	2023	<MLS> Added better logic for remote s
 domedriver.cpp:85        	//*	Jul 17,	2023	<MLS> Added watchdog timer enable/disable to dome setup web page
 alpacadriver.cpp:176     	//*	Jul 18,	2023	<MLS> Added watchdog table to main web page
 alpaca_defs.h:85         	//*	Jul 18,	2023	<MLS> Build 169
-windowtab_skytravel.cpp:118	//*	Jul 21,	2023	<MLS> Added AAVSO alerts to FindObjectNearCursor()
+windowtab_skytravel.cpp:119	//*	Jul 21,	2023	<MLS> Added AAVSO alerts to FindObjectNearCursor()
 alpacadriver.cpp:177     	//*	Jul 22,	2023	<MLS> Added Get_WatchDogTimeout()
 MessierData.c:6          	//*	Jul 23,	2023	<MLS> Created MessierData.c
 StarData.c:20            	//*	Jul 23,	2023	<MLS> Moved Messier code to MessierData.c
-windowtab_skytravel.cpp:119	//*	Jul 23,	2023	<MLS> Fixed startup color bug by calling Set_Skycolor() from constructor
+windowtab_skytravel.cpp:120	//*	Jul 23,	2023	<MLS> Fixed startup color bug by calling Set_Skycolor() from constructor
 imu_lib_LIS2DH12.c:11    	//*	Jul 31,	2023	<CRN> Added read and write functions, test functionality.
 imu_lib_LIS2DH12.c:12    	//*	Aug  3,	2023	<MLS> Compile with -li2c -lm
 serialport.c:10          	//*	Aug  3,	2023	<MLS> Added return code to Serial_Set_RTS()
@@ -3076,8 +3079,8 @@ windowtab_starlist.cpp:31	//*	Aug 22,	2023	<MLS> Added ctrl double click to star
 windowtab_starlist.cpp:32	//*	Aug 23,	2023	<MLS> Added ProcessCtrlDblClick()
 windowtab_starlist.cpp:33	//*	Aug 23,	2023	<MLS> Ctrl DoubleClick opens AAVSO alert web page
 windowtab.cpp:98         	//*	Aug 24,	2023	<MLS> Added angle to ellipse functions
-windowtab_skytravel.cpp:120	//*	Aug 24,	2023	<MLS> Added ellipse drawing for OpenNGC objects major/minor axis
-windowtab_skytravel.cpp:121	//*	Aug 25,	2023	<MLS> Ellipse angle working properly
+windowtab_skytravel.cpp:121	//*	Aug 24,	2023	<MLS> Added ellipse drawing for OpenNGC objects major/minor axis
+windowtab_skytravel.cpp:122	//*	Aug 25,	2023	<MLS> Ellipse angle working properly
 cameradriver_TOUP.cpp:45 	//*	Aug 27,	2023	<MLS> Updated Makefile to compile toup and touppi properly
 cameradriver_TOUP.cpp:46 	//*	Aug 27,	2023	<MLS> Changed to if (SUCCEEDED(toupResult)) as per .h file
 cameradriver_QHY.cpp:40  	//*	Aug 29,	2023	<MLS> Received QHY174M camera with GPS from Mike (mike@bptrobotics.com)
@@ -3093,7 +3096,7 @@ cameradriver_gps.cpp:30  	//*	Sep  5,	2023	<MLS> Working on matching SharpCap FI
 cameradriver_QHY.cpp:43  	//*	Sep  5,	2023	<MLS> More work on qhy image header
 ConsoleDebug.h:18        	//*	Sep  5,	2023	<MLS> Added CONSOLE_DEBUG_W_SIZE() to quite mode
 ParseNMEA.c:61           	//*	Sep  5,	2023	<MLS> Removing global gNMEAdata, replacing with pointer
-ParseNMEA.c:1450         	//*	Sep  5,	2023	<MLS> Added NumSats from GPGSV
+ParseNMEA.c:1515         	//*	Sep  5,	2023	<MLS> Added NumSats from GPGSV
 ParseNMEA.h:22           	//*	Sep  5,	2023	<MLS> Added	currSatsInUse & currSatMode
 alpacadriver.cpp:178     	//*	Sep  6,	2023	<MLS> Added all the device version info to Get_Readall_Common()
 cameradriver_overlay.cpp:25	//*	Sep  6,	2023	<MLS> Created cameradriver_overlay.cpp
@@ -3450,8 +3453,44 @@ windowtab_fov.cpp:34     	//*	May 25,	2024	<MLS> Line select now working in FOV 
 alpaca_defs.h:99         	//*	May 26,	2024	<MLS> Build 178
 cameradriver_PlayerOne.cpp:36	//*	May 26,	2024	<MLS> Fixed common property "Name"  aka DeviceName
 cameradriver_PlayerOne.cpp:37	//*	May 26,	2024	<MLS> Found new version of PlayerOne SDK V3.6.2
-cameradriver.cpp:213     	//*	Jan  1,	2119	<TODO> ----------------------------------------
-cameradriver.cpp:214     	//*	Jun 26,	2119	<TODO> Add support for sub frames
+cameradriver_PlayerOne.cpp:38	//*	May 26,	2024	<MLS> Updated install_playerone.sh to handle new version
+windowtab_fov.cpp:35     	//*	May 27,	2024	<MLS> Cleaned up displayed device name
+windowtab_fov.cpp:36     	//*	May 27,	2024	<MLS> Added HandleKeyDown() to FOV window
+milkyway.cpp:21          	//*	May 29,	2024	<MLS> Created milkyway.cpp
+milkyway.cpp:22          	//*	May 29,	2024	<MLS> Added Milkyway_ReadOutlines() & MilkyWay_ParsePointData()
+windowtab_skytravel.cpp:123	//*	May 29,	2024	<MLS> Added DrawOutlines()
+windowtab_skytravel.cpp:124	//*	May 29,	2024	<MLS> Added support for MilkyWay outlines
+ParseNMEA.c:68           	//*	May 30,	2024	<MLS> Implementing GPS sentences from EMLID Reach RS2
+ParseNMEA.c:69           	//*	May 30,	2024	<MLS> https://docs.emlid.com/reachrs3/specifications/nmea-format/
+windowtab_STsettings.cpp:36	//*	May 30,	2024	<MLS> Added MilkyWay outline width
+ParseNMEA.c:70           	//*	May 31,	2024	<MLS> Emlid Reach uses "$GNxxx" instead of "$GPxxx"
+ParseNMEA.c:71           	//*	May 31,	2024	<MLS> Added FormatGoogleMapsRequest()
+windowtab_skytravel.cpp:125	//*	May 31,	2024	<MLS> Added filled polygons to Milkyway display options
+windowtab_skytravel.cpp:126	//*	May 31,	2024	<MLS> ';' toggles Milkyway filled polygons, not perfect
+alpacadriver.cpp:193     	//*	Jun  1,	2024	<MLS> Global GPS now looks for Emlid and if found, uses that port
+usbmanager.cpp:33        	//*	Jun  1,	2024	<MLS> Added ttyACM to scanned ports
+windowtab_skytravel.cpp:127	//*	Jun  1,	2024	<MLS> MilkyWay is now outlined in white
+controller_skytravel.cpp:26	//*	Jun  9,	2024	<MLS> Added SolarSystem window to SkyTravel
+windowtab_skytravel.cpp:128	//*	Jun  9,	2024	<MLS> Added planet size drawing in PlotSkyObjects()
+windowtab_solarsystem.cpp:21	//*	Jun  9,	2024	<MLS> Created windowtab_solarsystem.cpp
+KeplerEquations.cpp:4    	//*	Jun 10,	2024	<MLS> Created KeplerEquations.cpp
+KeplerEquations.cpp:5    	//*	Jun 10,	2024	<MLS> Found keps for Pluto
+windowtab_solarsystem.cpp:22	//*	Jun 10,	2024	<MLS> Solar system display working
+windowtab_solarsystem.cpp:23	//*	Jun 10,	2024	<MLS> Verified display is correct https://www.theplanetstoday.com/index.html
+SkyTravelTimeRoutines.c:6	//*	Jun 11,	2024	<MLS> Added ProcessTimeAdjustmentChar()
+SkyTravelTimeRoutines.c:7	//*	Jun 11,	2024	<MLS> Added SetCurrentTime()
+windowtab_skytravel.cpp:129	//*	Jun 11,	2024	<MLS> Changed cAutoAdvanceTime to global, gAutoAdvanceTime
+windowtab_solarsystem.cpp:24	//*	Jun 11,	2024	<MLS> Added time adjustment key commands identical to SkyTravel window
+KeplerEquations.cpp:6    	//*	Jun 12,	2024	<MLS> Added ReadAsteroidElementsData()
+windowtab_solarsystem.cpp:25	//*	Jun 12,	2024	<MLS> DrawAsteriods() & DrawAstronomicalScale()
+windowtab_solarsystem.cpp:26	//*	Jun 12,	2024	<MLS> Added DrawCrossHairs()
+windowtab_solarsystem.cpp:27	//*	Jun 13,	2024	<MLS> Added DrawKuiperBelt()
+KeplerEquations.cpp:7    	//*	Jun 14,	2024	<MLS> Added ReadTransNeptunianData()
+windowtab_solarsystem.cpp:28	//*	Jun 14,	2024	<MLS> Added DrawOrbits()
+cameradriver.cpp:212     	//*	Jun 15,	2024	<MLS> Fixed case bug in Put_SaveAsPNG()
+alpaca_defs.h:100        	//*	Jun 16,	2024	<MLS> Build 179 - pushed to github
+cameradriver.cpp:214     	//*	Jan  1,	2119	<TODO> ----------------------------------------
+cameradriver.cpp:215     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:48 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:49 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -3462,19 +3501,19 @@ controller_camera.cpp:79 	//*	Feb  6,	2121	<TODO> Move downloading of images to 
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:33     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3463 in 515 files
-Total lines              = 243914
-Total comment Lines      = 39956 (16.4%)
-Total comments           = 44808 (18.4%)
-Total history comments   = 3463 (1.4%)
+History Comments found   = 3502 in 522 files
+Total lines              = 246837
+Total comment Lines      = 40475 (16.4%)
+Total comments           = 45460 (18.4%)
+Total history comments   = 3502 (1.4%)
 Total C files            = 69
-Total C++ files          = 193
-Total H files            = 251
-Preprocssor cnt          = 7793
-Total SLOC               = 155018
-Total SLOC-Logical       = 119540
+Total C++ files          = 196
+Total H files            = 255
+Preprocssor cnt          = 7892
+Total SLOC               = 156858
+Total SLOC-Logical       = 120969
 Programmer comment summary
-MLS             = 3053
+MLS             = 3092
 TODO            =   11
 DDB             =    1
 JMH             =    3

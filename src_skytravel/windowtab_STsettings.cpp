@@ -33,6 +33,7 @@
 //*	Mar 14,	2023	<MLS> Added UpdateObservatorySettings()
 //*	Apr 10,	2023	<MLS> Added proper motion display settings
 //*	May 27,	2023	<MLS> Added Parallax display option
+//*	May 30,	2024	<MLS> Added MilkyWay outline width
 //*****************************************************************************
 
 #include	<pthread.h>
@@ -268,7 +269,7 @@ int		radioBtnWidth;
 	yLoc			+=	cBoxHeight;
 	yLoc			+=	2;
 
-	iii			=	kSkyT_Settings_LineW_Const;
+	iii			=	kSkyT_Settings_LineW_MilkyWay;
 	while (iii < kSkyT_Settings_LineW_BoxOutline)
 	{
 		xLoc2	=	xLoc;
@@ -299,6 +300,7 @@ int		radioBtnWidth;
 	SetWidgetOutlineBox(	kSkyT_Settings_LineW_BoxOutline,
 							kSkyT_Settings_LineWidthTitle,
 							(kSkyT_Settings_LineW_BoxOutline -1));
+	SetWidgetText(	kSkyT_Settings_LineW_MilkyWay,		"MilkyWay");
 	SetWidgetText(	kSkyT_Settings_LineW_Const,			"Constellations");
 	SetWidgetText(	kSkyT_Settings_LineW_ConstOutlines,	"Constellation Outlines");
 	SetWidgetText(	kSkyT_Settings_LineW_NGCoutlines,	"NGC Outlines");
@@ -775,7 +777,18 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			gST_DispOptions.DashedLines	=	true;
 			break;
 
-		//*	Constellastions
+		//------------------------------------------------------------
+		//*	MilkyWay
+		case kSkyT_Settings_LineW_MilkyWay1:
+			gST_DispOptions.LineWidth_MilkyWay		=	1;
+			break;
+
+		case kSkyT_Settings_LineW_MilkyWay2:
+			gST_DispOptions.LineWidth_MilkyWay		=	2;
+			break;
+
+		//------------------------------------------------------------
+		//*	Constellations
 		case kSkyT_Settings_LineW_Const1:
 			gST_DispOptions.LineWidth_Constellations	=	1;
 			break;
@@ -784,6 +797,7 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			gST_DispOptions.LineWidth_Constellations	=	2;
 			break;
 
+		//------------------------------------------------------------
 		//*	Constellation outlines
 		case kSkyT_Settings_LineW_ConstOutlines1:
 			gST_DispOptions.LineWidth_ConstOutlines	=	1;
@@ -793,6 +807,7 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			gST_DispOptions.LineWidth_ConstOutlines	=	2;
 			break;
 
+		//------------------------------------------------------------
 		//*	NGC Outlines
 		case kSkyT_Settings_LineW_NGCoutlines1:
 			gST_DispOptions.LineWidth_NGCoutlines	=	1;
@@ -802,6 +817,7 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			gST_DispOptions.LineWidth_NGCoutlines	=	2;
 			break;
 
+		//------------------------------------------------------------
 		case kSkyT_Settings_LineW_Grid1:
 			gST_DispOptions.LineWidth_GridLines		=	1;
 			break;
@@ -814,6 +830,7 @@ void	WindowTabSTsettings::ProcessButtonClick(const int buttonIdx, const int flag
 			gST_DispOptions.EarthDispMode				=	0;
 			gST_DispOptions.DashedLines					=	false;
 			gST_DispOptions.DayNightSkyColor			=	false;
+			gST_DispOptions.LineWidth_MilkyWay			=	1;
 			gST_DispOptions.LineWidth_Constellations	=	1;
 			gST_DispOptions.LineWidth_ConstOutlines		=	1;
 			gST_DispOptions.LineWidth_GridLines			=	1;
@@ -990,6 +1007,10 @@ char	textString[32];
 
 	SetWidgetChecked(	kSkyT_Settings_GridSolid,				(!gST_DispOptions.DashedLines));
 	SetWidgetChecked(	kSkyT_Settings_GridDashed,				(gST_DispOptions.DashedLines));
+
+
+	SetWidgetChecked(	kSkyT_Settings_LineW_MilkyWay1,			(gST_DispOptions.LineWidth_MilkyWay == 1));
+	SetWidgetChecked(	kSkyT_Settings_LineW_MilkyWay2,			(gST_DispOptions.LineWidth_MilkyWay >= 2));
 
 	SetWidgetChecked(	kSkyT_Settings_LineW_Const1,			(gST_DispOptions.LineWidth_Constellations == 1));
 	SetWidgetChecked(	kSkyT_Settings_LineW_Const2,			(gST_DispOptions.LineWidth_Constellations == 2));

@@ -4,7 +4,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	??				Original Written by Frank Covits
-//*	May  2,	1996	<MLS> (Mark Sproul) Starting on SkyTravel for Frank and Clif
+//*	May  2,	1996	<MLS> Starting on SkyTravel for Frank and Clif
 //*	Nov 18,	1999	<MLS> restarting efforts
 //*	Nov 20,	1999	<MLS> major re-writing and re-organization
 //*	Dec 29,	2020	<MLS> Starting to integrate SkyTravel into AlpacaPi

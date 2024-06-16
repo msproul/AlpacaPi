@@ -88,6 +88,8 @@ int		slen;
 char	codeName[64];
 bool	codeNameFound;
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	filePointer	=	fopen("/etc/os-release", "r");
 	if (filePointer != NULL)
 	{
@@ -138,6 +140,7 @@ enum
 	kCPUinfo_Model,
 	kCPUinfo_ModelName,
 	kCPUinfo_Revision,
+	kCPUinfo_VendorID,
 
 };
 
@@ -150,7 +153,7 @@ TYPE_KEYWORDS	gCPUinfoDictenary[]	=
 	{	"CPU architecture",		kCPUinfo_CPU_Arch},
 	{	"Hardware",				kCPUinfo_Hardware},
 	{	"Revision",				kCPUinfo_Revision},
-	{	"foo",					-1},
+	{	"vendor_id",			kCPUinfo_VendorID},
 	{	"foo",					-1},
 	{	"",						-1},
 };
@@ -169,27 +172,36 @@ char	*stringPtr;
 bool	stillNeedModel;
 bool	stillNeedModelName;
 int		keyWordEnum;
+bool	vendorIDfound;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set the default value in case we fail to read /proc/cpuinfo
 	strcpy(gPlatformString,	"");
 	strcpy(gCpuInfoString,	"");
 	stillNeedModel		=	true;
 	stillNeedModelName	=	true;
+	vendorIDfound		=	false;
+//	CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 
 #if defined(__arm__) && !defined(_PLATFORM_STRING_)
 	strcpy(gPlatformString,	"Raspberry Pi - ");
 #elif defined(__i386__)
 	strcpy(gPlatformString,	"32 bit x86");
+	strcpy(gHardwareString,	"PC-x86");
 #elif defined(__x86_64__)
 	strcpy(gPlatformString,	"64 bit x86");
+	strcpy(gHardwareString,	"PC-x64");
 #elif defined(__ARM_ARCH_8A) && defined(__ARM_64BIT_STATE)
 	strcpy(gPlatformString,	"Jetson TX2");
+	strcpy(gHardwareString,	"Jetson");
 #elif defined(__ARM_ARCH_8A) || defined(__ARM_ARCH_8)
 	strcpy(gPlatformString,	"ARM");
+	strcpy(gHardwareString,	"ARM");
 #else
 	strcpy(gPlatformString,	"Unknown platform");
 #endif
 
+//	CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 
 
 #if defined( __ARM_ARCH)
@@ -251,13 +263,26 @@ int		keyWordEnum;
 					case kCPUinfo_Hardware:
 						//*	so far I have only found this is only on Raspberry Pi
 						ExtractArgValue(lineBuff, ':', gHardwareString);
+						break;
 
+
+					case kCPUinfo_VendorID:
+						ExtractArgValue(lineBuff, ':', gPlatformString);
+						vendorIDfound		=	true;
 						break;
 
 					case kCPUinfo_Model:
 						//*	so far I have only found this is only on Raspberry Pi
-						ExtractArgValue(lineBuff, ':', gPlatformString);
+//						ExtractArgValue(lineBuff, ':', gPlatformString);
+						ExtractArgValue(lineBuff, ':', argValueString);
+						if (vendorIDfound)
+						{
+							strcat(gPlatformString, "-");
+							strcat(gPlatformString, argValueString);
+						}
 						stillNeedModel	=	false;
+//						CONSOLE_DEBUG_W_STR("lineBuff       \t=", lineBuff);
+//						CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 						break;
 
 					case kCPUinfo_ModelName:
@@ -276,6 +301,7 @@ int		keyWordEnum;
 							else
 							{
 								strcat(gPlatformString,	argValueString);
+//								CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 							}
 						}
 						break;
@@ -337,6 +363,7 @@ int		keyWordEnum;
 	{
 		CONSOLE_DEBUG("failed to open /proc/cpuinfo");
 	}
+	CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 
 	//=======================================================================
 	filePointer	=	fopen("/sys/firmware/devicetree/base/model", "r");
@@ -349,6 +376,7 @@ int		keyWordEnum;
 			if (strlen(lineBuff) > 5)
 			{
 				strcpy(gPlatformString, lineBuff);
+				CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 				if ((strlen(gHardwareString) == 0) && (strncasecmp(lineBuff, "NVIDIA", 6) == 0))
 				{
 					strcpy(gHardwareString, "jetson");
@@ -602,6 +630,24 @@ uint32_t		ram_megabytes;
 	ram_megabytes	=	mySysInfo.freehigh / (1024 * 1024);
 }
 
+//*****************************************************************************
+int		FindKeywordFromTable(const char *keyword, const TYPE_KEYWORDS *keywordTable)
+{
+int		keywordEnumValue;
+int		iii;
+	//*	Find the keyword in the table
+	keywordEnumValue	=	-1;
+	iii			=	0;
+	while ((keywordTable[iii].enumValue >= 0) && (keywordEnumValue < 0))
+	{
+		if (strcasecmp(keyword, keywordTable[iii].keyword) == 0)
+		{
+			keywordEnumValue	=	keywordTable[iii].enumValue;
+		}
+		iii++;
+	}
+	return(keywordEnumValue);
+}
 
 //*****************************************************************************
 int main(int argc, char *argv[])
@@ -610,6 +656,7 @@ double		cputempDegC;
 char		theTempString[48];
 uint32_t	ram_megabytes;
 
+	CONSOLE_DEBUG(__FUNCTION__);
 	cputempDegC	=	CPUstats_GetTemperature(theTempString);
 	printf("%s\r\n", theTempString);
 
@@ -617,6 +664,15 @@ uint32_t	ram_megabytes;
 	printf("total ram\t=\t%ld\r\n", ram_megabytes);
 
 	DumpSysInfo();
+
+	CPUstats_ReadOSreleaseVersion();
+	CPUstats_ReadInfo();
+
+	printf("gOsReleaseString\t=%s\r\n",	gOsReleaseString);
+	printf("gCpuInfoString  \t=%s\r\n",	gCpuInfoString);
+	printf("gPlatformString \t=%s\r\n",	gPlatformString);
+	printf("gHardwareString \t=%s\r\n",	gHardwareString);
+
 }
 #endif // _INCLUDE_MAIN_CPU_STATS_
 

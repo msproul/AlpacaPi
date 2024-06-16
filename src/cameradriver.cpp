@@ -209,6 +209,7 @@
 //*	Mar 25,	2024	<MLS> Read NASA Moon Phase on creation of camera objects
 //*	Apr 19,	2024	<MLS> Added check for flip enabled to Put_Flip()
 //*	May 17,	2024	<MLS> Started adding http error 400 to camera methods
+//*	Jun 15,	2024	<MLS> Fixed case bug in Put_SaveAsPNG()
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -6090,7 +6091,7 @@ char				saveAsJPEGString[32];
 	if (reqData != NULL)
 	{
 		saveAsJPEGFound		=	GetKeyWordArgument(	reqData->contentData,
-													"saveasJPEG",
+													"saveasjpeg",
 													saveAsJPEGString,
 													(sizeof(saveAsJPEGString) -1));
 		CONSOLE_DEBUG_W_BOOL("saveAsJPEGFound\t=", saveAsJPEGFound);
@@ -6144,7 +6145,7 @@ char				saveAsPNGString[32];
 	if (reqData != NULL)
 	{
 		saveAsPNGFound		=	GetKeyWordArgument(	reqData->contentData,
-													"saveasPNG",
+													"saveaspng",
 													saveAsPNGString,
 													(sizeof(saveAsPNGString) -1));
 		if (saveAsPNGFound)
@@ -6154,7 +6155,7 @@ char				saveAsPNGString[32];
 		}
 		else
 		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasfits argument not specified");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveaspng argument not specified");
 			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			CONSOLE_DEBUG(alpacaErrMsg);
 			CONSOLE_DEBUG(reqData->contentData);
@@ -6193,28 +6194,21 @@ char				saveAsRawString[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	saveAsRawFound		=	GetKeyWordArgument(	reqData->contentData,
+												"saveasraw",
+												saveAsRawString,
+												(sizeof(saveAsRawString) -1));
+	if (saveAsRawFound)
 	{
-		saveAsRawFound		=	GetKeyWordArgument(	reqData->contentData,
-													"saveasraw",
-													saveAsRawString,
-													(sizeof(saveAsRawString) -1));
-		if (saveAsRawFound)
-		{
-			cSaveAsRAW		=	IsTrueFalse(saveAsRawString);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasfits argument not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			CONSOLE_DEBUG(alpacaErrMsg);
-			CONSOLE_DEBUG(reqData->contentData);
-		}
+		cSaveAsRAW		=	IsTrueFalse(saveAsRawString);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasraw argument not specified");
+		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		CONSOLE_DEBUG(alpacaErrMsg);
+		CONSOLE_DEBUG(reqData->contentData);
 	}
 	return(alpacaErrCode);
 }
@@ -6224,16 +6218,13 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_SavedImages(TYPE_GetPutRequestData *reqData,
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
-	if (reqData != NULL)
-	{
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cCameraProp.SavedImageCnt,
-									INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cCameraProp.SavedImageCnt,
+								INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
 
 	return(alpacaErrCode);
 }

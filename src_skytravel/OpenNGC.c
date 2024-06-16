@@ -25,7 +25,8 @@
 //*	Aug 22,	2023	<MLS> Added axis and angle parsing
 //*	Sep 27,	2023	<MLS> The latest version of OpenNGC changed file location
 //*****************************************************************************
-//*	git clone https://github.com/mattiaverga/OpenNGC
+//*	https://github.com/mattiaverga/OpenNGC
+//*	git clone https://github.com/mattiaverga/OpenNGC.git
 //*****************************************************************************
 
 
@@ -381,13 +382,14 @@ int				returnCode;
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	startupWidgetIdx	=	SetStartupText("Open-NGC catalog:");
+	ngcStarData			=	NULL;
 
-	ngcStarData	=	NULL;
-
+	//*	this is the original file structure
 	strcpy(filePath, "OpenNGC/NGC.csv");
 	returnCode	=	stat(filePath, &fileStatus);		//*	fstat - check for existence of file
 	if (returnCode != 0)
 	{
+		//*	current file structure (as of June 2024)
 		strcpy(filePath, "OpenNGC/database_files/NGC.csv");
 		returnCode	=	stat(filePath, &fileStatus);		//*	fstat - check for existence of file
 	}
@@ -455,7 +457,7 @@ int				returnCode;
 //85.22535  -2.21541  2
 
 //************************************************************************
-static bool	ParseOneLine_OpenNGC_Outlines(char *lineBuff, TYPE_OpenNGCoutline *outlinePt)
+static bool	ParseOneLine_OpenNGC_Outlines(char *lineBuff, TYPE_OutlineData *outlinePt)
 {
 double				ra_degrees;
 double				dec_degrees;
@@ -473,11 +475,11 @@ int					flag;
 }
 
 //************************************************************************
-TYPE_OpenNGCoutline	*Read_OpenNGC_Outline_catgen(long *pointCount)
+TYPE_OutlineData	*Read_OpenNGC_Outline_catgen(long *pointCount)
 {
 FILE				*filePointer;
-TYPE_OpenNGCoutline	*outlineArray;
-TYPE_OpenNGCoutline	outlinePoint;
+TYPE_OutlineData	*outlineArray;
+TYPE_OutlineData	outlinePoint;
 long				linesInFile;
 long				recordCount;
 char				lineBuff[512];
@@ -494,7 +496,7 @@ bool				validObject;
 	if (filePointer != NULL)
 	{
 		linesInFile		=	CountLinesInFile(filePointer);
-		outlineArray	=	(TYPE_OpenNGCoutline *)calloc((linesInFile + 2), sizeof(TYPE_OpenNGCoutline));
+		outlineArray	=	(TYPE_OutlineData *)calloc((linesInFile + 2), sizeof(TYPE_OutlineData));
 		if (outlineArray != NULL)
 		{
 			recordCount	=	0;
@@ -527,7 +529,7 @@ int main(int argc, char *argv[])
 {
 TYPE_CelestData		*ngcData;
 long				starCount;
-TYPE_OpenNGCoutline	*outlineArray;
+TYPE_OutlineData	*outlineArray;
 long				outlinePtCount;
 
 	CONSOLE_DEBUG(__FUNCTION__);

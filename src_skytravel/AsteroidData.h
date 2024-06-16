@@ -17,20 +17,20 @@ typedef struct
 	TYPE_CelestData	StarData;
 
 	//*	values from astorb.dat
-	int		AsteroidNumber;
-	char	AsteroidName[32];
-	char	EpochOfOsculation[32];			//	Epoch of osculation
-	double	AbsoluteMagnitude;
-	double	Slope;
-	double	MeanAnomaly;
-	double	ArgOfPerihelion;
-	double	Longitude;
-	double	Inclination;
-	double	Eccentricity;
-	double	SemimajorAxis;
-	double	AbsValueCEU;		//*	arc seconds		(CEU = current ephemeris uncertainty)
-	double	RateOfChangeCEU;	//*	arcsec/day
-	char	DateOfCEU[16];		//*	yyyymmdd (0 hr UT).
+	int		AsteroidNumber;			//(1) 	Asteroid number (blank if unnumbered).
+	char	AsteroidName[32];		//(2) 	Name or preliminary designation.
+	double	AbsoluteMagnitude;		//(4) 	Absolute magnitude H, mag [see E. Bowell et al., pp. 549-554, in "Asteroids II",
+	double	Slope;					//(5) 	Slope parameter G ( ibid.).
+	char	EpochOfOsculation[32];	//(12) 	Epoch of osculation, yyyymmdd (TDT).
+	double	MeanAnomaly;			//(13) 	Mean anomaly, deg.
+	double	ArgOfPerihelion;		//(14) 	Argument of perihelion, deg (J2000.0).
+	double	Longitude;				//(15) 	Longitude of ascending node, deg (J2000.0).
+	double	Inclination;			//(16) 	Inclination, deg (J2000.0).
+	double	Eccentricity;			//(17) 	Eccentricity.
+	double	SemimajorAxis;			//(18) 	Semimajor axis, AU.
+	double	AbsValueCEU;			//*	arc seconds		(CEU = current ephemeris uncertainty)
+	double	RateOfChangeCEU;		//*	arcsec/day
+	char	DateOfCEU[16];			//*	yyyymmdd (0 hr UT).
 	//----------------------------------------------------
 	//*	computed values
 	double	Period;

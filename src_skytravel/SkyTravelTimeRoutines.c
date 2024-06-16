@@ -3,6 +3,8 @@
 //**********************************************************************
 //*	Sep  1,	2021	<MLS> Added DumpTimeStruct()
 //*	Mar 25,	2023	<MLS> Added daylight savings time check to Compute_Timezone()
+//*	Jun 11,	2024	<MLS> Added ProcessTimeAdjustmentChar()
+//*	Jun 11,	2024	<MLS> Added SetCurrentTime()
 //**********************************************************************
 
 
@@ -36,7 +38,7 @@ int		numDays;
 	numDays	=	lastd[timeptr->month - 1];
 
 	//*	Is it February
-	if (timeptr->month==2)	//* Feb. check
+	if (timeptr->month == 2)	//* Feb. check
 	{
 		if (timeptr->calflag==1)
 		{
@@ -48,13 +50,13 @@ int		numDays;
 			{
 				flg++;	//* jul
 			}
-			if (timeptr->year==1582)
+			if (timeptr->year == 1582)
 			{
-				if (timeptr->month<10)
+				if (timeptr->month < 10)
 				{
 					flg++;	//*jul
 				}
-				if (timeptr->month==10)
+				if (timeptr->month == 10)
 				{
 					if (timeptr->day<15) flg++;	//* jul
 				}
@@ -76,8 +78,34 @@ int		numDays;
 	return(numDays);
 }
 
+//*********************************************************************
+void	SetCurrentTimeStruct(TYPE_SkyTime *timeptr)
+{
+struct timeval	currentTimeVal;
+struct tm		*linuxTime;
+
+//	CONSOLE_DEBUG(__FUNCTION__);
+
+	gettimeofday(&currentTimeVal, NULL);
+
+	linuxTime	=	gmtime(&currentTimeVal.tv_sec);
+//	CONSOLE_DEBUG_W_LONG("currentTimeVal.tv_sec=", currentTimeVal.tv_sec);
+
+
+	timeptr->year	=	(1900 + linuxTime->tm_year);
+	timeptr->month	=	(1 + linuxTime->tm_mon);
+	timeptr->day	=	linuxTime->tm_mday;
+	timeptr->hour	=	linuxTime->tm_hour;
+	timeptr->min	=	linuxTime->tm_min;
+	timeptr->sec	=	linuxTime->tm_sec;
+
+	CalanendarTime(timeptr);
+
+}
+
+
 //**********************************************************************
-void Add_year(TYPE_SkyTime *timeptr,int delta)
+void Add_year(TYPE_SkyTime *timeptr, int delta)
 {
 	timeptr->year	+=	delta;
 	if (timeptr->day > Lastday(timeptr))
@@ -220,6 +248,60 @@ void Sub_sec(TYPE_SkyTime *timeptr)
 	{
 		timeptr->sec	+=	60;
 		Sub_min(timeptr);
+	}
+}
+
+//**********************************************************************
+//*	easier to make it consistent between SkyTravel and SolarSystem windows
+//**********************************************************************
+void	ProcessTimeAdjustmentChar(char theChar)
+{
+	switch(theChar)
+	{
+		case '=':
+			SetCurrentTimeStruct(&gCurrentSkyTime);
+			break;
+
+		case '<':	//*	Back one hour
+			Sub_hour(&gCurrentSkyTime);
+			break;
+
+		case '>':	//*	Forward one hour
+			Add_hour(&gCurrentSkyTime);
+			break;
+
+		case '[':	//*	Back one day
+			Sub_day(&gCurrentSkyTime);
+			break;
+
+		case ']':	//*	Forward one day
+			Add_day(&gCurrentSkyTime);
+			break;
+
+		case '{':	//*	Back one month
+			Sub_month(&gCurrentSkyTime);
+			break;
+
+		case '}':	//*	Forward one month
+			Add_month(&gCurrentSkyTime);
+			break;
+
+		case '(':	//*	Back one year
+			Sub_year(&gCurrentSkyTime, 1);
+			break;
+
+		case ')':	//*	Forward one year
+			Add_year(&gCurrentSkyTime, 1);
+			break;
+
+		case '9':	//*	Back one minute
+			Sub_min(&gCurrentSkyTime);
+			break;
+
+		case '0':	//*	Forward one minute
+			Add_min(&gCurrentSkyTime);
+			break;
+
 	}
 }
 
@@ -384,7 +466,7 @@ int		yr,mo;
 void	CalanendarTime(TYPE_SkyTime *timeptr)	//* compute dte and cent
 {
 int		julianFlag	=	0;	//* 0 = gregorian calendar default, >0 = julian calendar
-double	dtemp; 		//* floating point accumulator
+double	dtemp; 				//* floating point accumulator
 double	hr;
 double	min;
 double	sec;

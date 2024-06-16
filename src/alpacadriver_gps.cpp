@@ -83,7 +83,7 @@ static void	PrintHTMLtableEntryDBL(int mySocketFD, const char *string1, const do
 {
 char	string2[256];
 
-	sprintf(string2, "%f", value);
+	sprintf(string2, "%10.9f", value);
 	PrintHTMLtableEntry(mySocketFD, string1, string2);
 }
 
@@ -288,10 +288,12 @@ int		iii;
 
 uint32_t	gLastGrapicsSave_ms	=	0;
 
+
 //*****************************************************************************
 void	SendHtml_GPS(TYPE_GetPutRequestData *reqData)
 {
 char		lineBuffer[512];
+char		urlString[512];
 int			mySocketFD;
 char		gpsWebTitle[]	=	"GPS Information";
 
@@ -340,7 +342,13 @@ uint32_t	delta_ms;
 
 			PrintHTMLtableEntry(mySocketFD,	"Device",		gGlobalGPSpath);
 
-			sprintf(lineBuffer, "%d", (gGlobalGPSbaudrate == '4') ? 4800 : 9600);
+			switch(gGlobalGPSbaudrate)
+			{
+				case '1':	strcpy(lineBuffer,	"19200");	break;
+				case '4':	strcpy(lineBuffer,	"4800");	break;
+				case '9':	strcpy(lineBuffer,	"9600");	break;
+				default:	strcpy(lineBuffer,	"unknown");	break;
+			}
 			PrintHTMLtableEntry(mySocketFD,	"Baud rate",	lineBuffer);
 
 			SocketWriteData(mySocketFD,	"</TABLE>\r\n");
@@ -372,20 +380,34 @@ uint32_t	delta_ms;
 				PrintHTMLtableEntryDBL(mySocketFD,	"Latitude",					gNMEAdata.lat_double);
 				PrintHTMLtableEntryDBL(mySocketFD,	"Longitude",				gNMEAdata.lon_double);
 
+			#ifdef _ENABLE_GPS_AVERAGE_
 				ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_average,
 												latString,
 												gNMEAdata.lon_average,
 												lonString);
+			#else
+				ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_double,
+												latString,
+												gNMEAdata.lon_double,
+												lonString);
+			#endif
+
 				PrintHTMLtableEntry(mySocketFD,	"Latitude",			latString);
 				PrintHTMLtableEntry(mySocketFD,	"Longitude",		lonString);
 
 				FormatTimeStringISO8601_tm(&gNMEAdata.linuxTime, lineBuffer);
 				PrintHTMLtableEntry(mySocketFD,	"Date/Time",		lineBuffer);
 
-
+				//*	create a google maps link
+			#ifdef _ENABLE_GPS_AVERAGE_
+				FormatGoogleMapsRequest(urlString, gNMEAdata.lat_average, gNMEAdata.lon_average);
+			#else
+				FormatGoogleMapsRequest(urlString, gNMEAdata.lat_double, gNMEAdata.lon_double);
+			#endif
+				sprintf(lineBuffer,	"<A HREF=%s target=google>Google Maps</A>", urlString);
+				PrintHTMLtableEntry(mySocketFD,	"Google Maps",		lineBuffer);
 				SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 				SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-
 			}
 			else
 			{

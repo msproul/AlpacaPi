@@ -23,6 +23,7 @@
 //*	Mar  9,	2024	<MLS> Fixed bug where Software Version screen was not getting updated
 //*	Mar 25,	2024	<MLS> Added MoonPhase window to SkyTravel
 //*	Mar 26,	2024	<MLS> Added RunFastBackgroundTasks()
+//*	Jun  9,	2024	<MLS> Added SolarSystem window to SkyTravel
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -62,6 +63,7 @@
 #include	"windowtab_skytravel.h"
 #include	"windowtab_sw_versions.h"
 #include	"windowtab_time.h"
+#include	"windowtab_solarsystem.h"
 
 
 #include	"controller.h"
@@ -99,6 +101,7 @@ ControllerSkytravel::ControllerSkytravel(	const char *argWindowName)
 	cSwVersionsListObjPtr			=	NULL;
 	cAboutBoxTabObjPtr				=	NULL;
 	cFOVTabObjPtr					=	NULL;
+	cSolarSYstemTabObjPtr			=	NULL;
 #ifndef __ARM_ARCH
 	cMountTabObjPtr					=	NULL;
 #endif
@@ -150,6 +153,8 @@ ControllerSkytravel::~ControllerSkytravel(void)
 	DELETE_OBJ_IF_VALID(cMoonTabObjPtr);
 	DELETE_OBJ_IF_VALID(cMoonPhaseTabObjPtr);
 	DELETE_OBJ_IF_VALID(cAboutBoxTabObjPtr);
+	DELETE_OBJ_IF_VALID(cSolarSYstemTabObjPtr);
+
 #ifdef _ENABLE_CPU_STATS_
 	DELETE_OBJ_IF_VALID(cCpuStatsTabObjPtr);
 #endif
@@ -171,6 +176,16 @@ void	ControllerSkytravel::SetupWindowControls(void)
 		SetTabWindow(kTab_SkyTravel,	cSkyTravelTabOjbPtr);
 		cSkyTravelTabOjbPtr->SetParentObjectPtr(this);
 	}
+
+	//=============================================================
+	SetTabText(kTab_ST_SolarSystem,	"Solar System");
+	cSolarSYstemTabObjPtr		=	new WindowTabSolarSystem(	cWidth, cHeight, cBackGrndColor);
+	if (cSolarSYstemTabObjPtr != NULL)
+	{
+		SetTabWindow(kTab_ST_SolarSystem,	cSolarSYstemTabObjPtr);
+		cSolarSYstemTabObjPtr->SetParentObjectPtr(this);
+	}
+
 
 	//=============================================================
 	SetTabText(kTab_ST_Time,	"Time");
@@ -363,42 +378,42 @@ void	ControllerSkytravel::SetDomeIPaddress(TYPE_REMOTE_DEV *remoteDomeDevice)
 char	ipAddrStr[64];
 char	lineBuff[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	//============================================
 	//*	disable all of the extra commands until we know if they exist
 	if (cDomeTabObjPtr != NULL)
 	{
 		cDomeTabObjPtr->ResetKnownCommands();
-CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-1");
+//CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-1");
 	}
-CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-2");
+//CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-2");
 
 	cDomeIpAddress			=	remoteDomeDevice->deviceAddress;
 	cDomeIpPort				=	remoteDomeDevice->port;
 	cDomeAlpacaDeviceNum	=	remoteDomeDevice->alpacaDeviceNum;
 	cDomeAddressValid		=	true;
-CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-3");
+//CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-3");
 
 	cReadStartup_Dome		=	true;
 	cDomeHas_Readall		=	false;
 
-CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-4");
+//CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-4");
 	PrintIPaddressToString(cDomeIpAddress.sin_addr.s_addr, ipAddrStr);
 	sprintf(lineBuff, "%s:%d/%d", ipAddrStr, cDomeIpPort, cDomeAlpacaDeviceNum);
 
-CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-5");
+//CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-5");
 //-	SetWindowIPaddrInfo(lineBuff, true);
 
 	if (cWindowTabs[kTab_ST_Dome] != NULL)
 	{
 		cWindowTabs[kTab_ST_Dome]->SetWindowIPaddrInfo(lineBuff, true);
 	}
-CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-6");
+//CONSOLE_DEBUG_W_STR(__FUNCTION__, "step-6");
 
 	SetWidgetBGColor(kTab_SkyTravel,	kSkyTravel_DomeIndicator,		CV_RGB(64,	255,	64));
 
-	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
+//	CONSOLE_DEBUG_W_STR("IP address=", ipAddrStr);
 }
 
 //**************************************************************************************

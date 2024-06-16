@@ -49,17 +49,18 @@ typedef struct
 		bool				dispDeep;				//*	Deep sky objects on/off
 		bool				dispYale;				//*	Deep Yale catalog on/off
 		//*	added by <MLS>
-		bool				dispMessier;			//*	Messier on/off
+		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts
+		bool				dispAsteroids;			//*	Lowell Asteroid catalog
 		bool				dispConstOutlines;		//*	Constellation outlines on/off
 		bool				dispConstellations;		//*	Constellation vectors on/off
 		bool				dispCommonStarNames;	//*	Common star names on/off
-		bool				dispSAO;				//*	SAO database
-		bool				dispHYG_all;
 		bool				dispDraper;				//*	Henry Draper Catalog
-		bool				dispAAVSOalerts;		//*	AAVSO TargetTool Alerts
-
 		bool				dispGaia;				//*	Gaia Catalog
-		bool				dispAsteroids;			//*	Lowell Asteroid catalog
+		bool				dispHYG_all;
+		bool				dispMessier;			//*	Messier on/off
+		bool				dispMilkyWayOutline;	//*	MilkyWay outline
+		bool				dispMilkyWayFilled;		//*	MilkyWay outline
+		bool				dispSAO;				//*	SAO database
 
 		unsigned char		dispSpecialObjects;		//*	Special.txt objects, this is an enum
 

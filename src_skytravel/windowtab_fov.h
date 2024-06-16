@@ -127,6 +127,7 @@ class WindowTabFOV: public WindowTab
 
 		virtual	void	RunWindowBackgroundTasks(void);
 		virtual	void	SetupWindowControls(void);
+		virtual void	HandleKeyDown(const int keyPressed);
 		virtual	void	ProcessButtonClick(const int buttonIdx, const int flags);
 		virtual	void	ProcessDoubleClick(	const int	widgetIdx,
 											const int	event,

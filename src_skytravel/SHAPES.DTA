@@ -1,6 +1,9 @@
+//******************************************************************************
+//*	Jun  9,	2024	<MLS> Changed name from planet_shapes to gPlanet_shapes
 /*SHAPE TABLE FOR PLANETARY SYMBOLS*/
 
-const char *planet_shapes[]=
+//******************************************************************************
+const char *gPlanet_shapes[]=
 {
 	"\x98\x42\x21\x41\x23\x01\x21\x02" /*moon*/
 	"\xa3\xc1\xa1\xc6\xe1\xc1\xe3\x82"
@@ -39,8 +42,9 @@ const char *planet_shapes[]=
 	"\x84\x00"
 };
 
-/*SHAPE TABLE FOR ZODIAC SYMBOLS*/
 
+//******************************************************************************
+/*SHAPE TABLE FOR ZODIAC SYMBOLS*/
 const char *zodiac_shapes[]=
 {
 	"\xC3\x01\x44\x01\x41\x01\xE1\xA1"	/*aries*/

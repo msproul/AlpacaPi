@@ -409,10 +409,7 @@ void	ControllerCamera::ProcessConfiguredDevices(const char *keyword, const char 
 
 }
 
-
 #pragma mark -
-
-
 //*****************************************************************************
 bool	ControllerCamera::AlpacaGetStartupData_OneAAT(void)
 {
@@ -425,53 +422,11 @@ int				readOutModeIdx;
 	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	validData	=	false;
 
-//	//*	get the camera description
-//	if (cOnLine)
-//	{
-//		SJP_Init(&jsonParser);
-//		sprintf(alpacaString,	"/api/v1/camera/%d/description", cAlpacaDevNum);
-//		validData	=	GetJsonResponse(	&cDeviceAddress,
-//											cPort,
-//											alpacaString,
-//											NULL,
-//											&jsonParser);
-//		if (validData)
-//		{
-//			for (jjj=0; jjj<jsonParser.tokenCount_Data; jjj++)
-//			{
-//	//			CONSOLE_DEBUG_W_2STR("json=",	jsonParser.dataList[jjj].keyword,
-//	//											jsonParser.dataList[jjj].valueString);
-//
-//				//*	this is an extra in AlpacaPi only
-//				if (strcasecmp(jsonParser.dataList[jjj].keyword, "DEVICE") == 0)
-//				{
-//					strcpy(cCommonProp.Name,	jsonParser.dataList[jjj].valueString);
-//				}
-//
-//				if (strcasecmp(jsonParser.dataList[jjj].keyword, "VALUE") == 0)
-//				{
-//					if (strlen(jsonParser.dataList[jjj].valueString) >= kCommonPropMaxStrLen)
-//					{
-//						jsonParser.dataList[jjj].valueString[kCommonPropMaxStrLen - 1]	=	0;
-//					}
-//					strcpy(cCommonProp.Description,	jsonParser.dataList[jjj].valueString);
-//				}
-//			}
-//			UpdateCameraName();
-//
-//		}
-//		else
-//		{
-//			cReadFailureCnt++;
-//			cOnLine	=	false;
-//		}
-////		CONSOLE_DEBUG_W_STR("cCommonProp.Name\t=", cCommonProp.Name);
-//
-//	}
+	//*	common properties are already taken care of.
 
 	UpdateCameraName();
-	CONSOLE_DEBUG_W_BOOL("cOnLine  \t=",	cOnLine);
-	CONSOLE_DEBUG_W_BOOL("validData\t=",	validData);
+//	CONSOLE_DEBUG_W_BOOL("cOnLine  \t=",	cOnLine);
+//	CONSOLE_DEBUG_W_BOOL("validData\t=",	validData);
 	//===============================================================
 	//*	get the readout modes
 	if (cOnLine)
@@ -545,12 +500,9 @@ int				readOutModeIdx;
 		validData	=	AlpacaGetDoubleValue("camera", "exposuremax",	NULL,	&cCameraProp.ExposureMax_seconds);
 		UpdateCameraExposureStartup();
 
-
 		UpdateCameraState();
 	}
-
 	return(validData);
-
 }
 
 //*****************************************************************************

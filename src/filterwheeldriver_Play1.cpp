@@ -74,7 +74,7 @@ char	rulesFileName[]	=	"99-player_one_astronomy.rules";
 				kASCOM_Err_Success,
 				driverVersionString);
 
-	AddLibraryVersion("camera", "PlayerOne", driverVersionString);
+	AddLibraryVersion("filterwheel", "PlayerOne", driverVersionString);
 	CONSOLE_DEBUG_W_STR("PlayerOne driver version:", driverVersionString);
 
 	//*	check to make sure the rules file is present

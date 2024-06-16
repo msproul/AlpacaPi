@@ -13,20 +13,21 @@
 #ifndef	_WINDOW_TAB_H_
 	#include	"windowtab.h"
 #endif
-
 #ifndef _SKY_STRUCTS_H_
 	#include	"SkyStruc.h"
 #endif
-
 #ifndef _CONSTELLATION_DATA_H_
 	#include	"ConstellationData.h"
 #endif
-
 #ifndef _CAMERA_FOV_H_
 	#include	"cameraFOV.h"
 #endif
+#ifndef	_OUTLINE_DATA_H_
+	#include	"outlinedata.h"
+#endif
 
 #include	"commoncolor.h"
+
 
 #include	"SkyDisplayStruct.h"
 
@@ -52,6 +53,7 @@ enum
 	kSkyTravel_Btn_CommonStarNames,
 	kSkyTravel_Btn_ConstOutline,
 	kSkyTravel_Btn_Constellations,
+	kSkyTravel_Btn_MilkyWayDisp,
 	kSkyTravel_Btn_NGC,
 	kSkyTravel_Btn_Messier,
 	kSkyTravel_Btn_YaleCat,
@@ -302,7 +304,9 @@ class WindowTabSkyTravel: public WindowTab
 				void	DrawPolarAlignmentCenterVector(TYPE_CelestData *polarAlignCenters, long polarAlignCnt);
 
 				int		DrawAsteroids(void);
+				int		DrawOutlines(TYPE_OutlineData *outLineArray, long outLineCount, const int color);
 				int		DrawOpenNGC_Outlines(void);
+				int		DrawPolygons(TYPE_OutlineData *outLineArray, long outLineCount);
 
 				//*	this routine draws cute little easter eggs along the horizon,
 				void	MapTokens(TYPE_SkyTime *timeptr, TYPE_LatLon *locptr);
@@ -353,7 +357,6 @@ class WindowTabSkyTravel: public WindowTab
 			//*	still need the offset for doing cursor calculations
 			int					cCursorOffsetY;
 
-			bool				cAutoAdvanceTime;
 			bool				cNightMode;
 			unsigned short		cTrack;				//*	0=no tracking, 1=track cursor, 2,3 etc. means track planet
 			TYPE_SkyDispOptions	cDispOptions;

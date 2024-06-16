@@ -74,6 +74,9 @@
 #ifndef	_WINDOWTAB_SW_VERSIONS_H_
 	#include	"windowtab_sw_versions.h"
 #endif
+#ifndef	_WINDOWTAB_SOLAR_SYSTEM_H_
+	#include	"windowtab_solarsystem.h"
+#endif
 
 #include	"windowtab_time.h"
 	#ifndef	_WINDOWTAB_TIME_H_
@@ -110,6 +113,7 @@ typedef struct
 	int		LineWidth_ConstOutlines;
 	int		LineWidth_GridLines;
 	int		LineWidth_NGCoutlines;
+	int		LineWidth_MilkyWay;
 	bool	DispMagnitude;			//*	display magnitude of stars if zoomed in
 	bool	DispSpectralType;		//*	display spectral type as a letter if zoomed in
 	bool	DispParallax;
@@ -137,6 +141,7 @@ extern	SkyTravelDispOptions	gST_DispOptions;
 enum
 {
 	kTab_SkyTravel	=	1,
+	kTab_ST_SolarSystem,
 	kTab_ST_Settings,
 	kTab_ST_Time,
 	kTab_ST_FOV,
@@ -234,6 +239,7 @@ class ControllerSkytravel: public Controller
 
 				WindowTabTime			*cTimeTabObjPtr;
 
+				WindowTabSolarSystem	*cSolarSYstemTabObjPtr;
 		//====================================================
 		//*	CPU status stuff (primarily for debugging)
 			#ifdef _ENABLE_CPU_STATS_

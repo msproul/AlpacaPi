@@ -30,6 +30,7 @@
 //*	Jun 14,	2023	<MLS> Added event logging if errors with usbquerry.sh
 //*	Sep 20,	2023	<MLS> Added USB_DumpTable()
 //*	May  9,	2024	<MLS> Added auto init to USB_GetPathFromID()
+//*	Jun  1,	2024	<MLS> Added ttyACM to scanned ports
 //*****************************************************************************
 
 #include	<stdlib.h>
@@ -122,6 +123,7 @@ int				errorCode;
 			if (dir != NULL)
 			{
 				if ((strncmp(dir->d_name, "ttyUSB", 6) == 0) ||
+					(strncmp(dir->d_name, "ttyACM", 6) == 0) ||
 					(strncmp(dir->d_name, "ttyAMA", 6) == 0))
 				{
 //					CONSOLE_DEBUG_W_STR("USB serial device found->", dir->d_name);
@@ -201,6 +203,9 @@ bool	foundIt;
 		USB_InitTable();
 	}
 
+//	USB_DumpTable();
+
+//	CONSOLE_DEBUG_W_STR("Looking for:", idString);
 
 	foundIt	=	false;
 	iii		=	0;
@@ -209,6 +214,7 @@ bool	foundIt;
 		//*	check for a match
 		if (strstr(gUSBtable[iii].usbIDstring, idString) != NULL)
 		{
+//			CONSOLE_DEBUG_W_STR("Found:", gUSBtable[iii].usbIDstring);
 			//*	make sure it has not been claimed already
 			if (gUSBtable[iii].hasBeenClaimed == false)
 			{
