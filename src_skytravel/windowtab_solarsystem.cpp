@@ -22,7 +22,7 @@
 //*	Jun 10,	2024	<MLS> Solar system display working
 //*	Jun 10,	2024	<MLS> Verified display is correct https://www.theplanetstoday.com/index.html
 //*	Jun 11,	2024	<MLS> Added time adjustment key commands identical to SkyTravel window
-//*	Jun 12,	2024	<MLS> DrawAsteriods() & DrawAstronomicalScale()
+//*	Jun 12,	2024	<MLS> Added DrawAsteriods() & DrawAstronomicalScale()
 //*	Jun 12,	2024	<MLS> Added DrawCrossHairs()
 //*	Jun 13,	2024	<MLS> Added DrawKuiperBelt()
 //*	Jun 14,	2024	<MLS> Added DrawOrbits()
@@ -231,28 +231,36 @@ int		myChar;
 			gAutoAdvanceTime	=	!gAutoAdvanceTime;
 			break;
 
+		case 'A':
 		case 'a':
 			cDislayAsteriods	=	!cDislayAsteriods;
 			break;
 
 		case 'c':
+		case 'C':
 			cCenter_X	=	cWidgetList[kSolarSystem_DisplayBox].left + (cWidgetList[kSolarSystem_DisplayBox].width / 2);
 			cCenter_Y	=	cWidgetList[kSolarSystem_DisplayBox].top + (cWidgetList[kSolarSystem_DisplayBox].height / 2);
 			break;
 
 		//*	set to Inner solar system
+		case 'I':
 		case 'i':
-			cScaleFactor		=	kInnerSolarSystemScaleFactor;
+			cScaleFactor	=	kInnerSolarSystemScaleFactor;
+			cCenter_X		=	cWidgetList[kSolarSystem_DisplayBox].left + (cWidgetList[kSolarSystem_DisplayBox].width / 2);
+			cCenter_Y		=	cWidgetList[kSolarSystem_DisplayBox].top + (cWidgetList[kSolarSystem_DisplayBox].height / 2);
 			break;
 
+		case 'K':
 		case 'k':
 			cDislayKuiperBelt	=	!cDislayKuiperBelt;
 			break;
 
+		case 'O':
 		case 'o':
 			cDislayOrbit	=	!cDislayOrbit;
 			break;
 
+		case 'P':
 		case 'p':
 			gTransNeptunianCount++;
 			if (gTransNeptunianCount > 5)
@@ -261,6 +269,7 @@ int		myChar;
 			}
 			break;
 
+		case 'R':
 		case 'r':
 			cScaleFactor		=	kDefaultScaleFactor;
 			cDislayOrbit		=	false;
@@ -273,10 +282,12 @@ int		myChar;
 			cCenter_Y	=	cWidgetList[kSolarSystem_DisplayBox].top + (cWidgetList[kSolarSystem_DisplayBox].height / 2);
 			break;
 
+		case 'U':
 		case 'u':
 			cDislayAUscale	=	!cDislayAUscale;
 			break;
 
+		case 'X':
 		case 'x':
 			cDislayCrossHairs	=	!cDislayCrossHairs;
 			break;
@@ -578,9 +589,9 @@ struct tm	myUtcTime;
 			LLG_DrawCString(pt1_X + 5, pt1_Y, gPlanetKepData[iii].name);
 		}
 	}
-	sprintf(textBuff, "Scale Factor = %3.2f", cScaleFactor);
+	sprintf(textBuff, "Scale Factor = %3.0f (pixels per AU)", cScaleFactor);
 	LLG_SetColor(W_WHITE);
-	LLG_DrawCString(graphWidget->left + 20, graphWidget->top + 40, textBuff);
+	LLG_DrawCString(graphWidget->left + 10, graphWidget->top + 30, textBuff);
 
 	//-----------------------------------------------------------------
 	//*	Astronomical Units Scale

@@ -65,6 +65,7 @@
 #++	Mar  5,	2023	<MLS> Re-organizing object lists
 #++	Dec  2,	2023	<MLS> Added piswitch3
 #++	Apr 22,	2024	<MLS> Added _INCLUDE_MULTI_LANGUAGE_SUPPORT_
+#++	Jun 16,	2024	<MLS> Updated QSI Makefile entry
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -2440,14 +2441,16 @@ qsi		:		DEFINEFLAGS		+=	-D_ENABLE_QSI_
 qsi		:		DEFINEFLAGS		+=	-D_USE_OPENCV_
 qsi		:		INCLUDES		+=	-I$(QSI_INCLUDE_DIR)
 qsi		:										\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
 					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 
 		$(LINK)  								\
-					$(SOCKET_OBJECTS)			\
-					$(CPP_OBJECTS)				\
 					$(DRIVER_OBJECTS)			\
+					$(CAMERA_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
 					$(OPENCV_LINK)				\
 					-lcfitsio					\
 					-lqsiapi					\

@@ -191,6 +191,7 @@
 //*	May 18,	2024	<MLS> Added _DEBUG_MANAGEMENT_
 //*	May 18,	2024	<MLS> Fixed cSendJSONresponse bug, not initialized to true
 //*	Jun  1,	2024	<MLS> Global GPS now looks for Emlid and if found, uses that port
+//*	Jun 17,	2024	<MLS> Fixed bug in ProcessCmdLineArgs(), -p6502 caused a segmentation fault
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -4376,6 +4377,8 @@ int		iii;
 char	theChar;
 int		newListenPort;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
+
 	for (iii=1; iii<argc; iii++)
 	{
 		if (argv[iii][0] == '-')
@@ -4427,16 +4430,28 @@ int		newListenPort;
 
 				//	-p specifies a port
 				case 'p':
-					iii++;
-					newListenPort		=	atoi(argv[iii]);
+//					CONSOLE_DEBUG_W_STR("argv[iii]\t=", argv[iii])
+
+					newListenPort	=	kAlpacaPiDefaultPORT;
+					if (isdigit(argv[iii][2]))
+					{
+						newListenPort		=	atoi(&argv[iii][2]);
+					}
+					else if (iii < (argc -1))
+					{
+						iii++;
+						newListenPort		=	atoi(argv[iii]);
+					}
 					if ((newListenPort > 1024) && (newListenPort <= 65535))
 					{
 						gAlpacaListenPort	=	newListenPort;
+//						CONSOLE_DEBUG_W_NUM("gAlpacaListenPort\t=", gAlpacaListenPort)
 					}
 					else
 					{
-						CONSOLE_DEBUG("Invalid listen port specified");
-						CONSOLE_ABORT(__FUNCTION__);
+						CONSOLE_DEBUG("Invalid listen port specified, using default");
+						CONSOLE_DEBUG_W_NUM("gAlpacaListenPort\t=", gAlpacaListenPort)
+//						CONSOLE_ABORT(__FUNCTION__);
 					}
 					break;
 

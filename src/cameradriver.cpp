@@ -2478,38 +2478,28 @@ char				gainString[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	gainFound		=	GetKeyWordArgument(	reqData->contentData,
+											"Gain",
+											gainString,
+											(sizeof(gainString) -1));
+	if (gainFound)
 	{
-		gainFound		=	GetKeyWordArgument(	reqData->contentData,
-												"Gain",
-												gainString,
-												(sizeof(gainString) -1));
-		if (gainFound)
+		if (IsValidNumericString(gainString))
 		{
-			if (IsValidNumericString(gainString))
+			newGainValue	=	atoi(gainString);
+			if ((newGainValue >= cCameraProp.GainMin) && (newGainValue <= cCameraProp.GainMax))
 			{
-				newGainValue	=	atoi(gainString);
-				if ((newGainValue >= cCameraProp.GainMin) && (newGainValue <= cCameraProp.GainMax))
+				alpacaErrCode	=	Write_Gain(newGainValue);
+				if (alpacaErrCode == kASCOM_Err_Success)
 				{
-					alpacaErrCode	=	Write_Gain(newGainValue);
-					if (alpacaErrCode == kASCOM_Err_Success)
-					{
-						cCameraProp.Gain	=	newGainValue;
-					}
-				}
-				else
-				{
-					alpacaErrCode			=	kASCOM_Err_InvalidValue;
-					reqData->httpRetCode	=	400;
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain value outside of min/max");
-					CONSOLE_DEBUG(alpacaErrMsg);
+					cCameraProp.Gain	=	newGainValue;
 				}
 			}
 			else
 			{
 				alpacaErrCode			=	kASCOM_Err_InvalidValue;
 				reqData->httpRetCode	=	400;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain value is non-numeric");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain value outside of min/max");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -2517,23 +2507,25 @@ char				gainString[32];
 		{
 			alpacaErrCode			=	kASCOM_Err_InvalidValue;
 			reqData->httpRetCode	=	400;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain not specified");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain value is non-numeric");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										gValueString,
-										cCameraProp.Gain,
-										INCLUDE_COMMA);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Gain not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									gValueString,
+									cCameraProp.Gain,
+									INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_GainMax(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -2827,20 +2819,13 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 
 	if (cOffsetSupported)
 	{
-		if (reqData != NULL)
-		{
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											responseString,		//gValueString,
-											cCameraProp.Offset,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InternalError;
-		}
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,		//gValueString,
+										cCameraProp.Offset,
+										INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
@@ -3695,17 +3680,18 @@ double				myExposureDuration_secs;
 double				myExposure_usecs;
 bool				lightFrame;
 
-	if (cVerboseDebug)
+//	if (cVerboseDebug)
 	{
 		CONSOLE_DEBUG(__FUNCTION__);
 		CONSOLE_DEBUG_W_NUM("currentROIimageType\t=",	cROIinfo.currentROIimageType);
-		CONSOLE_DEBUG_W_STR("contentData        \t=",	reqData->contentData);
+//		CONSOLE_DEBUG_W_STR("contentData        \t=",	reqData->contentData);
+//		CONSOLE_DEBUG_W_STR("htmlData\r\n",				reqData->htmlData);
+		DumpRequestStructure(__FUNCTION__, reqData);
 	}
 
 	if (reqData != NULL)
 	{
 		lightFrame	=	true;
-
 
 		//*	first we are going to check a bunch of stuff to make CONFORM happy
 		if ((cCameraProp.CanAsymmetricBin == false) && (cCameraProp.BinX != cCameraProp.BinY))
@@ -3789,6 +3775,13 @@ bool				lightFrame;
 													kMaxJsonBuffLen,
 													"exposure",
 													currExposure_secs,
+													INCLUDE_COMMA);
+
+					cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
+													reqData->jsonTextBuffer,
+													kMaxJsonBuffLen,
+													"Light",
+													lightFrame,
 													INCLUDE_COMMA);
 				}
 				else

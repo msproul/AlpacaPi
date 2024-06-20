@@ -39,6 +39,7 @@
 //*	May 18,	2022	<MLS> Added Write_SensorTemp()
 //*	May 18,	2022	<MLS> SUPPORTED: QSI cameras
 //*	Jun  7,	2022	<MLS> Added maxbinx/y override until binning is implemented
+//*	Jun 17,	2024	<MLS> Fixed bug in CreateCameraObjects_QSI() invalid camera count
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
@@ -78,11 +79,29 @@ std::string		text;
 std::string		lastError("");
 int				numCamerasFound;
 QSICamera		cQSIcam;
+bool			rulesFileOK;
+char			rulesFileName[]	=	"99-qsi.rules";
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	numCamerasFound	=	0;
-	camSerial[0]	=	"";
+	numCamerasFound		=	0;
+	cameraCreatedCount	=	0;
+	camSerial[0]		=	"";
+
+	//----------------------------------------------------------------------
+	//*	check the rules file
+	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
+	if (rulesFileOK == false)
+	{
+		LogEvent(	"camera",
+					"Problem with QSI rules",
+					NULL,
+					kASCOM_Err_Success,
+					rulesFileName);
+		CONSOLE_DEBUG_W_STR("QSI Rules file is not installed:", rulesFileName);
+	}
+
+
 	cQSIcam.put_UseStructuredExceptions(false);
 	qsi_Result	=	cQSIcam.get_DriverInfo(info);
 	if (qsi_Result == QSI_OK)
@@ -118,6 +137,7 @@ QSICamera		cQSIcam;
 		{
 			//*	for debugging without a camera
 			new CameraDriverQSI(0, camSerial[0]);
+			cameraCreatedCount++;
 		}
 	}
 	else

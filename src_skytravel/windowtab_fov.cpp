@@ -932,7 +932,6 @@ char	textString[512];
 char	offsetsString[64];
 char	tempString[64];
 int		myDevCount;
-bool	hostNameIsIncluded;
 int		hostNameLen;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -965,7 +964,7 @@ int		hostNameLen;
 			if (cRemoteDeviceList[iii].alpacaDeviceNum > 0)
 			{
 				//*	if the device number is not 0, we want to display it
-				sprintf(tempString, "%:%d",cRemoteDeviceList[iii].alpacaDeviceNum);
+				sprintf(tempString, ":%d",cRemoteDeviceList[iii].alpacaDeviceNum);
 				strcat(nameString, tempString);
 			}
 

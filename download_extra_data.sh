@@ -55,7 +55,7 @@ then
 		echo "Something is wrong, the folder exists but the data folder is missing"
 	fi
 else
-	echo "Downloading via git................."
+	echo "Downloading milkyway outline data via git................."
 	git clone https://github.com/ofrohn/d3-celestial.git
 fi
 
