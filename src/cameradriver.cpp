@@ -210,6 +210,9 @@
 //*	Apr 19,	2024	<MLS> Added check for flip enabled to Put_Flip()
 //*	May 17,	2024	<MLS> Started adding http error 400 to camera methods
 //*	Jun 15,	2024	<MLS> Fixed case bug in Put_SaveAsPNG()
+//*	Jun 25,	2024	<MLS> Updated PUT_CoolerOn() to pass CONFORMU
+//*	Jun 25,	2024	<MLS> Updated Put_Fastreadout() to pass CONFORMU
+//*	Jun 25,	2024	<MLS> Updated Put_SetCCDtemperature() to pass CONFORMU
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -1059,7 +1062,8 @@ char				httpHeader[500];
 			else
 			{
 				CONSOLE_DEBUG("invalid request");
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
 			}
 			break;
 
@@ -1287,7 +1291,8 @@ char				httpHeader[500];
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				alpacaErrCode			=	kASCOM_Err_InvalidOperation;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
@@ -1300,7 +1305,8 @@ char				httpHeader[500];
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				alpacaErrCode			=	kASCOM_Err_InvalidOperation;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
@@ -1313,7 +1319,8 @@ char				httpHeader[500];
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidOperation;
+				alpacaErrCode			=	kASCOM_Err_InvalidOperation;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Get not supported for stopexposure");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
@@ -1610,6 +1617,20 @@ char				httpHeader[500];
 											gServerTransactionID,
 											INCLUDE_COMMA);
 
+		//*	this is for debugging with CONFORUM 2024-06-25
+		if (true)
+		{
+			if (strlen(reqData->contentData) > 0)
+			{
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(		mySocket,
+													reqData->jsonTextBuffer,
+													kMaxJsonBuffLen,
+													"ContentData",
+													reqData->contentData,
+													INCLUDE_COMMA);
+			}
+		}
+
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Int32(		mySocket,
 											reqData->jsonTextBuffer,
 											kMaxJsonBuffLen,
@@ -1623,6 +1644,7 @@ char				httpHeader[500];
 											"ErrorMessage",
 											alpacaErrMsg,
 											NO_COMMA);
+
 
 		//CONSOLE_DEBUG_W_NUM("len of jsonTextBuffer\t=", strlen(reqData->jsonTextBuffer));
 		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Finish(	mySocket,
@@ -1668,7 +1690,8 @@ char	myValueString[256];
 	keywordFound		=	GetKeyWordArgument(	sourceData,
 												keyword,
 												myValueString,
-												(sizeof(myValueString) -1));
+												(sizeof(myValueString) -1),
+												kIgnoreCase);
 	if (keywordFound)
 	{
 //		CONSOLE_DEBUG_W_STR("Keyword found:", keyword);
@@ -1703,50 +1726,41 @@ double	myExposureDuration_secs;
 double	myExposure_usecs;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		ProcessTelescopeKeyWord(reqData->contentData,	"Object",		cObjectName,			kObjectNameMaxLen);
-		ProcessTelescopeKeyWord(reqData->contentData,	"Prefix",		cFileNamePrefix,		kFileNamePrefixMaxLen);
-		ProcessTelescopeKeyWord(reqData->contentData,	"Suffix",		cFileNameSuffix,		kFileNamePrefixMaxLen);
+	ProcessTelescopeKeyWord(reqData->contentData,	"Object",		cObjectName,			kObjectNameMaxLen);
+	ProcessTelescopeKeyWord(reqData->contentData,	"Prefix",		cFileNamePrefix,		kFileNamePrefixMaxLen);
+	ProcessTelescopeKeyWord(reqData->contentData,	"Suffix",		cFileNameSuffix,		kFileNamePrefixMaxLen);
 
 //		CONSOLE_DEBUG_W_STR("Suffix", cFileNameSuffix);
 
 
-		durationFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Duration",
-													duarationString,
-													(sizeof(duarationString) -1),
-													kArgumentIsNumeric);
+	durationFound		=	GetKeyWordArgument(	reqData->contentData,
+												"Duration",
+												duarationString,
+												(sizeof(duarationString) -1),
+												kRequireCase,
+												kArgumentIsNumeric);
 
-		//*	if duration is NOT found, leave it alone
-		if (durationFound)
+	//*	if duration is NOT found, leave it alone
+	if (durationFound)
+	{
+		myExposureDuration_secs	=	AsciiToDouble(duarationString);
+//		CONSOLE_DEBUG_W_DBL("myExposureDuration_secs\t=", myExposureDuration_secs);
+		myExposure_usecs		=	myExposureDuration_secs * 1000 * 1000;
+		if (myExposure_usecs < cCameraProp.ExposureMin_us)
 		{
-			myExposureDuration_secs	=	AsciiToDouble(duarationString);
-//			CONSOLE_DEBUG_W_DBL("myExposureDuration_secs\t=", myExposureDuration_secs);
-			myExposure_usecs		=	myExposureDuration_secs * 1000 * 1000;
-			if (myExposure_usecs < cCameraProp.ExposureMin_us)
-			{
-				myExposure_usecs	=	cCameraProp.ExposureMin_us;
-				CONSOLE_DEBUG_W_DBL("Setting to default minimum exposure time of", myExposure_usecs);
-			}
-			else if (myExposure_usecs > cCameraProp.ExposureMax_us)
-			{
-				myExposure_usecs	=	cCameraProp.ExposureMax_us;
-				CONSOLE_DEBUG_W_DBL("Setting to default maximum exposure time of", myExposure_usecs);
-			}
-			cCurrentExposure_us		=	myExposure_usecs;
+			myExposure_usecs	=	cCameraProp.ExposureMin_us;
+			CONSOLE_DEBUG_W_DBL("Setting to default minimum exposure time of", myExposure_usecs);
 		}
-		else
+		else if (myExposure_usecs > cCameraProp.ExposureMax_us)
 		{
-//			CONSOLE_DEBUG("'Duration' not specified");
+			myExposure_usecs	=	cCameraProp.ExposureMax_us;
+			CONSOLE_DEBUG_W_DBL("Setting to default maximum exposure time of", myExposure_usecs);
 		}
-
+		cCurrentExposure_us		=	myExposure_usecs;
 	}
 	else
 	{
-		CONSOLE_DEBUG("Internal Error");
-	//	alpacaErrCode	=	kASCOM_Err_InternalError;
-	//	CONSOLE_ABORT("Internal Error");
+//			CONSOLE_DEBUG("'Duration' not specified");
 	}
 }
 
@@ -1812,7 +1826,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode;
 	else
 	{
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Camera is monochrome");
-		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		alpacaErrCode			=	kASCOM_Err_PropertyNotImplemented;
 	}
 	return(alpacaErrCode);
 }
@@ -1872,45 +1886,37 @@ bool				foundKeyWord;
 int					newBinValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"BinX",
+											argumentString,
+											(sizeof(argumentString) -1),
+											kRequireCase,
+											kArgumentIsNumeric);
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"BinX",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		if (IsValidNumericString(argumentString))
 		{
-			if (IsValidNumericString(argumentString))
+			newBinValue	=	atoi(argumentString);
+			if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinX))
 			{
-				newBinValue	=	atoi(argumentString);
-				if ((newBinValue >= 1) && (newBinValue <= cCameraProp.MaxbinX))
+			//	alpacaErrCode		=	kASCOM_Err_Success;
+				alpacaErrCode		=	Write_BinX(newBinValue);
+				if (alpacaErrCode == kASCOM_Err_Success)
 				{
-				//	alpacaErrCode		=	kASCOM_Err_Success;
-					alpacaErrCode		=	Write_BinX(newBinValue);
-					if (alpacaErrCode == kASCOM_Err_Success)
-					{
-						cCameraProp.BinX	=	newBinValue;
-					}
-					else
-					{
-						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
-						CONSOLE_DEBUG_W_STR("cLastCameraErrMsg\t=", cLastCameraErrMsg);
-						CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
-					}
+					cCameraProp.BinX	=	newBinValue;
 				}
 				else
 				{
-					alpacaErrCode			=	kASCOM_Err_InvalidValue;
-					reqData->httpRetCode	=	400;
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinX out of range");
-					CONSOLE_DEBUG(alpacaErrMsg);
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+					CONSOLE_DEBUG_W_STR("cLastCameraErrMsg\t=", cLastCameraErrMsg);
+					CONSOLE_DEBUG_W_STR("alpacaErrMsg\t=", alpacaErrMsg);
 				}
 			}
 			else
 			{
 				alpacaErrCode			=	kASCOM_Err_InvalidValue;
 				reqData->httpRetCode	=	400;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinX is non-numeric");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinX out of range");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -1918,13 +1924,16 @@ int					newBinValue;
 		{
 			alpacaErrCode			=	kASCOM_Err_InvalidValue;
 			reqData->httpRetCode	=	400;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'BinX' not found");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "BinX is non-numeric");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'BinX' not found");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -2167,50 +2176,44 @@ bool				coolerState;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	if (cIsCoolerCam)
 	{
-		if (cIsCoolerCam)
+		alpacaErrCode	=	Read_CoolerState(&coolerState);
+		if (alpacaErrCode == 0)
 		{
-			alpacaErrCode	=	Read_CoolerState(&coolerState);
-			if (alpacaErrCode == 0)
+	//		CONSOLE_DEBUG(__FUNCTION__);
+		}
+		else if (alpacaErrCode == kASCOM_Err_NotImplemented)
+		{
+			coolerState	=	false;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented:");
+			strcat(alpacaErrMsg, cLastCameraErrMsg);
+			if (cVerboseDebug)
 			{
-		//		CONSOLE_DEBUG(__FUNCTION__);
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
-			else if (alpacaErrCode == kASCOM_Err_NotImplemented)
-			{
-				coolerState	=	false;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented:");
-				strcat(alpacaErrMsg, cLastCameraErrMsg);
-				if (cVerboseDebug)
-				{
-					CONSOLE_DEBUG(alpacaErrMsg);
-				}
-			}
-			else
-			{
-				coolerState	=	false;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read cooler state:");
-				strcat(alpacaErrMsg, cLastCameraErrMsg);
-				if (cVerboseDebug)
-				{
-					CONSOLE_DEBUG(alpacaErrMsg);
-				}
-			}
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											responseString,			//	"Value",
-											coolerState,
-											INCLUDE_COMMA);
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
+			coolerState	=	false;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read cooler state:");
+			strcat(alpacaErrMsg, cLastCameraErrMsg);
+			if (cVerboseDebug)
+			{
+				CONSOLE_DEBUG(alpacaErrMsg);
+			}
 		}
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,			//	"Value",
+										coolerState,
+										INCLUDE_COMMA);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented:");
 	}
 	return(alpacaErrCode);
 }
@@ -2221,22 +2224,23 @@ TYPE_ASCOM_STATUS	CameraDriver::Put_Cooleron(TYPE_GetPutRequestData *reqData, ch
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 char				argumentString[32];
 bool				foundKeyWord;
+bool				validTrueFalse;
 bool				newCoolerState;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+//	CONSOLE_DEBUG(__FUNCTION__);
+	if (cIsCoolerCam)
 	{
-		if (cIsCoolerCam)
+		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+												"CoolerOn",
+												argumentString,
+												(sizeof(argumentString) -1));
+		if (foundKeyWord)
 		{
-			foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-													"CoolerOn",
-													argumentString,
-													(sizeof(argumentString) -1));
-			if (foundKeyWord)
+			CONSOLE_DEBUG_W_STR("argumentString\t=", argumentString);
+			validTrueFalse	=	IsValidTrueFalseString(argumentString);
+			if (validTrueFalse)
 			{
-				CONSOLE_DEBUG_W_STR("argumentString\t=", argumentString);
 				newCoolerState	=	IsTrueFalse(argumentString);
-
 				if (newCoolerState)
 				{
 					alpacaErrCode	=	Cooler_TurnOn();
@@ -2253,24 +2257,26 @@ bool				newCoolerState;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_InvalidValue;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'CoolerOn' is missing");
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Argument is not true/false");
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_NotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "This Camera does not support cooling");
-			CONSOLE_DEBUG(alpacaErrMsg);
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'CoolerOn' is missing");
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Cooleron Not implemented:");
 	}
+
 	return(alpacaErrCode);
 }
-
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriver::Get_CoolerPower(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
@@ -2846,7 +2852,7 @@ bool				validData;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-											"offset",
+											"Offset",
 											argumentString,
 											(sizeof(argumentString) -1));
 	validData	=	false;
@@ -2862,7 +2868,7 @@ bool				validData;
 			//*	the keyword "offset" is missing
 			alpacaErrCode			=	kASCOM_Err_InvalidValue;
 			reqData->httpRetCode	=	400;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "offset is non-numeric");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Offset is non-numeric");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
@@ -3081,7 +3087,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 char				argumentString[32];
 bool				foundKeyWord;
 int					newValue;
-char				errorString[64];
+//char				errorString[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -3091,11 +3097,10 @@ char				errorString[64];
 											(sizeof(argumentString) -1));
 	if (foundKeyWord)
 	{
-		newValue	=	atoi(argumentString);
-		//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
-//			if ((newValue >= 0) && (newValue < cCameraYsize))
-		if (1)
+		if (IsValidNumericString(argumentString))
 		{
+			newValue			=	atoi(argumentString);
+			//*	ASCOM docs say to check these values ONLY at start exposure, how stupid
 			cCameraProp.StartY	=	newValue;
 			alpacaErrCode		=	kASCOM_Err_Success;
 		}
@@ -3103,14 +3108,16 @@ char				errorString[64];
 		{
 			alpacaErrCode			=	kASCOM_Err_InvalidValue;
 			reqData->httpRetCode	=	400;
-			sprintf(errorString, "Value out of range: StartY=%d", newValue);
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
+//			sprintf(errorString, "StartY is non-numeric: StartY=%d", newValue);
+//			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, errorString);
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "StartY value is non-numeric");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'StartY' not found");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
@@ -3222,33 +3229,52 @@ bool				directionFound;
 bool				durationFound;
 char				directionString[32];
 char				durationString[32];
-bool				validData;
 
 	CONSOLE_DEBUG(__FUNCTION__);
 	//*	"Direction=1&Duration=2&ClientID=34&ClientTransactionID=56"
 	directionFound	=	GetKeyWordArgument(	reqData->contentData,
 											"Direction",
 											directionString,
-											(sizeof(directionString) -1));
+											(sizeof(directionString) -1),
+											kRequireCase);
 
 	durationFound	=	GetKeyWordArgument(	reqData->contentData,
 											"Duration",
 											durationString,
 											(sizeof(durationString) -1),
+											kRequireCase,
 											kArgumentIsNumeric);
 
-	validData	=	false;
 	if (directionFound && durationFound)
 	{
 		if (IsValidNumericString(directionString) && IsValidNumericString(durationString))
 		{
-			validData	=	true;
+			if (cCameraProp.CanPulseGuide)
+			{
+				if (cSt4Port)
+				{
+					alpacaErrCode				=	kASCOM_Err_Success;
+					cCameraProp.IsPulseGuiding	=	true;
+					gettimeofday(&cPulseGuideStartTime, NULL);
+				}
+				else
+				{
+					alpacaErrCode	=	kASCOM_Err_NotImplemented;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Pulse guiding not supported");
+					CONSOLE_DEBUG(alpacaErrMsg);
+				}
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_NotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Pulse Guide not finished")
+			}
 		}
 		else
 		{
 			alpacaErrCode			=	kASCOM_Err_InvalidValue;
 			reqData->httpRetCode	=	400;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument non-numeric");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Arguments not valid");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
@@ -3256,37 +3282,8 @@ bool				validData;
 	{
 		alpacaErrCode			=	kASCOM_Err_InvalidValue;
 		reqData->httpRetCode	=	400;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keywords missing");
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Direction' or 'Duration' Keyword missing");
 		CONSOLE_DEBUG(alpacaErrMsg);
-	}
-	if (cCameraProp.CanPulseGuide)
-	{
-		if (validData)
-		{
-			if (cSt4Port)
-			{
-				alpacaErrCode				=	kASCOM_Err_Success;
-				cCameraProp.IsPulseGuiding	=	true;
-				gettimeofday(&cPulseGuideStartTime, NULL);
-			}
-			else
-			{
-				alpacaErrCode	=	kASCOM_Err_NotImplemented;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Pulse guiding not supported");
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Arguments not valid");
-			CONSOLE_DEBUG(alpacaErrMsg);
-		}
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Pulse Guide not finished")
 	}
 	return(alpacaErrCode);
 }
@@ -3423,22 +3420,22 @@ char				readOutModeString[32];
 int					alpacaReadOutModeIdx;
 TYPE_IMAGE_TYPE		newImageType;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	readOutFound		=	GetKeyWordArgument(	reqData->contentData,
 												"ReadoutMode",
 												readOutModeString,
 												(sizeof(readOutModeString) -1));
 
-	CONSOLE_DEBUG_W_STR("readOutModeString\t\t=", readOutModeString);
+//	CONSOLE_DEBUG_W_STR("readOutModeString\t\t=", readOutModeString);
 
 	if (readOutFound)
 	{
 		if (isdigit(readOutModeString[0]))
 		{
-			CONSOLE_DEBUG("Processing digit");
+//			CONSOLE_DEBUG("Processing digit");
 			alpacaReadOutModeIdx	=	atoi(readOutModeString);
-			CONSOLE_DEBUG_W_NUM("alpacaReadOutModeIdx\t=", alpacaReadOutModeIdx);
+//			CONSOLE_DEBUG_W_NUM("alpacaReadOutModeIdx\t=", alpacaReadOutModeIdx);
 
 			//*	is the new image mode index within range
 			if ((alpacaReadOutModeIdx >= 0) && (alpacaReadOutModeIdx < kMaxReadOutModes))
@@ -3447,22 +3444,25 @@ TYPE_IMAGE_TYPE		newImageType;
 				if (cCameraProp.ReadOutModes[alpacaReadOutModeIdx].valid)
 				{
 					newImageType	=	(TYPE_IMAGE_TYPE)cCameraProp.ReadOutModes[alpacaReadOutModeIdx].internalImageType;
-					CONSOLE_DEBUG_W_NUM("newImageType\t\t=", newImageType);
+//					CONSOLE_DEBUG_W_NUM("newImageType\t\t=", newImageType);
 					alpacaErrCode	=	SetImageType(newImageType);
 					//*	now update the sensor type based on the image type
 					if (newImageType == kImageType_RGB24)
 					{
-						CONSOLE_DEBUG("Setting sensorType to kSensorType_Color");
+//						CONSOLE_DEBUG("Setting sensorType to kSensorType_Color");
 						cCameraProp.SensorType	=	kSensorType_Color;
 					}
 					else
 					{
-						CONSOLE_DEBUG("Setting sensorType to kSensorType_Monochrome");
+//						CONSOLE_DEBUG("Setting sensorType to kSensorType_Monochrome");
 						cCameraProp.SensorType	=	kSensorType_Monochrome;
 					}
 				}
 				else
 				{
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "INVALID alpacaReadOutModeIdx");
 					CONSOLE_DEBUG_W_NUM("INVALID alpacaReadOutModeIdx\t=", alpacaReadOutModeIdx);
 				}
 			}
@@ -3571,38 +3571,51 @@ TYPE_ASCOM_STATUS	CameraDriver::Put_SetCCDtemperature(TYPE_GetPutRequestData *re
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 bool				setCCDtempFound;
+bool				validNumber;
 char				setCCDtempString[256];
 double				newSetCCDvalue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
-
 	if (cCameraProp.CanSetCCDtemperature)
 	{
 		setCCDtempFound	=	GetKeyWordArgument(	reqData->contentData,
 												"SetCCDTemperature",
 												setCCDtempString,
 												(sizeof(setCCDtempString) -1),
+												kRequireCase,
 												kArgumentIsNumeric);
 		if (setCCDtempFound)
 		{
-			newSetCCDvalue	=	AsciiToDouble(setCCDtempString);
-			CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
-			if ((newSetCCDvalue > -273.15) && (newSetCCDvalue <= 100.0))
+			validNumber		=	IsValidNumericString(setCCDtempString);
+			if (validNumber)
 			{
-				//*	The current camera cooler setpoint in degrees Celsius.
-				cCameraProp.SetCCDTemperature	=	newSetCCDvalue;
-				alpacaErrCode					=	Write_SensorTargetTemp(cCameraProp.SetCCDTemperature);
-				if (alpacaErrCode != kASCOM_Err_Success)
+				newSetCCDvalue	=	AsciiToDouble(setCCDtempString);
+				CONSOLE_DEBUG_W_DBL("newSetCCDvalue\t=",	newSetCCDvalue);
+				if ((newSetCCDvalue > -273.15) && (newSetCCDvalue <= 100.0))
 				{
-					strcpy(alpacaErrMsg, cLastCameraErrMsg);
+					//*	The current camera cooler setpoint in degrees Celsius.
+					cCameraProp.SetCCDTemperature	=	newSetCCDvalue;
+					alpacaErrCode					=	Write_SensorTargetTemp(cCameraProp.SetCCDTemperature);
+					if (alpacaErrCode != kASCOM_Err_Success)
+					{
+//						strcpy(alpacaErrMsg, cLastCameraErrMsg);
+						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
+					}
+				}
+				else
+				{
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CCD Setpoint Temperature out of bounds");
+					CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
 			else
 			{
 				alpacaErrCode			=	kASCOM_Err_InvalidValue;
 				reqData->httpRetCode	=	400;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "CCD Setpoint Temperature out of bounds");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SetCCDTemperature value is non numeric");
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
@@ -3618,10 +3631,6 @@ double				newSetCCDvalue;
 	{
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Setting CCD temp not supported");
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
-	}
-	if (alpacaErrCode != kASCOM_Err_Success)
-	{
-		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=",	alpacaErrCode);
 	}
 	return(alpacaErrCode);
 }
@@ -3689,155 +3698,175 @@ bool				lightFrame;
 		DumpRequestStructure(__FUNCTION__, reqData);
 	}
 
-	if (reqData != NULL)
-	{
-		lightFrame	=	true;
+	ProcessExposureOptions(reqData);
+	//-----------------------------------------------------------------
+	lightFrame	=	true;
+	lightFound	=	GetKeyWordArgument(	reqData->contentData,
+										"Light",
+										lightString,
+										(sizeof(lightString) -1));
 
-		//*	first we are going to check a bunch of stuff to make CONFORM happy
-		if ((cCameraProp.CanAsymmetricBin == false) && (cCameraProp.BinX != cCameraProp.BinY))
+	if (lightFound)
+	{
+		CONSOLE_DEBUG_W_STR("Light\t=", lightString);
+		if (IsValidTrueFalseString(lightString))
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "binX and binY do not match");
+			lightFrame	=	IsTrueFalse(lightString);
+		}
+		else
+		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Light is not true/false");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
-		else if ((cCameraProp.StartX >= 0) && (cCameraProp.StartX < cCameraProp.CameraXsize) &&
-			(cCameraProp.StartY >= 0) && (cCameraProp.StartY < cCameraProp.CameraYsize) &&
-			(cCameraProp.NumX >= 1) && (cCameraProp.NumX <= cCameraProp.CameraXsize) &&
-			(cCameraProp.NumY >= 1) && (cCameraProp.NumY <= cCameraProp.CameraYsize) &&
-			(cCameraProp.BinX >= 1) && (cCameraProp.BinX <= cCameraProp.MaxbinX) &&
-			(cCameraProp.BinY >= 1) && (cCameraProp.BinY <= cCameraProp.MaxbinY))
+	}
+
+	//-----------------------------------------------------------------
+	durationFound	=	GetKeyWordArgument(	reqData->contentData,
+											"Duration",
+											duarationString,
+											(sizeof(duarationString) -1),
+											kRequireCase,
+											kArgumentIsNumeric);
+
+//	//=====================================================================================
+//	//*	make CONFORMU happy
+//	if ((reqData->clientIs_AlpacaPi == false) && ((lightFound == false) || (durationFound == false)))
+//	{
+//		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+//		reqData->httpRetCode	=	400;
+//		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Duration' or 'Light' not specified");
+//		CONSOLE_DEBUG(alpacaErrMsg);
+//		return(alpacaErrCode);
+//	}
+
+	//*	first we are going to check a bunch of stuff to make CONFORM happy
+	if ((cCameraProp.CanAsymmetricBin == false) && (cCameraProp.BinX != cCameraProp.BinY))
+	{
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "binX and binY do not match");
+		CONSOLE_DEBUG(alpacaErrMsg);
+	}
+	else if ((cCameraProp.StartX >= 0) && (cCameraProp.StartX < cCameraProp.CameraXsize) &&
+		(cCameraProp.StartY >= 0) && (cCameraProp.StartY < cCameraProp.CameraYsize) &&
+		(cCameraProp.NumX >= 1) && (cCameraProp.NumX <= cCameraProp.CameraXsize) &&
+		(cCameraProp.NumY >= 1) && (cCameraProp.NumY <= cCameraProp.CameraYsize) &&
+		(cCameraProp.BinX >= 1) && (cCameraProp.BinX <= cCameraProp.MaxbinX) &&
+		(cCameraProp.BinY >= 1) && (cCameraProp.BinY <= cCameraProp.MaxbinY))
+	{
+		CONSOLE_DEBUG_W_NUM("cCurrentExposure_us\t=",	cCurrentExposure_us);
+
+
+
+		if (durationFound)
 		{
-			CONSOLE_DEBUG_W_NUM("cCurrentExposure_us\t=",	cCurrentExposure_us);
+			myExposureDuration_secs	=	AsciiToDouble(duarationString);
+			myExposure_usecs		=	myExposureDuration_secs * (1000.0 * 1000.0);
+
+			CONSOLE_DEBUG_W_STR("Specified Duration (str)  \t=",	duarationString);
+			CONSOLE_DEBUG_W_DBL("Specified Duration (dbl)  \t=",	myExposureDuration_secs);
+			CONSOLE_DEBUG_W_DBL("Specified Duration (usecs)\t=",	myExposure_usecs);
+		}
+		else
+		{
+			CONSOLE_DEBUG("Duration was not Specified!!!");
+			CONSOLE_DEBUG_W_STR("reqData->contentData\t=",	reqData->contentData);
+			myExposure_usecs		=	cCurrentExposure_us;
+		}
+		CONSOLE_DEBUG_W_DBL("Using Duration (u-secs)\t=",	myExposure_usecs);
 
 
-			ProcessExposureOptions(reqData);
-			durationFound	=	GetKeyWordArgument(	reqData->contentData,
-													"Duration",
-													duarationString,
-													(sizeof(duarationString) -1),
-													kArgumentIsNumeric);
+		if ((myExposure_usecs > 0) && (myExposure_usecs >= cCameraProp.ExposureMin_us))
+		{
+			//	CONSOLE_DEBUG("cCameraProp.ImageReady set to FALSE!!!!!!!!!!!!!!");
+			cCameraProp.ImageReady		=	false;
+			cAVIfourCC					=	0;
+			cFrameRate					=	0;
+			SaveNextImage();
 
-			lightFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Light",
-													lightString,
-													(sizeof(lightString) -1));
+			//======================================================================================
+			//*	Save all of the info about this exposure for reference
+			SetLastExposureInfo();
 
-			if (durationFound)
+			alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us, lightFrame);
+			GenerateFileNameRoot();
+
+			if (alpacaErrCode == 0)
 			{
-				myExposureDuration_secs	=	AsciiToDouble(duarationString);
-				myExposure_usecs		=	myExposureDuration_secs * (1000.0 * 1000.0);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												"filenameroot",
+												cFileNameRoot,
+												INCLUDE_COMMA);
 
-				CONSOLE_DEBUG_W_STR("Specified Duration (str)  \t=",	duarationString);
-				CONSOLE_DEBUG_W_DBL("Specified Duration (dbl)  \t=",	myExposureDuration_secs);
-				CONSOLE_DEBUG_W_DBL("Specified Duration (usecs)\t=",	myExposure_usecs);
+				currExposure_secs	=	(1.0 * cCurrentExposure_us) / 1000000.0;
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												"exposure",
+												currExposure_secs,
+												INCLUDE_COMMA);
+
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
+												reqData->jsonTextBuffer,
+												kMaxJsonBuffLen,
+												"Light",
+												lightFrame,
+												INCLUDE_COMMA);
 			}
 			else
 			{
-				CONSOLE_DEBUG("Duration was not Specified!!!");
-				CONSOLE_DEBUG_W_STR("reqData->contentData\t=",	reqData->contentData);
-				myExposure_usecs		=	cCurrentExposure_us;
-			}
-			CONSOLE_DEBUG_W_DBL("Using Duration (u-secs)\t=",	myExposure_usecs);
-
-			if (lightFound)
-			{
-				CONSOLE_DEBUG_W_STR("Light\t=", lightString);
-				lightFrame	=	IsTrueFalse(lightString);
-			}
-
-			if ((myExposure_usecs > 0) && (myExposure_usecs >= cCameraProp.ExposureMin_us))
-			{
-//				CONSOLE_DEBUG("cCameraProp.ImageReady set to FALSE!!!!!!!!!!!!!!");
-				cCameraProp.ImageReady		=	false;
-				cAVIfourCC					=	0;
-				cFrameRate					=	0;
-				SaveNextImage();
-
-				//======================================================================================
-				//*	Save all of the info about this exposure for reference
-				SetLastExposureInfo();
-
-				alpacaErrCode				=	Start_CameraExposure(cCurrentExposure_us, lightFrame);
-				GenerateFileNameRoot();
-
-				if (alpacaErrCode == 0)
-				{
-					cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
-													reqData->jsonTextBuffer,
-													kMaxJsonBuffLen,
-													"filenameroot",
-													cFileNameRoot,
-													INCLUDE_COMMA);
-
-					currExposure_secs	=	(1.0 * cCurrentExposure_us) / 1000000.0;
-					cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
-													reqData->jsonTextBuffer,
-													kMaxJsonBuffLen,
-													"exposure",
-													currExposure_secs,
-													INCLUDE_COMMA);
-
-					cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(reqData->socket,
-													reqData->jsonTextBuffer,
-													kMaxJsonBuffLen,
-													"Light",
-													lightFrame,
-													INCLUDE_COMMA);
-				}
-				else
-				{
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
-					CONSOLE_DEBUG(alpacaErrMsg);
-				}
-			}
-			else
-			{
-				alpacaErrCode			=	kASCOM_Err_InvalidValue;
-				reqData->httpRetCode	=	400;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid exposure time");
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cLastCameraErrMsg);
 				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "num, start,or bin is out of range");
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid exposure time");
 			CONSOLE_DEBUG(alpacaErrMsg);
-
-			//*	show the offending value(s)
-			if ((cCameraProp.StartX< 0) || (cCameraProp.StartX >= cCameraProp.CameraXsize))
-			{
-				CONSOLE_DEBUG_W_NUM("cCameraProp.StartX\t\t=",		cCameraProp.StartX);
-				CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
-			}
-			if ((cCameraProp.StartY< 0) || (cCameraProp.StartY >= cCameraProp.CameraYsize))
-			{
-				CONSOLE_DEBUG_W_NUM("cCameraProp.StartY\t\t=",		cCameraProp.StartY);
-				CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
-			}
-			if ((cCameraProp.NumX < 1) || (cCameraProp.NumX > cCameraProp.CameraXsize))
-			{
-				CONSOLE_DEBUG_W_NUM("cCameraProp.NumX\t\t=",		cCameraProp.NumX);
-			}
-			if ((cCameraProp.NumY < 1) || (cCameraProp.NumY > cCameraProp.CameraYsize))
-			{
-				CONSOLE_DEBUG_W_NUM("cCameraProp.NumY\t\t=",		cCameraProp.NumY);
-			}
-			if ((cCameraProp.BinX < 1) || (cCameraProp.BinX > cCameraProp.MaxbinX))
-			{
-				CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t\t=",		cCameraProp.BinX);
-				CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t=",		cCameraProp.MaxbinX);
-			}
-			if ((cCameraProp.BinY < 1) || (cCameraProp.BinY > cCameraProp.MaxbinY))
-			{
-				CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t\t=",		cCameraProp.BinY);
-				CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinY\t=",		cCameraProp.MaxbinY);
-			}
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "num, start,or bin is out of range");
+		CONSOLE_DEBUG(alpacaErrMsg);
+
+		//*	show the offending value(s)
+		if ((cCameraProp.StartX< 0) || (cCameraProp.StartX >= cCameraProp.CameraXsize))
+		{
+			CONSOLE_DEBUG_W_NUM("cCameraProp.StartX\t\t=",		cCameraProp.StartX);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraXsize\t=",	cCameraProp.CameraXsize);
+		}
+		if ((cCameraProp.StartY< 0) || (cCameraProp.StartY >= cCameraProp.CameraYsize))
+		{
+			CONSOLE_DEBUG_W_NUM("cCameraProp.StartY\t\t=",		cCameraProp.StartY);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.CameraYsize\t=",	cCameraProp.CameraYsize);
+		}
+		if ((cCameraProp.NumX < 1) || (cCameraProp.NumX > cCameraProp.CameraXsize))
+		{
+			CONSOLE_DEBUG_W_NUM("cCameraProp.NumX\t\t=",		cCameraProp.NumX);
+		}
+		if ((cCameraProp.NumY < 1) || (cCameraProp.NumY > cCameraProp.CameraYsize))
+		{
+			CONSOLE_DEBUG_W_NUM("cCameraProp.NumY\t\t=",		cCameraProp.NumY);
+		}
+		if ((cCameraProp.BinX < 1) || (cCameraProp.BinX > cCameraProp.MaxbinX))
+		{
+			CONSOLE_DEBUG_W_NUM("cCameraProp.BinX\t\t=",		cCameraProp.BinX);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinX\t=",		cCameraProp.MaxbinX);
+		}
+		if ((cCameraProp.BinY < 1) || (cCameraProp.BinY > cCameraProp.MaxbinY))
+		{
+			CONSOLE_DEBUG_W_NUM("cCameraProp.BinY\t\t=",		cCameraProp.BinY);
+			CONSOLE_DEBUG_W_NUM("cCameraProp.MaxbinY\t=",		cCameraProp.MaxbinY);
+		}
 	}
 	return(alpacaErrCode);
 }
@@ -3876,6 +3905,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	else
 	{
 		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SubExposureDuration not supported")
 	}
 	return(alpacaErrCode);
 }
@@ -3887,28 +3917,45 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 bool				subDurationFound;
 char				mySubDurationString[32];
 
-	if (cSubDurationSupported)
+
+	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SubExposureDuration not supported")
+	return(kASCOM_Err_NotImplemented);
+
+	subDurationFound	=	GetKeyWordArgument(	reqData->contentData,
+												"SubExposureDuration",
+												mySubDurationString,
+												(sizeof(mySubDurationString) -1),
+												kArgumentIsNumeric);
+	if (subDurationFound)
 	{
-		subDurationFound	=	GetKeyWordArgument(	reqData->contentData,
-													"SubExposureDuration",
-													mySubDurationString,
-													(sizeof(mySubDurationString) -1),
-													kArgumentIsNumeric);
-		if (subDurationFound)
+		if (IsValidNumericString(mySubDurationString))
 		{
-			//*	not finished
+			if (cSubDurationSupported)
+			{
+				//*	not finished
+			}
+			else
+			{
+				alpacaErrCode	=	kASCOM_Err_NotImplemented;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SubExposureDuration not supported")
+			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'SubExposureDuration' argument not found");
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'SubExposureDuration' argument is non-numeric");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'SubExposureDuration' argument not found");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
+
 	return(alpacaErrCode);
 }
 
@@ -4473,6 +4520,10 @@ bool				xmit16BitAs32Bit	=	false;
 	binaryImageHdr.Dimension1				=	cLastExposure_ROIinfo.currentROIwidth;	//	Length of image array first dimension
 	binaryImageHdr.Dimension2				=	cLastExposure_ROIinfo.currentROIheight;	//	Length of image array second dimension
 	binaryImageHdr.Dimension3				=	0;										//	Length of image array third dimension (0 for 2D array)
+
+
+	binaryImageHdr.ClientTransactionID		=	reqData->ClientTransactionID;
+	binaryImageHdr.ServerTransactionID		=	gServerTransactionID;
 
 	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIimageType\t=",		cLastExposure_ROIinfo.currentROIimageType);
 	CONSOLE_DEBUG_W_NUM("cLastExposure_ROIinfo.currentROIwidth\t=",		cLastExposure_ROIinfo.currentROIwidth);
@@ -5632,35 +5683,28 @@ TYPE_ASCOM_STATUS	CameraDriver::Get_Fastreadout(TYPE_GetPutRequestData *reqData,
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	if (cCameraProp.CanFastReadout)
 	{
-		if (cCameraProp.CanFastReadout)
+		alpacaErrCode	=	Read_Fastreadout();
+		if (alpacaErrCode == 0)
 		{
-			alpacaErrCode	=	Read_Fastreadout();
-			if (alpacaErrCode == 0)
-			{
-				cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
-												reqData->jsonTextBuffer,
-												kMaxJsonBuffLen,
-												responseString,
-												cHighSpeedMode,
-												INCLUDE_COMMA);
-			}
-			else
-			{
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read FastReadout:, camera-err=");
-				strcat(alpacaErrMsg, cLastCameraErrMsg);
-			}
+			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Bool(	reqData->socket,
+											reqData->jsonTextBuffer,
+											kMaxJsonBuffLen,
+											responseString,
+											cHighSpeedMode,
+											INCLUDE_COMMA);
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "FastReadOut not supported");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Failed to read FastReadout:, camera-err=");
+			strcat(alpacaErrMsg, cLastCameraErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "FastReadOut not supported");
 	}
 	return(alpacaErrCode);
 }
@@ -5670,36 +5714,46 @@ TYPE_ASCOM_STATUS	CameraDriver::Put_Fastreadout(		TYPE_GetPutRequestData *reqDat
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_InternalError;
 bool				fastReadOutFound;
-char				myFastReadOut[32];
+char				myFastReadOutStr[32];
 bool				newFastReadOutState;
+bool				validTrueFalse;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	strcpy(myFastReadOut, "not specified");
-	if (reqData != NULL)
+	if (cCameraProp.CanFastReadout)
 	{
-		if (cCameraProp.CanFastReadout)
+		fastReadOutFound	=	GetKeyWordArgument(	reqData->contentData,
+												"FastReadout",
+												myFastReadOutStr,
+												(sizeof(myFastReadOutStr) -1));
+		if (fastReadOutFound)
 		{
-			alpacaErrCode		=	kASCOM_Err_Success;
-			fastReadOutFound	=	GetKeyWordArgument(	reqData->contentData,
-													"FastReadout",
-													myFastReadOut,
-													(sizeof(myFastReadOut) -1));
-			if (fastReadOutFound)
+			validTrueFalse		=	IsValidTrueFalseString(myFastReadOutStr);
+			if (validTrueFalse)
 			{
-				newFastReadOutState	=	IsTrueFalse(myFastReadOut);
+				newFastReadOutState	=	IsTrueFalse(myFastReadOutStr);
 				CONSOLE_DEBUG_W_NUM("newFastReadOutState\t=", newFastReadOutState);
+			}
+			else
+			{
+				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
+				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Argument is not true/false");
+				CONSOLE_DEBUG(alpacaErrMsg);
 			}
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'FastReadout' argument not found");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'FastReadout' not supported");
 	}
-
 	return(alpacaErrCode);
 }
 
@@ -5842,7 +5896,8 @@ bool				newLiveModeState;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "'Livemode' argument not found");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
@@ -5920,13 +5975,16 @@ long				exposureDuration_us;	//*	micro seconds
 			else
 			{
 				alpacaErrCode			=	kASCOM_Err_InvalidValue;
+				reqData->httpRetCode	=	400;
 				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Exposure time out of valid range");
 			}
 		}
 		else
 		{
-			CONSOLE_DEBUG("Duration not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Duration not specified");
+			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
@@ -5977,28 +6035,22 @@ char				saveAllFoundString[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	saveAllFound		=	GetKeyWordArgument(	reqData->contentData,
+												"saveallimages",
+												saveAllFoundString,
+												(sizeof(saveAllFoundString) -1));
+	if (saveAllFound)
 	{
-		saveAllFound		=	GetKeyWordArgument(	reqData->contentData,
-													"saveallimages",
-													saveAllFoundString,
-													(sizeof(saveAllFoundString) -1));
-		if (saveAllFound)
-		{
-			cSaveAllImages	=	IsTrueFalse(saveAllFoundString);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SaveAll argument not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
-			CONSOLE_DEBUG(alpacaErrMsg);
-			CONSOLE_DEBUG(reqData->contentData);
-		}
+		cSaveAllImages	=	IsTrueFalse(saveAllFoundString);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "SaveAll argument not specified");
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		CONSOLE_DEBUG(alpacaErrMsg);
+		CONSOLE_DEBUG(reqData->contentData);
 	}
 	return(alpacaErrCode);
 }
@@ -6042,8 +6094,9 @@ char				saveAsFitsString[32];
 		}
 		else
 		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasfits argument not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			CONSOLE_DEBUG(alpacaErrMsg);
 			CONSOLE_DEBUG(reqData->contentData);
 		}
@@ -6095,8 +6148,9 @@ char				saveAsJPEGString[32];
 		}
 		else
 		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasjpeg argument not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			CONSOLE_DEBUG(alpacaErrMsg);
 			CONSOLE_DEBUG(reqData->contentData);
 		}
@@ -6148,8 +6202,9 @@ char				saveAsPNGString[32];
 		}
 		else
 		{
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveaspng argument not specified");
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
 			CONSOLE_DEBUG(alpacaErrMsg);
 			CONSOLE_DEBUG(reqData->contentData);
 		}
@@ -6198,8 +6253,9 @@ char				saveAsRawString[32];
 	}
 	else
 	{
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "saveasraw argument not specified");
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 		CONSOLE_DEBUG(alpacaErrMsg);
 		CONSOLE_DEBUG(reqData->contentData);
 	}
@@ -7139,10 +7195,10 @@ TYPE_IMAGE_TYPE		myImageType;
 	}
 	else
 	{
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
 		strcpy(cLastCameraErrMsg, "Unsupported image type-");
 		strcat(cLastCameraErrMsg, newImageTypeString);
 		CONSOLE_DEBUG_W_STR("cLastCameraErrMsg\t=", cLastCameraErrMsg);
-		alpacaErrCode	=	kASCOM_Err_InvalidValue;
 	}
 	if (alpacaErrCode != 0)
 	{
@@ -8098,7 +8154,8 @@ bool				foundKeyWord;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument not specified");
 		}
 	}
@@ -8147,7 +8204,8 @@ bool				foundKeyWord;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_InvalidValue;
+			alpacaErrCode			=	kASCOM_Err_InvalidValue;
+			reqData->httpRetCode	=	400;
 			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "argument not specified");
 		}
 	}
@@ -8320,7 +8378,8 @@ int					newFlipMode;
 				}
 				else
 				{
-					alpacaErrCode	=	kASCOM_Err_InvalidValue;
+					alpacaErrCode			=	kASCOM_Err_InvalidValue;
+					reqData->httpRetCode	=	400;
 					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Invalid flip value");
 				}
 			}

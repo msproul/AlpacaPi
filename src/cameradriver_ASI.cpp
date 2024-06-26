@@ -84,6 +84,7 @@
 //*	Apr 30,	2023	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp()
 //*	Sep  9,	2023	<MLS> Moved read thread stuff to parent class
 //*	Sep  9,	2023	<MLS> Deleted _USE_THREADS_FOR_ASI_CAMERA_
+//*	Jun 25,	2024	<MLS> Changed all kASCOM_Err_FailedUnknown to kASCOM_Err_UnspecifiedError
 //*****************************************************************************
 //*	Length: unspecified [text/plain]
 //*	Saving to: "imagearray.1"
@@ -735,7 +736,7 @@ bool				cameraIsBusy;
 						else
 						{
 							CONSOLE_DEBUG_W_NUM("Camera is not idle, status\t=",	asiErrorCode);
-							alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+							alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 							strcpy(cLastCameraErrMsg, "Failed to start exposure");
 							CONSOLE_DEBUG_W_STR("Error Msg\t=",	cLastCameraErrMsg);
 						}
@@ -745,7 +746,7 @@ bool				cameraIsBusy;
 				{
 					CheckForClosedError(asiErrorCode);
 					CONSOLE_DEBUG_W_NUM("ASIGetExpStatus->asiErrorCode\t=",	asiErrorCode);
-					alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+					alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 					strcpy(cLastCameraErrMsg, "Failed to get status");
 				}
 			}
@@ -753,7 +754,7 @@ bool				cameraIsBusy;
 			{
 				CheckForClosedError(asiErrorCode);
 				CONSOLE_DEBUG_W_NUM("ASISetControlValue->asiErrorCode\t=",	asiErrorCode);
-				alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+				alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 				strcpy(cLastCameraErrMsg, "Failed to set exposure");
 			}
 		}
@@ -794,7 +795,7 @@ ASI_ERROR_CODE		asiErrorCode;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 			sprintf(cLastCameraErrMsg, "Failed to stop exposure. asiErrorCode=%d", asiErrorCode);
 			CONSOLE_DEBUG(cLastCameraErrMsg);
 		}
@@ -915,7 +916,7 @@ ASI_BOOL			bAuto		=	ASI_FALSE;
 		}
 		else
 		{
-			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 			strcpy(cLastCameraErrMsg, "Failed to start video capture");
 			CONSOLE_DEBUG(cLastCameraErrMsg);
 		}
@@ -942,12 +943,12 @@ char				asiErrorMsgString[64];
 		switch(cInternalCameraState)
 		{
 			case kCameraState_Idle:
-				alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+				alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 				strcpy(cLastCameraErrMsg, "Camera not taking video");
 				break;
 
 			case kCameraState_TakingPicture:
-				alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+				alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 				strcpy(cLastCameraErrMsg, "Single frame exposure in progress");
 				break;
 
@@ -1140,7 +1141,7 @@ int					bytesPerRow;
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("ASIGetVideoData() returned asiErrorCode\t=", asiErrorCode);
-			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 		}
 	}
 	else
@@ -1321,7 +1322,7 @@ bool			timeToStop;
 		else
 		{
 			CONSOLE_DEBUG_W_NUM("ASIGetVideoData() returned asiErrorCode\t=", asiErrorCode);
-			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 		}
 	}
 	else
@@ -1850,7 +1851,7 @@ bool			returnFlag;
 //*****************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverASI::SetImageTypeCameraOpen(TYPE_IMAGE_TYPE newImageType)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 ASI_ERROR_CODE		asiErrorCode;
 int					currentROIwidth;
 int					currentROIheight;
@@ -2588,7 +2589,7 @@ char				asiErrorMsgString[64];
 		Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
 		strcpy(cLastCameraErrMsg, "Failed to open ASI camera:, asiErr=");
 		strcat(cLastCameraErrMsg, asiErrorMsgString);
-		alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 	}
 	return(alpacaErrCode);
 }
@@ -2609,7 +2610,7 @@ char				asiErrorMsgString[64];
 	SETUP_TIMING();
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+	alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 	if ((cCameraID >= 0) && (cCameraID < kMaxCameraCnt))
 	{
 		asiErrorCode	=	OpenASIcameraIfNeeded(cCameraID);
@@ -2682,7 +2683,7 @@ char				asiErrorMsgString[64];
 			Get_ASI_ErrorMsg(asiErrorCode, asiErrorMsgString);
 			strcpy(cLastCameraErrMsg, "Failed to open ASI camera:, asiErr=");
 			strcat(cLastCameraErrMsg, asiErrorMsgString);
-			alpacaErrCode	=	kASCOM_Err_FailedUnknown;
+			alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
 		}
 	}
 	else

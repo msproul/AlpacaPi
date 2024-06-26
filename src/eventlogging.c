@@ -174,12 +174,12 @@ const char	gHtmlTitleLog[]	=
 };
 
 
-#define	kMaxErrors	32
+#define	kMaxErrors	256
 //*****************************************************************************
 void	SendHtmlLog(int mySocketFD)
 {
 char		lineBuff[256];
-int			ii;
+int			iii;
 struct tm	*linuxTime;
 int			errorTotal;
 int			errorCounts[kMaxErrors];
@@ -195,6 +195,7 @@ int			errIndx;
 	SocketWriteData(mySocketFD,	gHtmlNightMode);
 	SocketWriteData(mySocketFD,	gHtmlTitleLog);
 
+	//-------------------------------------------------------------------
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
@@ -206,10 +207,10 @@ int			errIndx;
 	SocketWriteData(mySocketFD,	"<TH>Error/Comment</TH>\r\n");
 
 	SocketWriteData(mySocketFD,	"</TR>\r\n");
-	for (ii=0; ii<gLogIndex; ii++)
+	for (iii=0; iii<gLogIndex; iii++)
 	{
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
-		linuxTime		=	localtime(&gEventLog[ii].eventTime);
+		linuxTime		=	localtime(&gEventLog[iii].eventTime);
 		sprintf(lineBuff, "\t<TD>%d/%d/%d %02d:%02d:%02d</TD>",
 								(1 + linuxTime->tm_mon),
 								linuxTime->tm_mday,
@@ -219,19 +220,19 @@ int			errIndx;
 								linuxTime->tm_sec);
 		SocketWriteData(mySocketFD,	lineBuff);
 
-		sprintf(lineBuff, "<TD>%s</TD>",	gEventLog[ii].eventName);
+		sprintf(lineBuff, "<TD>%s</TD>",	gEventLog[iii].eventName);
 		SocketWriteData(mySocketFD,	lineBuff);
 
 
-		sprintf(lineBuff, "<TD>%s</TD>",	gEventLog[ii].eventDescription);
+		sprintf(lineBuff, "<TD>%s</TD>",	gEventLog[iii].eventDescription);
 		SocketWriteData(mySocketFD,	lineBuff);
 
-		if (gEventLog[ii].alpacaErrCode != 0)
+		if (gEventLog[iii].alpacaErrCode != 0)
 		{
-			sprintf(lineBuff, "<TD>0x%03X/%d</TD>",	gEventLog[ii].alpacaErrCode, gEventLog[ii].alpacaErrCode);
+			sprintf(lineBuff, "<TD>0x%03X/%d</TD>",	gEventLog[iii].alpacaErrCode, gEventLog[iii].alpacaErrCode);
 
 			errorTotal++;
-			errIndx	=	gEventLog[ii].alpacaErrCode - kASCOM_Err_NotImplemented;
+			errIndx	=	gEventLog[iii].alpacaErrCode - kASCOM_Err_NotImplemented;
 			if ((errIndx >= 0) && (errIndx < kMaxErrors))
 			{
 				errorCounts[errIndx]++;
@@ -243,7 +244,7 @@ int			errIndx;
 		}
 		SocketWriteData(mySocketFD,	lineBuff);
 
-		sprintf(lineBuff, "<TD>%s</TD>",	gEventLog[ii].errorString);
+		sprintf(lineBuff, "<TD>%s</TD>",	gEventLog[iii].errorString);
 		SocketWriteData(mySocketFD,	lineBuff);
 
 
@@ -258,9 +259,11 @@ int			errIndx;
 	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 	SocketWriteData(mySocketFD,	"<P>\r\n");
 
-
+	//--------------------------------------------------------------------
 	//*	print out the error code meanings
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+		SocketWriteData(mySocketFD,	"<TR><TH COLSPAN=3>Error Counts</TH></TR>\r\n");
+
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 		sprintf(lineBuff, "<TD>0x%03X/%d</TD>",	kASCOM_Err_NotImplemented, kASCOM_Err_NotImplemented);
 		SocketWriteData(mySocketFD,	lineBuff);
@@ -335,6 +338,24 @@ int			errIndx;
 		SocketWriteData(mySocketFD,	lineBuff);
 		SocketWriteData(mySocketFD,	"<TD>ActionNotImplemented</TD>");
 		errIndx	=	kASCOM_Err_ActionNotImplemented - kASCOM_Err_NotImplemented;
+		sprintf(lineBuff, "<TD>%d</TD>",	errorCounts[errIndx]);
+		SocketWriteData(mySocketFD,	lineBuff);
+		SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+		SocketWriteData(mySocketFD,	"<TR>\r\n");
+		sprintf(lineBuff, "<TD>0x%03X/%d</TD>",	kASCOM_Err_NotInCacheException, kASCOM_Err_NotInCacheException);
+		SocketWriteData(mySocketFD,	lineBuff);
+		SocketWriteData(mySocketFD,	"<TD>NotInCacheException</TD>");
+		errIndx	=	kASCOM_Err_NotInCacheException - kASCOM_Err_NotImplemented;
+		sprintf(lineBuff, "<TD>%d</TD>",	errorCounts[errIndx]);
+		SocketWriteData(mySocketFD,	lineBuff);
+		SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+		SocketWriteData(mySocketFD,	"<TR>\r\n");
+		sprintf(lineBuff, "<TD>0x%03X/%d</TD>",	kASCOM_Err_UnspecifiedError, kASCOM_Err_UnspecifiedError);
+		SocketWriteData(mySocketFD,	lineBuff);
+		SocketWriteData(mySocketFD,	"<TD>UnspecifiedError</TD>");
+		errIndx	=	kASCOM_Err_UnspecifiedError - kASCOM_Err_NotImplemented;
 		sprintf(lineBuff, "<TD>%d</TD>",	errorCounts[errIndx]);
 		SocketWriteData(mySocketFD,	lineBuff);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");

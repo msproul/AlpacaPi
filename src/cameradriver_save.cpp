@@ -76,7 +76,6 @@
 void	CameraDriver::SaveImageData(void)
 {
 int		iii;
-int		bytesPerPixel;
 
 
 	CONSOLE_DEBUG_W_NUM("cSaveNextImage\t=", cSaveNextImage);
@@ -119,6 +118,7 @@ int		bytesPerPixel;
 
 
 	#if defined(_ENABLE_JPEGLIB_)
+int		bytesPerPixel;
 		bytesPerPixel		=	cOpenCV_ImagePtr->step[1];
 		if (cSaveAsJPEG && (bytesPerPixel!= 2))
 		{

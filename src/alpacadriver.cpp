@@ -192,6 +192,7 @@
 //*	May 18,	2024	<MLS> Fixed cSendJSONresponse bug, not initialized to true
 //*	Jun  1,	2024	<MLS> Global GPS now looks for Emlid and if found, uses that port
 //*	Jun 17,	2024	<MLS> Fixed bug in ProcessCmdLineArgs(), -p6502 caused a segmentation fault
+//*	Jun 25,	2024	<MLS> Added contentdata to requestlog file for PUT cmds
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -3283,6 +3284,7 @@ static void	LogRequest(TYPE_GetPutRequestData	*reqData)
 {
 char		lineBuff[512];
 char		datestring[64];
+char		myHttpUserAgentStr[kUserAgentLen];
 time_t		currentTime;
 struct tm	*linuxTime;
 int			bytesWritten;
@@ -3347,13 +3349,39 @@ int			returnCode;
 //		DEBUG_TIMING("Time to open log file (ms)\t=");
 	}
 
+	//*	ConformU generates a ridiculously long user agent string
+	//*	ConformUniversal/2.2.0-rc.3+26636.58f2f3d79821bd5fa5e11173c24f1d7e1397a2f8
+	strcpy(myHttpUserAgentStr, reqData->httpUserAgent);
+	if (strlen(myHttpUserAgentStr) > 32)
+	{
+	char 	*slashPtr;
 
-	sprintf(lineBuff,	"%-18s\t%-18s\t%s\t%s %s\r\n",
+		slashPtr	=	strchr(myHttpUserAgentStr, '/');
+		if (slashPtr != NULL)
+		{
+			*slashPtr	=	0;
+		}
+		else
+		{
+			myHttpUserAgentStr[32]	=	0;
+		}
+	}
+	sprintf(lineBuff,	"%-18s\t%-18s\t%s\t%s %s",
 						datestring,
 						reqData->clientIPaddr,
-						reqData->httpUserAgent,
+						myHttpUserAgentStr,
 						getPutStr,
 						reqData->cmdBuffer);
+
+	//*	Added 6/25/2024
+	//*	Jun 25,	2024	<MLS> Added contentdata to requestlog file for PUT cmds
+	if (reqData->get_putIndicator == 'P')
+	{
+		strcat(lineBuff, "\t");
+		strcat(lineBuff, reqData->contentData);
+	}
+	strcat(lineBuff, "\r\n");
+
 //	CONSOLE_DEBUG(lineBuff);
 
 
@@ -3391,6 +3419,13 @@ int			returnCode;
 	{
 		CONSOLE_DEBUG("Error: gIPlogFilePointer is NULL");
 	}
+
+//	//*	CONFORMU debugging 6/25/2024
+//	if (reqData->get_putIndicator == 'P')
+//	{
+//		DumpRequestStructure(__FUNCTION__, reqData);
+//		CONSOLE_ABORT(__FUNCTION__);
+//	}
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 }
 
@@ -5495,6 +5530,7 @@ void	DumpRequestStructure(const char *functionName, TYPE_GetPutRequestData	*reqD
 	CONSOLE_DEBUG_W_NUM(	"cHTTPclientType       \t=",	reqData->cHTTPclientType);
 	CONSOLE_DEBUG_W_BOOL(	"clientIs_AlpacaPi     \t=",	reqData->clientIs_AlpacaPi);
 	CONSOLE_DEBUG_W_BOOL(	"clientIs_ConformU     \t=",	reqData->clientIs_ConformU);
+	CONSOLE_DEBUG_W_BOOL(	"clientIs_Conform      \t=",	reqData->clientIs_Conform);
 
 	CONSOLE_DEBUG_W_STR(	"httpCmdString         \t=",	reqData->httpCmdString);
 	CONSOLE_DEBUG_W_NUM(	"requestTypeEnum       \t=",	reqData->requestTypeEnum);

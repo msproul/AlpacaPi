@@ -40,6 +40,7 @@
 //*	May 18,	2022	<MLS> SUPPORTED: QSI cameras
 //*	Jun  7,	2022	<MLS> Added maxbinx/y override until binning is implemented
 //*	Jun 17,	2024	<MLS> Fixed bug in CreateCameraObjects_QSI() invalid camera count
+//*	Jun 21,	2024	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp() to QSI camera
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
@@ -833,6 +834,26 @@ std::string			lastError("");
 			strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
 		}
 	}
+	return(alpacaErrCode);
+}
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Read_SensorTargetTemp(void)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+//	CONSOLE_DEBUG(cLastCameraErrMsg);
+	return(alpacaErrCode);
+}
+
+//**************************************************************************
+TYPE_ASCOM_STATUS	CameraDriverQSI::Write_SensorTargetTemp(const double newCCDtargetTemp)
+{
+TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+
+	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
+	CONSOLE_DEBUG(cLastCameraErrMsg);
 	return(alpacaErrCode);
 }
 
