@@ -29,6 +29,7 @@
 //*	Nov 24,	2023	<MLS> Fixed bug in RunThread_Loop() as per pull request #28
 //*	Nov 26,	2023	<SCV> Fixed Closing status bug RunThread_Loop() as per pull request #32
 //*	Nov 26,	2023	<MLS> Support for topens ROR driver appears to be complete
+//*	Jul  4,	2024	<MLS> github  Compile error #35, added kRelay_FlatScren
 //*****************************************************************************
 //*****************************************************************************
 //	After doing some experimenting with AlpacaPi,
@@ -94,6 +95,7 @@
 	#define		kRelay_RoofPower	1
 	#define		kRelay_RoofOpen		2
 	#define		kRelay_RoofClose	3
+	#define		kRelay_FlatScren	4
 
 	//*	this is the default value, it can be changed from the web setup interface
 	#define		kSwitchDelaySeconds	20

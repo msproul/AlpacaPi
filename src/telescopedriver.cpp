@@ -282,7 +282,7 @@ int		iii;
 	for (iii=0; iii<3; iii++)
 	{
 		cTelescopeProp.AxisRates[iii].Minimum	=	0.0;
-		cTelescopeProp.AxisRates[iii].Maximum	=	4.0 + iii;	//*	the extra iii is for testing
+		cTelescopeProp.AxisRates[iii].Maximum	=	7.0 + iii;	//*	the extra iii is for testing
 	}
 
 	//*	there are a bunch of static settings that conform needs to be happy
@@ -3273,14 +3273,18 @@ bool					previousTrackingState;
 						alpacaErrCode			=	kASCOM_Err_InvalidValue;
 						reqData->httpRetCode	=	400;
 						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Rate out of allowed range");
-		//				CONSOLE_DEBUG(alpacaErrMsg);
+						CONSOLE_DEBUG(alpacaErrMsg);
+						CONSOLE_DEBUG_W_STR("rateString\t=",	rateString);
+						CONSOLE_DEBUG_W_DBL("newRate   \t=",	newRate);
+						DumpRequestStructure(__FUNCTION__, reqData);
+						DumpTelescopeDriverStruct(&cTelescopeProp);
 					}
 				}
 				else
 				{
 					alpacaErrCode			=	kASCOM_Err_InvalidValue;
 					reqData->httpRetCode	=	400;
-					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Rate out non-numeric");
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Rate is non-numeric");
 	//				CONSOLE_DEBUG(alpacaErrMsg);
 				}
 			}
@@ -4498,6 +4502,13 @@ void	DumpTelescopeDriverStruct(TYPE_TelescopeProperties *telescopeDriver)
 	CONSOLE_DEBUG_W_BOOL("CanSync                    \t=",	telescopeDriver->CanSync);
 	CONSOLE_DEBUG_W_BOOL("CanSyncAltAz               \t=",	telescopeDriver->CanSyncAltAz);
 	CONSOLE_DEBUG_W_BOOL("CanUnpark                  \t=",	telescopeDriver->CanUnpark);
+
+	CONSOLE_DEBUG_W_DBL("AxisRates[0].Minimum        \t=",	telescopeDriver->AxisRates[0].Minimum);
+	CONSOLE_DEBUG_W_DBL("AxisRates[0].Maximum        \t=",	telescopeDriver->AxisRates[0].Maximum);
+
+	CONSOLE_DEBUG_W_DBL("AxisRates[1].Minimum        \t=",	telescopeDriver->AxisRates[1].Minimum);
+	CONSOLE_DEBUG_W_DBL("AxisRates[1].Maximum        \t=",	telescopeDriver->AxisRates[1].Maximum);
+
 }
 
 #ifdef _ENABLE_GLOBAL_GPS_
