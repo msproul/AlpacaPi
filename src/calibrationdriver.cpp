@@ -43,6 +43,7 @@
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content()
 //*	May 17,	2024	<MLS> Added http error 400 processing to covercalibraor driver
 //*	May 17,	2024	<MLS> CONFORMU-covercalibraor -> PASSED!!!!!!!!!!!!!!
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from calibrationdriver.cpp
 //*****************************************************************************
 
 
@@ -345,22 +346,15 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
-	{
 //		CONSOLE_DEBUG_W_NUM("cCoverCalibrationProp.Brightness\t=",	cCoverCalibrationProp.Brightness);
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCoverCalibrationProp.Brightness,
-								INCLUDE_COMMA);
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cCoverCalibrationProp.Brightness,
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -385,29 +379,22 @@ TYPE_ASCOM_STATUS		alpacaErrCode;
 char					calibrationStateStr[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCoverCalibrationProp.CalibratorState,
-								INCLUDE_COMMA);
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cCoverCalibrationProp.CalibratorState,
+							INCLUDE_COMMA);
 
-		GetCalibrationStateString(cCoverCalibrationProp.CalibratorState, calibrationStateStr);
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"calibratorstate-str",
-								calibrationStateStr,
-								INCLUDE_COMMA);
+	GetCalibrationStateString(cCoverCalibrationProp.CalibratorState, calibrationStateStr);
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"calibratorstate-str",
+							calibrationStateStr,
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -418,21 +405,14 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Get_Coverstate(TYPE_GetPutRequestData *reqD
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCoverCalibrationProp.CoverState,
-								INCLUDE_COMMA);
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cCoverCalibrationProp.CoverState,
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -443,21 +423,14 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Get_Maxbrightness(TYPE_GetPutRequestData *r
 TYPE_ASCOM_STATUS		alpacaErrCode;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cCoverCalibrationProp.MaxBrightness,
-								INCLUDE_COMMA);
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cCoverCalibrationProp.MaxBrightness,
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -641,27 +614,20 @@ TYPE_ASCOM_STATUS	CalibrationDriver::Get_Aperture(TYPE_GetPutRequestData *reqDat
 {
 TYPE_ASCOM_STATUS	alpacaErrCode;
 
-	if (reqData != NULL)
+	if (cCoverCalibrationProp.CanSetAperture)
 	{
-		if (cCoverCalibrationProp.CanSetAperture)
-		{
-			cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											responseString,
-											cCoverCalibrationProp.Aperture,
-											INCLUDE_COMMA);
-			alpacaErrCode	=	kASCOM_Err_Success;
-		}
-		else
-		{
-			alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
-		}
+		cBytesWrittenForThisCmd	+=	JsonResponse_Add_Double(reqData->socket,
+										reqData->jsonTextBuffer,
+										kMaxJsonBuffLen,
+										responseString,
+										cCoverCalibrationProp.Aperture,
+										INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Not implemented");
 	}
 	return(alpacaErrCode);
 }
@@ -727,47 +693,40 @@ int		mySocket;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif // _DEBUG_CONFORM_
 
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData, alpacaErrMsg);
+	//*	do the common ones first
+	Get_Readall_Common(	reqData, alpacaErrMsg);
 
-		//*	make local copies of the data structure to make the code easier to read
-		mySocket	=	reqData->socket;
+	//*	make local copies of the data structure to make the code easier to read
+	mySocket	=	reqData->socket;
 
 
-		alpacaErrCode	=	Get_Brightness(			reqData, alpacaErrMsg,	"brightness");
-		alpacaErrCode	=	Get_Calibratorstate(	reqData, alpacaErrMsg,	"calibratorstate");
-		alpacaErrCode	=	Get_Coverstate(			reqData, alpacaErrMsg,	"coverstate");
-		alpacaErrCode	=	Get_Maxbrightness(		reqData, alpacaErrMsg,	"maxbrightness");
-		alpacaErrCode	=	Get_CalibratorReady(	reqData, alpacaErrMsg,	"CalibratorReady");
-		alpacaErrCode	=	Get_CoverMoving(		reqData, alpacaErrMsg,	"covermoving");
+	alpacaErrCode	=	Get_Brightness(			reqData, alpacaErrMsg,	"brightness");
+	alpacaErrCode	=	Get_Calibratorstate(	reqData, alpacaErrMsg,	"calibratorstate");
+	alpacaErrCode	=	Get_Coverstate(			reqData, alpacaErrMsg,	"coverstate");
+	alpacaErrCode	=	Get_Maxbrightness(		reqData, alpacaErrMsg,	"maxbrightness");
+	alpacaErrCode	=	Get_CalibratorReady(	reqData, alpacaErrMsg,	"CalibratorReady");
+	alpacaErrCode	=	Get_CoverMoving(		reqData, alpacaErrMsg,	"covermoving");
 
-		//===============================================================
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Comment",
-								"Non-standard alpaca commands follow",
-								INCLUDE_COMMA);
+	//===============================================================
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Comment",
+							"Non-standard alpaca commands follow",
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	Get_Aperture(			reqData, alpacaErrMsg,	"aperture");
-		alpacaErrCode	=	Get_CanAdjustAperture(	reqData, alpacaErrMsg,	"canadjustaperture");
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"version",
-								gFullVersionString,
-								INCLUDE_COMMA);
+	alpacaErrCode	=	Get_Aperture(			reqData, alpacaErrMsg,	"aperture");
+	alpacaErrCode	=	Get_CanAdjustAperture(	reqData, alpacaErrMsg,	"canadjustaperture");
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"version",
+							gFullVersionString,
+							INCLUDE_COMMA);
 
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 
@@ -779,17 +738,14 @@ void	CalibrationDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
 int		mySocketFD;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		mySocketFD	=	reqData->socket;
+	mySocketFD	=	reqData->socket;
 
-		mySocketFD		=	reqData->socket;
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	mySocketFD		=	reqData->socket;
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 
-		SocketWriteData(mySocketFD,	"<H2>Calibration/Cover</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Calibration/Cover</H2>\r\n");
 
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-	}
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 }
 
 //*****************************************************************************

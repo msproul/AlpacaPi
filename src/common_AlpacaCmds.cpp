@@ -47,6 +47,7 @@ TYPE_CmdEntry	gCommonCmdTable[]	=
 
 	//*	extras added by MLS
 	{	"--extras",				kCmd_Common_Extras,				kCmdType_GET	},
+	{	"details",				kCmd_Common_Details,			kCmdType_GET	},
 	{	"livewindow",			kCmd_Common_LiveWindow,			kCmdType_PUT	},
 	{	"temperaturelog",		kCmd_Common_TemperatureLog,		kCmdType_GET	},
 	{	"restart",				kCmd_Common_Restart,			kCmdType_PUT	},

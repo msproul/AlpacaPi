@@ -1064,7 +1064,7 @@ double				cameraTemp_DegC;
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_NotSupported;
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 		strcpy(cLastCameraErrMsg, "Temperature not supported on this camera");
 	}
 	return(alpacaErrCode);

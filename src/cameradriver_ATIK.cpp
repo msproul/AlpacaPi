@@ -641,7 +641,7 @@ bool				eightbit;
 				}
 				else
 				{
-					alpacaErrCode	=	kASCOM_Err_NotSupported;
+					alpacaErrCode	=	kASCOM_Err_InvalidValue;
 					strcpy(cLastCameraErrMsg, "This camera does not support 8 bit readout");
 					CONSOLE_DEBUG(cLastCameraErrMsg);
 				}
@@ -676,7 +676,7 @@ bool				eightbit;
 				}
 				else
 				{
-					alpacaErrCode	=	kASCOM_Err_NotSupported;
+					alpacaErrCode	=	kASCOM_Err_InvalidValue;
 					strcpy(cLastCameraErrMsg, "This camera does not support color");
 					CONSOLE_DEBUG(cLastCameraErrMsg);
 				}
@@ -882,7 +882,7 @@ int					atikRetCode;
 	else
 	{
 		strcpy(cLastCameraErrMsg, "This ATIK Camera does not support cooling");
-		alpacaErrCode	=	kASCOM_Err_NotSupported;
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 
 	return(alpacaErrCode);
@@ -958,7 +958,7 @@ int					temperatureVal;
 			}
 			else
 			{
-				alpacaErrCode	=	kASCOM_Err_NotSupported;
+				alpacaErrCode	=	kASCOM_Err_NotImplemented;
 				strcpy(cLastCameraErrMsg, "Camera does not have a temperature sensor");
 				CONSOLE_DEBUG(cLastCameraErrMsg);
 			}
@@ -1061,7 +1061,7 @@ int					setpoint;
 	{
 		*coolerOnOff	=	false;
 		strcpy(cLastCameraErrMsg, "This ATIK Camera does not support cooling");
-		alpacaErrCode	=	kASCOM_Err_NotSupported;
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 
 	return(alpacaErrCode);
@@ -1109,7 +1109,7 @@ int					setpoint;
 	else
 	{
 		strcpy(cLastCameraErrMsg, "This ATIK camera cannot get cooler power level");
-		alpacaErrCode	=	kASCOM_Err_NotSupported;
+		alpacaErrCode	=	kASCOM_Err_NotImplemented;
 	}
 	return(alpacaErrCode);
 }

@@ -56,7 +56,7 @@ class ManagementDriver: public AlpacaDriver
 			TYPE_ASCOM_STATUS		Get_Description(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 			TYPE_ASCOM_STATUS		Get_Configureddevices(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 			TYPE_ASCOM_STATUS		Get_Libraries(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-			TYPE_ASCOM_STATUS		Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+	virtual	TYPE_ASCOM_STATUS		Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 							void	ReportOneDevice(		TYPE_GetPutRequestData *reqData, AlpacaDriver *devicePtr, bool includeComma);
 };

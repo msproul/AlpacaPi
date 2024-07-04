@@ -27,6 +27,7 @@
 //*	Apr 22,	2020	<MLS> Added readall to shutter driver
 //*	Dec 13,	2021	<MLS> Added WatchDog_TimeOut() to shutterdriver
 //*	Jan 18,	2022	<MLS> Changing shutter to be more like dome
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from shutterdriver.cpp
 //*****************************************************************************
 
 #ifdef _ENABLE_SHUTTER_
@@ -384,20 +385,13 @@ int					mySocket;
 TYPE_ASCOM_STATUS	ShutterDriver::Get_Altitude(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cAltitude_Dbl,
-									INCLUDE_COMMA);
 
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cAltitude_Dbl,
+								INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -406,19 +400,12 @@ TYPE_ASCOM_STATUS	ShutterDriver::Get_Cansetaltitude(	TYPE_GetPutRequestData *req
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								false,
-								INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	JsonResponse_Add_Bool(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							false,
+							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -427,19 +414,12 @@ TYPE_ASCOM_STATUS	ShutterDriver::Get_Cansetshutter(	TYPE_GetPutRequestData *reqD
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								true,
-								INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	JsonResponse_Add_Bool(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							true,
+							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -449,60 +429,38 @@ TYPE_ASCOM_STATUS	ShutterDriver::Get_Shutterstatus(TYPE_GetPutRequestData *reqDa
 char				statusString[32];
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cShutterStatus,
-								INCLUDE_COMMA);
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cShutterStatus,
+							INCLUDE_COMMA);
 
 //		CONSOLE_DEBUG_W_NUM("cShutterStatus=", cShutterStatus);
-		GetDomeShutterStatusString(cShutterStatus, statusString);
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"shutterstatus-string",
-									statusString,
-									INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	GetDomeShutterStatusString(cShutterStatus, statusString);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"shutterstatus-string",
+								statusString,
+								INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	ShutterDriver::Get_Slewing(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	if (reqData != NULL)
-	{
 
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
 	return(alpacaErrCode);
 }
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	ShutterDriver::Put_AbortSlew(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
-	if (reqData != NULL)
-	{
-
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
 	return(alpacaErrCode);
 }
 
@@ -512,7 +470,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 TYPE_ASCOM_STATUS	ShutterDriver::Put_OpenShutter(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
 {
 bool				shutterOpenOK;
-TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
 	shutterOpenOK	=	OpenShutter();
 	if (shutterOpenOK)
@@ -524,6 +482,7 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 									"OpenShutter",
 									"OK",
 									INCLUDE_COMMA);
+		alpacaErrCode	=	kASCOM_Err_Success;
 	}
 	else
 	{
@@ -608,41 +567,30 @@ TYPE_ASCOM_STATUS	ShutterDriver::Get_Readall(	TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData,	alpacaErrMsg);
+	//*	do the common ones first
+	Get_Readall_Common(	reqData,	alpacaErrMsg);
 
-		Get_Altitude(		reqData,	alpacaErrMsg,	"altitude");
-		Get_Cansetaltitude(	reqData,	alpacaErrMsg,	"cansetaltitude");
-		Get_Cansetshutter(	reqData,	alpacaErrMsg,	"cansetshutter");
-		Get_Shutterstatus(	reqData,	alpacaErrMsg,	"shutterstatus");
-		Get_Slewing(		reqData,	alpacaErrMsg,	"slewing");
+	Get_Altitude(		reqData,	alpacaErrMsg,	"altitude");
+	Get_Cansetaltitude(	reqData,	alpacaErrMsg,	"cansetaltitude");
+	Get_Cansetshutter(	reqData,	alpacaErrMsg,	"cansetshutter");
+	Get_Shutterstatus(	reqData,	alpacaErrMsg,	"shutterstatus");
+	Get_Slewing(		reqData,	alpacaErrMsg,	"slewing");
 
 
-		//===============================================================
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"version",
-								gFullVersionString,
-								INCLUDE_COMMA);
+	//===============================================================
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"version",
+							gFullVersionString,
+							INCLUDE_COMMA);
 
 
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
-
-
-
-
 
 //*****************************************************************************
 void	ShutterDriver::OutputHTML(TYPE_GetPutRequestData *reqData)

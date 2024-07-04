@@ -40,6 +40,7 @@ enum
 	kCmd_Common_exit,
 #endif // _INCLUDE_EXIT_COMMAND_
 	kCmd_Common_Extras,
+	kCmd_Common_Details,
 	kCmd_Common_LiveWindow,
 	kCmd_Common_TemperatureLog,
 	kCmd_Common_Restart,			//*	cause the driver to be destroyed and re-created

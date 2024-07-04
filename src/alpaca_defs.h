@@ -231,7 +231,7 @@ typedef enum
 	kASCOM_Err_UnspecifiedError			=	0x4FF,		//	1279
 
 	//*	0x0500 to 0x0fff are driver defined.
-	kASCOM_Err_NotSupported				=	0x500,
+//	kASCOM_Err_NotSupported				=	0x500,
 	kASCOM_Err_FailedToTakePicture		=	0x501,
 	kASCOM_Err_CameraDriverErr			=	0x502,
 	kASCOM_Err_CameraBusy				=	0x503,

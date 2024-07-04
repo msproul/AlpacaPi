@@ -59,9 +59,9 @@ class RotatorDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_Sync(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		//*	added by MLS
-		TYPE_ASCOM_STATUS	Put_Step(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Put_Stepabsolute(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_Step(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS	Put_Stepabsolute(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		virtual	bool					DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 		virtual	int32_t					ReadCurrentPoisiton_steps(void);

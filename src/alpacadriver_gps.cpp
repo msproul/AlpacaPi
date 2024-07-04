@@ -314,197 +314,190 @@ uint32_t	delta_ms;
 
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		mySocketFD	=	reqData->socket;
+	mySocketFD	=	reqData->socket;
 //		CONSOLE_DEBUG_W_NUM("mySocketFD\t=", mySocketFD);
-		SocketWriteData(mySocketFD,	gHtmlHeader);
+	SocketWriteData(mySocketFD,	gHtmlHeader_html);
 //		SocketWriteData(mySocketFD,	gHtmlNightMode);
-		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gpsWebTitle);
-		SocketWriteData(mySocketFD,	lineBuffer);
-		SocketWriteData(mySocketFD,	"</HEAD><BODY>\r\n<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H1>Alpaca device driver Web server</H1>\r\n");
-		sprintf(lineBuffer, "<H3>%s</H3>\r\n", gpsWebTitle);
-		SocketWriteData(mySocketFD,	lineBuffer);
+	sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gpsWebTitle);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</HEAD><BODY>\r\n<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H1>Alpaca device driver Web server</H1>\r\n");
+	sprintf(lineBuffer, "<H3>%s</H3>\r\n", gpsWebTitle);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+	//====================================================
+#ifdef _ENABLE_GLOBAL_GPS_
+	if (gEnableGlobalGPS)
+	{
+	char		latString[256];
+	char		lonString[256];
+	int			returnCode;
+	struct stat	fileStatus;
+
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+
+		PrintHTMLtableEntry(mySocketFD,	"Device",		gGlobalGPSpath);
+
+		switch(gGlobalGPSbaudrate)
+		{
+			case '1':	strcpy(lineBuffer,	"19200");	break;
+			case '4':	strcpy(lineBuffer,	"4800");	break;
+			case '9':	strcpy(lineBuffer,	"9600");	break;
+			default:	strcpy(lineBuffer,	"unknown");	break;
+		}
+		PrintHTMLtableEntry(mySocketFD,	"Baud rate",	lineBuffer);
+
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
-		//====================================================
-#ifdef _ENABLE_GLOBAL_GPS_
-		if (gEnableGlobalGPS)
+		if (gNMEAdata.SequenceNumber > 0)
 		{
-		char		latString[256];
-		char		lonString[256];
-		int			returnCode;
-		struct stat	fileStatus;
-
 			SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 			SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
-			PrintHTMLtableEntry(mySocketFD,	"Device",		gGlobalGPSpath);
+			//----------------------------------------------------------------------------
+			GetGPSmodeString(gNMEAdata.currSatMode1, gNMEAdata.currSatMode2, lineBuffer);
+			PrintHTMLtableEntry(mySocketFD,	"Mode",		lineBuffer);
 
-			switch(gGlobalGPSbaudrate)
-			{
-				case '1':	strcpy(lineBuffer,	"19200");	break;
-				case '4':	strcpy(lineBuffer,	"4800");	break;
-				case '9':	strcpy(lineBuffer,	"9600");	break;
-				default:	strcpy(lineBuffer,	"unknown");	break;
-			}
-			PrintHTMLtableEntry(mySocketFD,	"Baud rate",	lineBuffer);
+			//----------------------------------------------------------------------------
+			#define	ISLOCKED(myBoolvalue)	(char *)(myBoolvalue ? "Locked" : "invalid")
 
+			PrintHTMLtableEntry(mySocketFD,	"GPS Status",		ISLOCKED(gNMEAdata.validData));
+			PrintHTMLtableEntry(mySocketFD,	"Date Status",		ISLOCKED(gNMEAdata.validDate));
+			PrintHTMLtableEntry(mySocketFD,	"Time Status",		ISLOCKED(gNMEAdata.validTime));
+			PrintHTMLtableEntry(mySocketFD,	"Lat/Lon Status",	ISLOCKED(gNMEAdata.validLatLon));
+			PrintHTMLtableEntry(mySocketFD,	"Altitude Status",	ISLOCKED(gNMEAdata.validAlt));
+
+
+			//--------------------------------------------------------------
+			//*	Sequence number
+			PrintHTMLtableEntryINT(mySocketFD,	"Sequence number",			gNMEAdata.SequenceNumber);
+			PrintHTMLtableEntryINT(mySocketFD,	"Satellites in view",		gNMEAdata.numSats);
+			PrintHTMLtableEntryDBL(mySocketFD,	"Latitude",					gNMEAdata.lat_double);
+			PrintHTMLtableEntryDBL(mySocketFD,	"Longitude",				gNMEAdata.lon_double);
+
+		#ifdef _ENABLE_GPS_AVERAGE_
+			ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_average,
+											latString,
+											gNMEAdata.lon_average,
+											lonString);
+		#else
+			ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_double,
+											latString,
+											gNMEAdata.lon_double,
+											lonString);
+		#endif
+
+			PrintHTMLtableEntry(mySocketFD,	"Latitude",			latString);
+			PrintHTMLtableEntry(mySocketFD,	"Longitude",		lonString);
+
+			FormatTimeStringISO8601_tm(&gNMEAdata.linuxTime, lineBuffer);
+			PrintHTMLtableEntry(mySocketFD,	"Date/Time",		lineBuffer);
+
+			//*	create a google maps link
+		#ifdef _ENABLE_GPS_AVERAGE_
+			FormatGoogleMapsRequest(urlString, gNMEAdata.lat_average, gNMEAdata.lon_average);
+		#else
+			FormatGoogleMapsRequest(urlString, gNMEAdata.lat_double, gNMEAdata.lon_double);
+		#endif
+			sprintf(lineBuffer,	"<A HREF=%s target=google>Google Maps</A>", urlString);
+			PrintHTMLtableEntry(mySocketFD,	"Google Maps",		lineBuffer);
 			SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 			SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-
-			if (gNMEAdata.SequenceNumber > 0)
-			{
-				SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-				SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-
-				//----------------------------------------------------------------------------
-				GetGPSmodeString(gNMEAdata.currSatMode1, gNMEAdata.currSatMode2, lineBuffer);
-				PrintHTMLtableEntry(mySocketFD,	"Mode",		lineBuffer);
-
-				//----------------------------------------------------------------------------
-				#define	ISLOCKED(myBoolvalue)	(char *)(myBoolvalue ? "Locked" : "invalid")
-
-				PrintHTMLtableEntry(mySocketFD,	"GPS Status",		ISLOCKED(gNMEAdata.validData));
-				PrintHTMLtableEntry(mySocketFD,	"Date Status",		ISLOCKED(gNMEAdata.validDate));
-				PrintHTMLtableEntry(mySocketFD,	"Time Status",		ISLOCKED(gNMEAdata.validTime));
-				PrintHTMLtableEntry(mySocketFD,	"Lat/Lon Status",	ISLOCKED(gNMEAdata.validLatLon));
-				PrintHTMLtableEntry(mySocketFD,	"Altitude Status",	ISLOCKED(gNMEAdata.validAlt));
-
-
-				//--------------------------------------------------------------
-				//*	Sequence number
-				PrintHTMLtableEntryINT(mySocketFD,	"Sequence number",			gNMEAdata.SequenceNumber);
-				PrintHTMLtableEntryINT(mySocketFD,	"Satellites in view",		gNMEAdata.numSats);
-				PrintHTMLtableEntryDBL(mySocketFD,	"Latitude",					gNMEAdata.lat_double);
-				PrintHTMLtableEntryDBL(mySocketFD,	"Longitude",				gNMEAdata.lon_double);
-
-			#ifdef _ENABLE_GPS_AVERAGE_
-				ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_average,
-												latString,
-												gNMEAdata.lon_average,
-												lonString);
-			#else
-				ParseNMEA_FormatLatLonStrings(	gNMEAdata.lat_double,
-												latString,
-												gNMEAdata.lon_double,
-												lonString);
-			#endif
-
-				PrintHTMLtableEntry(mySocketFD,	"Latitude",			latString);
-				PrintHTMLtableEntry(mySocketFD,	"Longitude",		lonString);
-
-				FormatTimeStringISO8601_tm(&gNMEAdata.linuxTime, lineBuffer);
-				PrintHTMLtableEntry(mySocketFD,	"Date/Time",		lineBuffer);
-
-				//*	create a google maps link
-			#ifdef _ENABLE_GPS_AVERAGE_
-				FormatGoogleMapsRequest(urlString, gNMEAdata.lat_average, gNMEAdata.lon_average);
-			#else
-				FormatGoogleMapsRequest(urlString, gNMEAdata.lat_double, gNMEAdata.lon_double);
-			#endif
-				sprintf(lineBuffer,	"<A HREF=%s target=google>Google Maps</A>", urlString);
-				PrintHTMLtableEntry(mySocketFD,	"Google Maps",		lineBuffer);
-				SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-				SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-			}
-			else
-			{
-				SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-				SocketWriteData(mySocketFD,	"<H1>No data has been received from the GPS</H1>\r\n");
-				SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-			}
-			//--------------------------------------------------------
-			//*	output links to images
-
-
-			returnCode	=	stat(kGPSimageDirectory, &fileStatus);	//*	fstat - check for existence of file
-			if (returnCode == 0)
-			{
-				SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-				SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-				//--------------------------------------------------------
-			#ifdef _ENABLE_SATELLITE_TRAILS_
-				PrintHTMLgraphTableEntry(	mySocketFD,
-											"Satellite Tracking",
-											kGPSimageDirectory,
-											"satelliteTrails.jpg");
-				PrintHTMLgraphTableEntry(	mySocketFD,
-											"Satellite Elevation",
-											kGPSimageDirectory,
-											elevationGraphFileName);
-			#endif // _ENABLE_SATELLITE_TRAILS_
-
-			#ifdef _ENABLE_LAT_LON_TRACKING_
-				PrintHTMLgraphTableEntry(	mySocketFD,
-											"Lat Lon Tracking",
-											kGPSimageDirectory,
-											"latlonGraph.jpg");
-				SocketWriteData(mySocketFD,	"<TR><TD><CENTER>\r\n");
-				PrintLatLonStatsTable(mySocketFD);
-				SocketWriteData(mySocketFD,	"</TD><TR></CENTER>\r\n");
-			#endif // _ENABLE_LAT_LON_TRACKING_
-
-			#ifdef _ENABLE_ALTITUDE_TRACKING_
-				PrintHTMLgraphTableEntry(	mySocketFD,
-											"Altitude Tracking",
-											kGPSimageDirectory,
-											altGraphFileName);
-			#endif // _ENABLE_ALTITUDE_TRACKING_
-
-			#ifdef _ENABLE_PDOP_TRACKING_
-				PrintHTMLgraphTableEntry(	mySocketFD,
-											"PDOP Tracking",
-											kGPSimageDirectory,
-											pdopGraphFileName);
-			#endif // _ENABLE_PDOP_TRACKING_
-
-			#ifdef _ENABLE_NMEA_POSITION_ERROR_TRACKING_
-				if (gNMEAdata.gPGRME_exists)
-				{
-					PrintHTMLgraphTableEntry(	mySocketFD,
-												"Position Error Tracking",
-												kGPSimageDirectory,
-												posErrGraphFileName);
-				}
-			#endif // _ENABLE_NMEA_POSITION_ERROR_TRACKING_
-
-			#ifdef _ENABLE_SATELLITE_ALMANAC_
-				PrintHTMLgraphTableEntry(	mySocketFD,
-											"Satellite SNR distribution",
-											kGPSimageDirectory,
-											snrGraphFileName);
-
-				PrintHTMLgraphTableEntry(	mySocketFD,
-											"Satellites in Use",
-											kGPSimageDirectory,
-											satsInUseGraphFileName);
-			#endif // _ENABLE_SATELLITE_ALMANAC_
-
-				SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-				SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-			#ifdef _ENABLE_NMEA_SENTANCE_TRACKING_
-				PrintNMEA_SentanceTable(mySocketFD);
-			#endif // _ENABLE_NMEA_SENTANCE_TRACKING_
-			}
 		}
 		else
 		{
 			SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-			SocketWriteData(mySocketFD,	"<H1>GPS input is not enabled</H1>\r\n");
+			SocketWriteData(mySocketFD,	"<H1>No data has been received from the GPS</H1>\r\n");
 			SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 		}
-#else
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H1>Global GPS support is not enabled on this server</H1>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-#endif
-		SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
+		//--------------------------------------------------------
+		//*	output links to images
+
+
+		returnCode	=	stat(kGPSimageDirectory, &fileStatus);	//*	fstat - check for existence of file
+		if (returnCode == 0)
+		{
+			SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+			SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+			//--------------------------------------------------------
+		#ifdef _ENABLE_SATELLITE_TRAILS_
+			PrintHTMLgraphTableEntry(	mySocketFD,
+										"Satellite Tracking",
+										kGPSimageDirectory,
+										"satelliteTrails.jpg");
+			PrintHTMLgraphTableEntry(	mySocketFD,
+										"Satellite Elevation",
+										kGPSimageDirectory,
+										elevationGraphFileName);
+		#endif // _ENABLE_SATELLITE_TRAILS_
+
+		#ifdef _ENABLE_LAT_LON_TRACKING_
+			PrintHTMLgraphTableEntry(	mySocketFD,
+										"Lat Lon Tracking",
+										kGPSimageDirectory,
+										"latlonGraph.jpg");
+			SocketWriteData(mySocketFD,	"<TR><TD><CENTER>\r\n");
+			PrintLatLonStatsTable(mySocketFD);
+			SocketWriteData(mySocketFD,	"</TD><TR></CENTER>\r\n");
+		#endif // _ENABLE_LAT_LON_TRACKING_
+
+		#ifdef _ENABLE_ALTITUDE_TRACKING_
+			PrintHTMLgraphTableEntry(	mySocketFD,
+										"Altitude Tracking",
+										kGPSimageDirectory,
+										altGraphFileName);
+		#endif // _ENABLE_ALTITUDE_TRACKING_
+
+		#ifdef _ENABLE_PDOP_TRACKING_
+			PrintHTMLgraphTableEntry(	mySocketFD,
+										"PDOP Tracking",
+										kGPSimageDirectory,
+										pdopGraphFileName);
+		#endif // _ENABLE_PDOP_TRACKING_
+
+		#ifdef _ENABLE_NMEA_POSITION_ERROR_TRACKING_
+			if (gNMEAdata.gPGRME_exists)
+			{
+				PrintHTMLgraphTableEntry(	mySocketFD,
+											"Position Error Tracking",
+											kGPSimageDirectory,
+											posErrGraphFileName);
+			}
+		#endif // _ENABLE_NMEA_POSITION_ERROR_TRACKING_
+
+		#ifdef _ENABLE_SATELLITE_ALMANAC_
+			PrintHTMLgraphTableEntry(	mySocketFD,
+										"Satellite SNR distribution",
+										kGPSimageDirectory,
+										snrGraphFileName);
+
+			PrintHTMLgraphTableEntry(	mySocketFD,
+										"Satellites in Use",
+										kGPSimageDirectory,
+										satsInUseGraphFileName);
+		#endif // _ENABLE_SATELLITE_ALMANAC_
+
+			SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+			SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+		#ifdef _ENABLE_NMEA_SENTANCE_TRACKING_
+			PrintNMEA_SentanceTable(mySocketFD);
+		#endif // _ENABLE_NMEA_SENTANCE_TRACKING_
+		}
 	}
 	else
 	{
-	//	CONSOLE_DEBUG("reqData is NULL");
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H1>GPS input is not enabled</H1>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 	}
+#else
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H1>Global GPS support is not enabled on this server</H1>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+#endif
+	SocketWriteData(mySocketFD,	"</BODY></HTML>\r\n");
 }
 

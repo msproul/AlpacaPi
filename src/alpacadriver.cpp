@@ -1,7 +1,7 @@
 //**************************************************************************
 //*	Name:			alpacadriver.cpp
 //*
-//*	Author:			Mark Sproul (C) 2019-2023
+//*	Author:			Mark Sproul (C) 2019-2024
 //*					msproul@skychariot.com
 //*
 //*	Description:	C++ Driver for Alpaca protocol
@@ -193,6 +193,10 @@
 //*	Jun  1,	2024	<MLS> Global GPS now looks for Emlid and if found, uses that port
 //*	Jun 17,	2024	<MLS> Fixed bug in ProcessCmdLineArgs(), -p6502 caused a segmentation fault
 //*	Jun 25,	2024	<MLS> Added contentdata to requestlog file for PUT cmds
+//*	Jun 30,	2024	<MLS> Zoom meeting with Dave Raphael draphael@gmail.com
+//*	Jul  1,	2024	<MLS> Added http headers for js and css files
+//*	Jul  1,	2024	<MLS> Added Get_Readall() to base class
+//*	Jul  1,	2024	<MLS> Added details command to be compatible with AlpacaHub <PDR>
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -317,6 +321,9 @@
 #include	"managementdriver.h"
 #include	"common_AlpacaCmds.h"
 #include	"common_AlpacaCmds.cpp"
+
+
+//#include	"alpacadriver_scripts.cpp"
 
 
 AlpacaDriver	*gAlpacaDeviceList[kMaxDevices];
@@ -724,6 +731,10 @@ char				tempString[64];
 			gKeepRunning	=	false;
 			break;
 #endif // _INCLUDE_EXIT_COMMAND_
+
+		case kCmd_Common_Details:
+			alpacaErrCode	=	Get_Readall(reqData, alpacaErrMsg);
+			break;
 
 		case kCmd_Common_LiveWindow:
 			alpacaErrCode	=	Put_LiveWindow(reqData, alpacaErrMsg);
@@ -1326,6 +1337,13 @@ int		mySocketFD;
 							"\t],\r\n");
 	return(kASCOM_Err_Success);
 }
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	AlpacaDriver::Get_Readall(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
+{
+	return(kASCOM_Err_Success);
+}
+
 
 //*****************************************************************************
 TYPE_ASCOM_STATUS	AlpacaDriver::Put_LiveWindow(TYPE_GetPutRequestData *reqData, char *alpacaErrMsg)
@@ -1977,7 +1995,7 @@ const char	gBadResponse400[]	=
 };
 
 //*****************************************************************************
-const char	gHtmlHeader[]	=
+const char	gHtmlHeader_html[]	=
 {
 	"HTTP/1.0 200 \r\n"
 //	"Server: alpaca\r\n"
@@ -1986,14 +2004,46 @@ const char	gHtmlHeader[]	=
 	"Content-Type: text/html\r\n"
 	"Connection: close\r\n"
 	"Access-Control-Allow-Origin: *\r\n"
+	"Access-Control-Allow-Headers: *\r\n"
 	"\r\n"
 	"<!DOCTYPE html>\r\n"
 	"<HTML lang=\"en\">\r\n"
 	"<HEAD>\r\n"
 
-
-
 };
+// text/css
+// text/csv
+// text/html
+// text/javascript
+// text/plain
+// text/xml
+//*****************************************************************************
+const char	gHtmlHeader_css[]	=
+{
+	"HTTP/1.0 200 \r\n"
+//	"Server: AlpacaPi\r\n"
+//	"Mime-Version: 1.0\r\n"
+	"User-Agent: AlpacaPi\r\n"
+	"Content-Type: text/css\r\n"
+	"Connection: close\r\n"
+	"Access-Control-Allow-Origin: *\r\n"
+	"\r\n"
+};
+//*****************************************************************************
+const char	gHtmlHeader_js[]	=
+{
+	"HTTP/1.0 200 \r\n"
+//	"Server: AlpacaPi\r\n"
+//	"Mime-Version: 1.0\r\n"
+	"User-Agent: AlpacaPi\r\n"
+	"Content-Type: text/javascript\r\n"
+//	"Content-Type: application/javascript\r\n"
+	"Connection: close\r\n"
+	"Access-Control-Allow-Origin: *\r\n"
+	"Access-Control-Allow-Headers: *\r\n"
+	"\r\n"
+};
+
 
 #define _USE_BLACK_HTML_
 //*****************************************************************************
@@ -2029,7 +2079,7 @@ int			returnCode;
 
 		mySocketFD	=	reqData->socket;
 
-		SocketWriteData(mySocketFD,	gHtmlHeader);
+		SocketWriteData(mySocketFD,	gHtmlHeader_html);
 
 		sprintf(lineBuffer, "<TITLE>%s-%s</TITLE>\r\n", kApplicationName, kVersionString);
 		SocketWriteData(mySocketFD,	lineBuffer);
@@ -2157,7 +2207,7 @@ int		iii;
 	{
 		mySocketFD	=	reqData->socket;
 
-		SocketWriteData(mySocketFD,	gHtmlHeader);
+		SocketWriteData(mySocketFD,	gHtmlHeader_html);
 
 		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
 
@@ -2588,7 +2638,7 @@ int		iii;
 	if (reqData != NULL)
 	{
 		mySocketFD	=	reqData->socket;
-		SocketWriteData(mySocketFD,	gHtmlHeader);
+		SocketWriteData(mySocketFD,	gHtmlHeader_html);
 //		SocketWriteData(mySocketFD,	gHtmlNightMode);
 		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
 		SocketWriteData(mySocketFD,	lineBuffer);
@@ -2660,7 +2710,7 @@ int		iii;
 	if (reqData != NULL)
 	{
 		mySocketFD	=	reqData->socket;
-		SocketWriteData(mySocketFD,	gHtmlHeader);
+		SocketWriteData(mySocketFD,	gHtmlHeader_html);
 		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
 		SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</HEAD><BODY>\r\n<CENTER>\r\n");
@@ -2723,7 +2773,7 @@ int		mySocketFD;
 	if (reqData != NULL)
 	{
 		mySocketFD	=	reqData->socket;
-		SocketWriteData(mySocketFD,	gHtmlHeader);
+		SocketWriteData(mySocketFD,	gHtmlHeader_html);
 		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
 		SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	gHtmlNightMode);
@@ -2896,7 +2946,7 @@ const char	gHTML_HeaderPNG[]	=
 //*	Open and sends fileName to socket as a binary stream
 //*	returns bytes sent
 //*****************************************************************************
-static int	SendFileToSocket(int socket, const char *fileName)
+int	SendFileToSocket(int socket, const char *fileName)
 {
 FILE			*filePointer;
 int				numRead;
@@ -2916,7 +2966,8 @@ char			dataBuffer[1600];
 		while (keepGoing)
 		{
 			numRead	=	fread(dataBuffer, 1, 1500, filePointer);
-			if ((numRead > 0) || (feof(filePointer)))
+//			if ((numRead > 0) || (feof(filePointer)))
+			if (numRead > 0)
 			{
 //				CONSOLE_DEBUG_W_NUM("numRead=", numRead);
 				bytesWritten		=	write(socket, dataBuffer, numRead);
@@ -2938,14 +2989,14 @@ char			dataBuffer[1600];
 			CONSOLE_DEBUG_W_NUM("fclose(filePointer) failed with rc\t=",	retCode);
 
 		}
-//		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
-//		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
+		CONSOLE_DEBUG_W_STR("File is closed   \t=", fileName);
+		CONSOLE_DEBUG_W_NUM("totalBytesWritten\t=",	totalBytesWritten);
 	}
 	else
 	{
 		CONSOLE_DEBUG("Failed to open file");
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(totalBytesWritten);
 }
 
@@ -3154,7 +3205,7 @@ bool				deviceFound;
 #ifdef _DEBUG_CONFORM_
 	//*	log everything
 #else
-	if ((alpacaErrCode != 0) && (alpacaErrCode != kASCOM_Err_NotSupported))
+	if ((alpacaErrCode != 0) && (alpacaErrCode != kASCOM_Err_NotImplemented))
 #endif // _DEBUG_CONFORM_
 	{
 	char	myCommandString[256];
@@ -3331,7 +3382,7 @@ int			returnCode;
 		//*	create a log filename with today's date
 		currentTime		=	time(NULL);
 		linuxTime		=	localtime(&currentTime);
-		CONSOLE_DEBUG_W_NUM("tm_mday", linuxTime->tm_mday);
+//		CONSOLE_DEBUG_W_NUM("tm_mday", linuxTime->tm_mday);
 		sprintf(logFilename, "requestlog-%d-%d-%02d-%02d.txt",	gAlpacaListenPort,
 																(1900 + linuxTime->tm_year),
 																(1 + linuxTime->tm_mon),
@@ -4217,10 +4268,17 @@ int	iii;
 			}
 			else
 			{
-//				CONSOLE_DEBUG_W_STR("Unknown http request\t=",	htmlData);
-				CONSOLE_DEBUG_W_STR("parseChrPtr\t=", parseChrPtr);
-				DumpRequestStructure(__FUNCTION__, &reqData);
-				SocketWriteData(socket,	gBadResponse400);
+//			bool	wasProcessed;
+//
+//				//*	see if there is a file by this name
+//				wasProcessed	=	ProcessWebServerFile(socket, parseChrPtr);
+//				if (wasProcessed == false)
+				{
+					CONSOLE_DEBUG_W_STR("Unknown http request\t=",	htmlData);
+					CONSOLE_DEBUG_W_STR("parseChrPtr\t=", parseChrPtr);
+					DumpRequestStructure(__FUNCTION__, &reqData);
+					SocketWriteData(socket,	gBadResponse400);
+				}
 			}
 			break;
 	}
@@ -4281,7 +4339,6 @@ int		bytesWritten;
 		CONSOLE_DEBUG_W_NUM("bytesWritten\t=",	bytesWritten);
 	}
 }
-
 
 
 //*****************************************************************************
@@ -5564,7 +5621,7 @@ static void	OutputHTML_Form(TYPE_GetPutRequestData *reqData)
 int		mySocketFD;
 
 	mySocketFD	=	reqData->socket;
-	SocketWriteData(mySocketFD,	gHtmlHeader);
+	SocketWriteData(mySocketFD,	gHtmlHeader_html);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
 	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");
@@ -5627,18 +5684,18 @@ int			returnCode;
 			slashPtr++;
 		}
 		filePath[ccc]	=	0;
-		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
+//		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
 
 		slashCnt	=	CountCharsInString(filePath, '/');
 		if ((slashCnt == 0) && (strcmp(filePath, "docs") == 0))
 		{
 			strcat(filePath, "/index.html");
 		}
-		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
+//		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
 
 		//*	fstat - check for existence of file
 		returnCode	=	stat(filePath, &fileStatus);
-		CONSOLE_DEBUG_W_HEX("fileStatus.st_mode\t=", fileStatus.st_mode);
+//		CONSOLE_DEBUG_W_HEX("fileStatus.st_mode\t=", fileStatus.st_mode);
 		if (returnCode != 0)
 		{
 			//*	ok, the file is not there, lets look in docs
@@ -5654,15 +5711,15 @@ int			returnCode;
 		CONSOLE_DEBUG_W_STR("filePath\t=", filePath);
 		if (returnCode == 0)
 		{
-			if (fileStatus.st_mode & S_IFREG)
-			{
-				CONSOLE_DEBUG("File is S_IFREG (regular file)");
-			}
+//			if (fileStatus.st_mode & S_IFREG)
+//			{
+//				CONSOLE_DEBUG("File is S_IFREG (regular file)");
+//			}
 			if (fileStatus.st_mode & S_IFDIR)
 			{
 			char	lastChar;
 
-				CONSOLE_DEBUG("File is S_IFDIR (Directory)");
+//				CONSOLE_DEBUG("File is S_IFDIR (Directory)");
 
 				lastChar	=	filePath[strlen(filePath) - 1];
 				if (lastChar == '/')
@@ -5671,7 +5728,7 @@ int			returnCode;
 				}
 			}
 
-			CONSOLE_DEBUG("File is OK");
+//			CONSOLE_DEBUG("File is OK");
 
 			//*	determine the extension
 			ExtractFileExtension(filePath, fileExtension);
@@ -5686,8 +5743,20 @@ int			returnCode;
 			}
 			else
 			{
+				//*	check the file type and send the appropriate header
+				if (strcasecmp(fileExtension, ".js") == 0)
+				{
+					SocketWriteData(mySocketFD,	gHtmlHeader_js);
+				}
+				else if (strcasecmp(fileExtension, ".css") == 0)
+				{
+					SocketWriteData(mySocketFD,	gHtmlHeader_css);
+				}
+				else
+				{
+					SocketWriteData(mySocketFD,	gHtmlHeader_html);
+				}
 				//*	send the file to the socket
-				SocketWriteData(mySocketFD,	gHtmlHeader);
 				SendFileToSocket(mySocketFD, filePath);
 			}
 		}

@@ -44,6 +44,7 @@
 //*	Nov  8,	2022	<MLS> Fixed bug in JSON for temperatureLog in all drivers.
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to focuser driver
 //*	May 17,	2024	<MLS> Added http error 400 processing to focuser driver
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from focuserdriver.cpp
 //*****************************************************************************
 
 #ifdef _ENABLE_FOCUSER_
@@ -457,22 +458,13 @@ TYPE_ASCOM_STATUS	FocuserDriver::Get_Tempcomp(TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Bool(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cFocuserProp.TempComp,
-								INCLUDE_COMMA);
-
-
-			alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	JsonResponse_Add_Bool(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cFocuserProp.TempComp,
+							INCLUDE_COMMA);
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -576,15 +568,8 @@ TYPE_ASCOM_STATUS	FocuserDriver::Put_Halt(TYPE_GetPutRequestData *reqData, char 
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		alpacaErrCode	=	HaltFocuser(alpacaErrMsg);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+//	CONSOLE_DEBUG(__FUNCTION__);
+	alpacaErrCode	=	HaltFocuser(alpacaErrMsg);
 	return(alpacaErrCode);
 }
 
@@ -636,39 +621,32 @@ bool				foundKeyWord;
 char				argumentString[32];
 int32_t				newPosition;
 
-	if (reqData != NULL)
+	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
+											"Position",
+											argumentString,
+											(sizeof(argumentString) -1));
+	if (foundKeyWord)
 	{
-		foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
-												"Position",
-												argumentString,
-												(sizeof(argumentString) -1));
-		if (foundKeyWord)
+		if (IsValidNumericString(argumentString))
 		{
-			if (IsValidNumericString(argumentString))
-			{
-				//*	new position is the current position plus the new offset
-				newPosition		=	cFocuserProp.Position + atoi(argumentString);
-				alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
-			}
-			else
-			{
-				alpacaErrCode			=	kASCOM_Err_InvalidValue;
-				reqData->httpRetCode	=	400;
-				GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Position is non-numeric");
-				CONSOLE_DEBUG(alpacaErrMsg);
-			}
+			//*	new position is the current position plus the new offset
+			newPosition		=	cFocuserProp.Position + atoi(argumentString);
+			alpacaErrCode	=	SetFocuserPosition(newPosition, alpacaErrMsg);
 		}
 		else
 		{
 			alpacaErrCode			=	kASCOM_Err_InvalidValue;
 			reqData->httpRetCode	=	400;
-			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+			GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Position is non-numeric");
 			CONSOLE_DEBUG(alpacaErrMsg);
 		}
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		alpacaErrCode			=	kASCOM_Err_InvalidValue;
+		reqData->httpRetCode	=	400;
+		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Keyword 'Position' not specified");
+		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -694,137 +672,130 @@ TYPE_ASCOM_STATUS	FocuserDriver::Get_Readall(TYPE_GetPutRequestData *reqData, ch
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
+	//*	do the common ones first
+	Get_Readall_Common(			reqData, alpacaErrMsg);
+
+	//*	do the standard Alpaca fields first
+	Get_Absolute(			reqData,	alpacaErrMsg,	"absolute");
+	Get_Ismoving(			reqData,	alpacaErrMsg,	"ismoving");
+	Get_Maxincrement(		reqData,	alpacaErrMsg,	"maxincrement");
+	Get_Maxstep(			reqData,	alpacaErrMsg,	"maxstep");
+	Get_Position(			reqData,	alpacaErrMsg,	"position");
+	Get_Stepsize(			reqData,	alpacaErrMsg,	"stepsize");
+	Get_Tempcomp(			reqData,	alpacaErrMsg,	"tempcomp");
+	Get_Tempcompavailable(	reqData,	alpacaErrMsg,	"tempcompavailable");
+	Get_Temperature(		reqData,	alpacaErrMsg,	"temperature");
+
+
+	//==========================================================
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"version",
+								gFullVersionString,
+								INCLUDE_COMMA);
+
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Model",
+								cDeviceModel,
+								INCLUDE_COMMA);
+
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SerialNum",
+								cDeviceSerialNum,
+								INCLUDE_COMMA);
+
+
+	if (cIsNiteCrawler)
 	{
-		//*	do the common ones first
-		Get_Readall_Common(			reqData, alpacaErrMsg);
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SwitchIN",
+								cSwitchIN,
+								INCLUDE_COMMA);
 
-		//*	do the standard Alpaca fields first
-		Get_Absolute(			reqData,	alpacaErrMsg,	"absolute");
-		Get_Ismoving(			reqData,	alpacaErrMsg,	"ismoving");
-		Get_Maxincrement(		reqData,	alpacaErrMsg,	"maxincrement");
-		Get_Maxstep(			reqData,	alpacaErrMsg,	"maxstep");
-		Get_Position(			reqData,	alpacaErrMsg,	"position");
-		Get_Stepsize(			reqData,	alpacaErrMsg,	"stepsize");
-		Get_Tempcomp(			reqData,	alpacaErrMsg,	"tempcomp");
-		Get_Tempcompavailable(	reqData,	alpacaErrMsg,	"tempcompavailable");
-		Get_Temperature(		reqData,	alpacaErrMsg,	"temperature");
-
-
-		//==========================================================
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"version",
-									gFullVersionString,
-									INCLUDE_COMMA);
-
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"Model",
-									cDeviceModel,
-									INCLUDE_COMMA);
-
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"SerialNum",
-									cDeviceSerialNum,
-									INCLUDE_COMMA);
-
-
-		if (cIsNiteCrawler)
-		{
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"SwitchIN",
-									cSwitchIN,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"SwitchOUT",
-									cSwitchOUT,
-									INCLUDE_COMMA);
-		}
-
-		if (cFocuserSupportsRotation)
-		{
-			JsonResponse_Add_Int32(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"RotatorPosition",
-									cRotatorPosition,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"RotatorIsMoving",
-									cRotatorProp.IsMoving,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"SwitchROT",
-									cSwitchROT,
-									INCLUDE_COMMA);
-
-		}
-
-
-		if (cFocuserSupportsAux)
-		{
-			JsonResponse_Add_Int32(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"AuxPosition",
-									cAuxPosition,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"AuxIsMoving",
-									cAuxIsMoving,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"SwitchAUX1",
-									cSwitchAUX1,
-									INCLUDE_COMMA);
-
-			JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"SwitchAUX2",
-									cSwitchAUX2,
-									INCLUDE_COMMA);
-		}
-
-
-		if (cFocuserHasVoltage)
-		{
-			JsonResponse_Add_Double(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										"Voltage",
-										cFocuserVoltage,
-										INCLUDE_COMMA);
-
-		}
-		alpacaErrCode	=	kASCOM_Err_Success;
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SwitchOUT",
+								cSwitchOUT,
+								INCLUDE_COMMA);
 	}
-	else
+
+	if (cFocuserSupportsRotation)
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"RotatorPosition",
+								cRotatorPosition,
+								INCLUDE_COMMA);
+
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"RotatorIsMoving",
+								cRotatorProp.IsMoving,
+								INCLUDE_COMMA);
+
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SwitchROT",
+								cSwitchROT,
+								INCLUDE_COMMA);
+
 	}
+
+
+	if (cFocuserSupportsAux)
+	{
+		JsonResponse_Add_Int32(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"AuxPosition",
+								cAuxPosition,
+								INCLUDE_COMMA);
+
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"AuxIsMoving",
+								cAuxIsMoving,
+								INCLUDE_COMMA);
+
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SwitchAUX1",
+								cSwitchAUX1,
+								INCLUDE_COMMA);
+
+		JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"SwitchAUX2",
+								cSwitchAUX2,
+								INCLUDE_COMMA);
+	}
+
+
+	if (cFocuserHasVoltage)
+	{
+		JsonResponse_Add_Double(	reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"Voltage",
+									cFocuserVoltage,
+									INCLUDE_COMMA);
+
+	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 

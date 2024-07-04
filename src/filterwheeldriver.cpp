@@ -37,7 +37,7 @@
 //*	Apr  1,	2020	<MLS> Switching filter numbers to 0 -> N-1 as per ASCOM
 //*	Apr  1,	2020	<MLS> Updated Get_Names() to deal with table starting at 0
 //*	Apr  1,	2020	<MLS> CONFORM-filterwheel -> PASSED!!!!!!!!!!!!!!!!!!!!!
-//*	May 22,	2020	<MLS> Fixed JSON formating error in filter wheel names output
+//*	May 22,	2020	<MLS> Fixed JSON formatting error in filter wheel names output
 //*	Mar 21,	2021	<MLS> Working on FilterWheel driver to prevent ZWO EFW from hanging
 //*	Apr 30,	2021	<MLS> Added "Filter #" if name not specified to names list
 //*	Jun 15,	2021	<MLS> Fixed filterwheel ifdefs
@@ -47,6 +47,7 @@
 //*	May 17,	2024	<MLS> Added http error 400 processing to filterwheel driver
 //*	May 17,	2024	<MLS> Added http error 400 to Put_Position()
 //*	May 17,	2024	<MLS> CONFORMU-filterwheel -> PASSED!!!!!!!!!!!!!!
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from filterwheeldriver.cpp
 //*****************************************************************************
 
 #if defined(_ENABLE_FILTERWHEEL_) || defined(_ENABLE_FILTERWHEEL_ZWO_) || defined(_ENABLE_FILTERWHEEL_ATIK_)
@@ -355,52 +356,45 @@ char				lineBuffer[256];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	mySocketFD	=	reqData->socket;
+
+
+	if (cNumberOfPositions > 0)
 	{
-		mySocketFD	=	reqData->socket;
+		JsonResponse_Add_ArrayStart(mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString);
 
-
-		if (cNumberOfPositions > 0)
+		JsonResponse_Add_RawText(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"\r\n");
+		for (ii=0; ii<cNumberOfPositions; ii++)
 		{
-			JsonResponse_Add_ArrayStart(mySocketFD,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString);
+		//	sprintf(lineBuffer, "\t\t\t%d", cFilterDef[ii].focusOffset);
+			sprintf(lineBuffer, "\t\t\t%d", cFilterWheelProp.FocusOffsets[ii]);
+
+			if (ii < (cNumberOfPositions - 1))
+			{
+				strcat(lineBuffer, ",");
+				strcat(lineBuffer, "\r\n");
+			}
+			else
+			{
+				strcat(lineBuffer, " ");
+			}
 
 			JsonResponse_Add_RawText(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"\r\n");
-			for (ii=0; ii<cNumberOfPositions; ii++)
-			{
-			//	sprintf(lineBuffer, "\t\t\t%d", cFilterDef[ii].focusOffset);
-				sprintf(lineBuffer, "\t\t\t%d", cFilterWheelProp.FocusOffsets[ii]);
+										lineBuffer);
 
-				if (ii < (cNumberOfPositions - 1))
-				{
-					strcat(lineBuffer, ",");
-					strcat(lineBuffer, "\r\n");
-				}
-				else
-				{
-					strcat(lineBuffer, " ");
-				}
-
-				JsonResponse_Add_RawText(	mySocketFD,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											lineBuffer);
-
-			}
-			JsonResponse_Add_ArrayEnd(	mySocketFD,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										INCLUDE_COMMA);
 		}
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		JsonResponse_Add_ArrayEnd(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									INCLUDE_COMMA);
 	}
 	return(alpacaErrCode);
 }
@@ -416,65 +410,58 @@ char				filterNameBuff[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
-	{
-		mySocketFD	=	reqData->socket;
+	mySocketFD	=	reqData->socket;
 
-		if (cNumberOfPositions > 0)
+	if (cNumberOfPositions > 0)
+	{
+	//	JsonResponse_Add_RawText(mySocketFD,
+	//							reqData->jsonTextBuffer,
+	//							kMaxJsonBuffLen,
+	//							"\t\"Value\": \r\n\t[\r\n");
+		JsonResponse_Add_ArrayStart(mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									responseString);
+		JsonResponse_Add_RawText(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									"\r\n");
+		for (ii=0; ii<cNumberOfPositions; ii++)
 		{
-		//	JsonResponse_Add_RawText(mySocketFD,
-		//							reqData->jsonTextBuffer,
-		//							kMaxJsonBuffLen,
-		//							"\t\"Value\": \r\n\t[\r\n");
-			JsonResponse_Add_ArrayStart(mySocketFD,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										responseString);
+			strcpy(lineBuffer, "\t\t\t\"");
+		//	strcat(lineBuffer, cFilterDef[ii].filterDesciption);
+
+			if (strlen(cFilterWheelProp.Names[ii].FilterName) > 0)
+			{
+				strcat(lineBuffer, cFilterWheelProp.Names[ii].FilterName);
+			}
+			else
+			{
+				sprintf(filterNameBuff, "Filter %d", (ii + 1));
+				strcat(lineBuffer, filterNameBuff);
+			}
+
+			strcat(lineBuffer, "\"");
+			if (ii < (cNumberOfPositions - 1))
+			{
+				strcat(lineBuffer, ",");
+				strcat(lineBuffer, "\r\n");
+			}
+			else
+			{
+				strcat(lineBuffer, " ");
+			}
+
 			JsonResponse_Add_RawText(	mySocketFD,
 										reqData->jsonTextBuffer,
 										kMaxJsonBuffLen,
-										"\r\n");
-			for (ii=0; ii<cNumberOfPositions; ii++)
-			{
-				strcpy(lineBuffer, "\t\t\t\"");
-			//	strcat(lineBuffer, cFilterDef[ii].filterDesciption);
+										lineBuffer);
 
-				if (strlen(cFilterWheelProp.Names[ii].FilterName) > 0)
-				{
-					strcat(lineBuffer, cFilterWheelProp.Names[ii].FilterName);
-				}
-				else
-				{
-					sprintf(filterNameBuff, "Filter %d", (ii + 1));
-					strcat(lineBuffer, filterNameBuff);
-				}
-
-				strcat(lineBuffer, "\"");
-				if (ii < (cNumberOfPositions - 1))
-				{
-					strcat(lineBuffer, ",");
-					strcat(lineBuffer, "\r\n");
-				}
-				else
-				{
-					strcat(lineBuffer, " ");
-				}
-
-				JsonResponse_Add_RawText(	mySocketFD,
-											reqData->jsonTextBuffer,
-											kMaxJsonBuffLen,
-											lineBuffer);
-
-			}
-			JsonResponse_Add_ArrayEnd(	mySocketFD,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										INCLUDE_COMMA);
 		}
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		JsonResponse_Add_ArrayEnd(	mySocketFD,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									INCLUDE_COMMA);
 	}
 	return(alpacaErrCode);
 }
@@ -634,23 +621,15 @@ TYPE_ASCOM_STATUS	FilterwheelDriver::Get_Readall(TYPE_GetPutRequestData *reqData
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
 
+	//*	do the common ones first
+	Get_Readall_Common(	reqData, alpacaErrMsg);
 
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData, alpacaErrMsg);
+	alpacaErrCode	=	Get_Position(reqData,		alpacaErrMsg,	"position");
+	alpacaErrCode	=	Get_Names(reqData,			alpacaErrMsg,	"names");
+	alpacaErrCode	=	Get_Focusoffsets(reqData,	alpacaErrMsg,	"focusoffsets");
 
-		alpacaErrCode	=	Get_Position(reqData,		alpacaErrMsg,	"position");
-		alpacaErrCode	=	Get_Names(reqData,			alpacaErrMsg,	"names");
-		alpacaErrCode	=	Get_Focusoffsets(reqData,	alpacaErrMsg,	"focusoffsets");
-
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 
@@ -667,75 +646,72 @@ bool		isConnected;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	mySocketFD		=	reqData->socket;
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Filter Wheel</H2>\r\n");
+
+	isConnected		=	IsFilterwheelConnected();
+	if (isConnected)
 	{
-		mySocketFD		=	reqData->socket;
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>Filter Wheel</H2>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
-		isConnected		=	IsFilterwheelConnected();
-		if (isConnected)
+
+		SocketWriteData(mySocketFD,	"<TR>\r\n");
+
+		SocketWriteData(mySocketFD,	"\t<TD>");
+		SocketWriteData(mySocketFD,	cCommonProp.Name);
+		SocketWriteData(mySocketFD,	"</TD>\r\n");
+
+		sprintf(lineBuffer,	"\t<TD><CENTER>Slots=%d</TD>\r\n",	cNumberOfPositions);
+		SocketWriteData(mySocketFD,	lineBuffer);
+
+		Read_CurrentFilterPositon();
+		sprintf(lineBuffer,	"\t<TD><CENTER>Current position=%d</TD>\r\n",	cFilterWheelProp.Position);
+		SocketWriteData(mySocketFD,	lineBuffer);
+
+		SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+
+		//*******************************************************
+		//*	list out the filter names
+		for (iii=0; iii < cNumberOfPositions; iii++)
 		{
-			SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-
-
 			SocketWriteData(mySocketFD,	"<TR>\r\n");
 
-			SocketWriteData(mySocketFD,	"\t<TD>");
-			SocketWriteData(mySocketFD,	cCommonProp.Name);
-			SocketWriteData(mySocketFD,	"</TD>\r\n");
-
-			sprintf(lineBuffer,	"\t<TD><CENTER>Slots=%d</TD>\r\n",	cNumberOfPositions);
-			SocketWriteData(mySocketFD,	lineBuffer);
-
-			Read_CurrentFilterPositon();
-			sprintf(lineBuffer,	"\t<TD><CENTER>Current position=%d</TD>\r\n",	cFilterWheelProp.Position);
+		//	sprintf(lineBuffer,	"\t<TD>Slot#%d</TD><TD>%s</TD>\r\n",	iii, cFilterDef[iii].filterDesciption);
+			sprintf(lineBuffer,	"\t<TD>Slot#%d</TD><TD>%s</TD>\r\n",	iii, cFilterWheelProp.Names[iii].FilterName);
 			SocketWriteData(mySocketFD,	lineBuffer);
 
 			SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-
-			//*******************************************************
-			//*	list out the filter names
-			for (iii=0; iii < cNumberOfPositions; iii++)
-			{
-				SocketWriteData(mySocketFD,	"<TR>\r\n");
-
-			//	sprintf(lineBuffer,	"\t<TD>Slot#%d</TD><TD>%s</TD>\r\n",	iii, cFilterDef[iii].filterDesciption);
-				sprintf(lineBuffer,	"\t<TD>Slot#%d</TD><TD>%s</TD>\r\n",	iii, cFilterWheelProp.Names[iii].FilterName);
-				SocketWriteData(mySocketFD,	lineBuffer);
-
-				SocketWriteData(mySocketFD,	"</TR>\r\n");
-			}
-			SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-			SocketWriteData(mySocketFD,	"<P>\r\n");
-
 		}
-		else
-		{
-			SocketWriteData(mySocketFD,	"<H3>Filter wheel is not connected</H3>\r\n");
-		}
-
-		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-		SocketWriteData(mySocketFD,	"<TR><TH COLSPAN=2><CENTER>Driver operations</TH></TR>\r\n");
-
-
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Succesful Opens</TD><TD>%d</TD></TR>\r\n",	cSuccesfullOpens);
-		SocketWriteData(mySocketFD,	lineBuffer);
-
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Successful Closes</TD><TD>%d</TD></TR>\r\n",	cSuccesfullCloses);
-		SocketWriteData(mySocketFD,	lineBuffer);
-
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Open Failures</TD><TD>%d</TD></TR>\r\n",	cOpenFailures);
-		SocketWriteData(mySocketFD,	lineBuffer);
-
-		sprintf(lineBuffer,	"\t<TR><TD><CENTER>Close Failures</TD><TD>%d</TD></TR>\r\n",	cCloseFailures);
-		SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"<P>\r\n");
 
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 	}
+	else
+	{
+		SocketWriteData(mySocketFD,	"<H3>Filter wheel is not connected</H3>\r\n");
+	}
+
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	SocketWriteData(mySocketFD,	"<TR><TH COLSPAN=2><CENTER>Driver operations</TH></TR>\r\n");
+
+
+	sprintf(lineBuffer,	"\t<TR><TD><CENTER>Succesful Opens</TD><TD>%d</TD></TR>\r\n",	cSuccesfullOpens);
+	SocketWriteData(mySocketFD,	lineBuffer);
+
+	sprintf(lineBuffer,	"\t<TR><TD><CENTER>Successful Closes</TD><TD>%d</TD></TR>\r\n",	cSuccesfullCloses);
+	SocketWriteData(mySocketFD,	lineBuffer);
+
+	sprintf(lineBuffer,	"\t<TR><TD><CENTER>Open Failures</TD><TD>%d</TD></TR>\r\n",	cOpenFailures);
+	SocketWriteData(mySocketFD,	lineBuffer);
+
+	sprintf(lineBuffer,	"\t<TR><TD><CENTER>Close Failures</TD><TD>%d</TD></TR>\r\n",	cCloseFailures);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 }
 
 //*****************************************************************************

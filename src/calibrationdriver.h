@@ -65,7 +65,7 @@ class CalibrationDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_Aperture(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 		TYPE_ASCOM_STATUS	Get_CanAdjustAperture(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
-		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+virtual	TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 virtual	bool	DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 

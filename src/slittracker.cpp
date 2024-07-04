@@ -32,6 +32,7 @@
 //*	Mar  9,	2023	<MLS> Added trackingenabled property
 //*	Mar  9,	2023	<MLS> Added web docs support
 //*	Jul 10,	2023	<MLS> Switched SlitTracker to use command table
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from slittracker.cpp
 //*****************************************************************************
 
 #ifdef _ENABLE_SLIT_TRACKER_
@@ -323,63 +324,60 @@ char		lineBuffer[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	mySocketFD		=	reqData->socket;
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Slit Tracker</H2>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+	SocketWriteData(mySocketFD, "<TH>Sensor #</TH><TH>inches</TH><TH>Read cnt</TH>\r\n");
+	SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+
+	for (iii=0; iii<kSlitSensorCnt; iii++)
 	{
-		mySocketFD		=	reqData->socket;
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>Slit Tracker</H2>\r\n");
-
-		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
-		SocketWriteData(mySocketFD, "<TH>Sensor #</TH><TH>inches</TH><TH>Read cnt</TH>\r\n");
-		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
-		for (iii=0; iii<kSlitSensorCnt; iii++)
+		sprintf(lineBuffer, "\t\t<TD><CENTER>%d</TD>\r\n", iii);
+		SocketWriteData(mySocketFD,	lineBuffer);
+		if (cSlitDistance[iii].validData)
 		{
-			SocketWriteData(mySocketFD,	"\t<TR>\r\n");
-
-			sprintf(lineBuffer, "\t\t<TD><CENTER>%d</TD>\r\n", iii);
-			SocketWriteData(mySocketFD,	lineBuffer);
-			if (cSlitDistance[iii].validData)
-			{
-				sprintf(lineBuffer, "\t\t<TD><CENTER>%1.2f</TD>\r\n", cSlitDistance[iii].distanceInches);
-			}
-			else
-			{
-				strcpy(lineBuffer, "\t\t<TD>not valid</TD>\r\n");
-			}
-			SocketWriteData(mySocketFD,	lineBuffer);
-
-			sprintf(lineBuffer, "\t\t<TD><CENTER>%ld</TD>\r\n", cSlitDistance[iii].readCount);
-			SocketWriteData(mySocketFD,	lineBuffer);
-
-			SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+			sprintf(lineBuffer, "\t\t<TD><CENTER>%1.2f</TD>\r\n", cSlitDistance[iii].distanceInches);
 		}
-
-		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
-		sprintf(lineBuffer, "\t\t<TD>Gravity X</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_X);
+		else
+		{
+			strcpy(lineBuffer, "\t\t<TD>not valid</TD>\r\n");
+		}
 		SocketWriteData(mySocketFD,	lineBuffer);
-		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
-		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
-		sprintf(lineBuffer, "\t\t<TD>Gravity Y</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_Y);
+		sprintf(lineBuffer, "\t\t<TD><CENTER>%ld</TD>\r\n", cSlitDistance[iii].readCount);
 		SocketWriteData(mySocketFD,	lineBuffer);
+
 		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
-
-		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
-		sprintf(lineBuffer, "\t\t<TD>Gravity Z</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_Z);
-		SocketWriteData(mySocketFD,	lineBuffer);
-		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
-
-		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
-		sprintf(lineBuffer, "\t\t<TD>Gravity T</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_T);
-		SocketWriteData(mySocketFD,	lineBuffer);
-		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
-
-
-		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 	}
+
+	SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+	sprintf(lineBuffer, "\t\t<TD>Gravity X</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_X);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+	sprintf(lineBuffer, "\t\t<TD>Gravity Y</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_Y);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+	sprintf(lineBuffer, "\t\t<TD>Gravity Z</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_Z);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+	sprintf(lineBuffer, "\t\t<TD>Gravity T</TD><TD><CENTER>%1.2f</TD>\r\n", cGravity_T);
+	SocketWriteData(mySocketFD,	lineBuffer);
+	SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+
+
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 }
 
 //*****************************************************************************
@@ -408,22 +406,15 @@ TYPE_ASCOM_STATUS	SlitTrackerDriver::Get_DomeAddress(TYPE_GetPutRequestData *req
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 char				domeAddrString[128];
 
-	if (reqData != NULL)
-	{
-		sprintf(domeAddrString, "%s:%d/%d", cDomeIPaddressString, cDomeAlpacaPort, cDomeAlpacaDevNum);
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									domeAddrString,
-									INCLUDE_COMMA);
+	sprintf(domeAddrString, "%s:%d/%d", cDomeIPaddressString, cDomeAlpacaPort, cDomeAlpacaDevNum);
+	JsonResponse_Add_String(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								domeAddrString,
+								INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -432,21 +423,14 @@ TYPE_ASCOM_STATUS	SlitTrackerDriver::Get_TrackingEnabled(	TYPE_GetPutRequestData
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Bool(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									responseString,
-									cSlitProp.TrackingEnabled,
-									INCLUDE_COMMA);
+	JsonResponse_Add_Bool(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								responseString,
+								cSlitProp.TrackingEnabled,
+								INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -484,62 +468,54 @@ TYPE_ASCOM_STATUS	SlitTrackerDriver::Get_Readall(TYPE_GetPutRequestData *reqData
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 char				textBuffer[64];
 int					iii;
+	//*	do the common ones first
+	Get_Readall_Common(		reqData, alpacaErrMsg);
+	Get_DomeAddress(		reqData, alpacaErrMsg, "domeaddress");
+	Get_TrackingEnabled(	reqData, alpacaErrMsg, "trackingenabled");
 
-	if (reqData != NULL)
+
+	for (iii=0; iii<kSlitSensorCnt; iii++)
 	{
-		//*	do the common ones first
-		Get_Readall_Common(		reqData, alpacaErrMsg);
-		Get_DomeAddress(		reqData, alpacaErrMsg, "domeaddress");
-		Get_TrackingEnabled(	reqData, alpacaErrMsg, "trackingenabled");
 
-
-		for (iii=0; iii<kSlitSensorCnt; iii++)
-		{
-
-			sprintf(textBuffer, "sensor-%d", iii);
-			JsonResponse_Add_Double(	reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										textBuffer,
-										cSlitDistance[iii].distanceInches,
-										INCLUDE_COMMA);
-		}
-
+		sprintf(textBuffer, "sensor-%d", iii);
 		JsonResponse_Add_Double(	reqData->socket,
 									reqData->jsonTextBuffer,
 									kMaxJsonBuffLen,
-									"gravity_x",
-									cGravity_X,
+									textBuffer,
+									cSlitDistance[iii].distanceInches,
 									INCLUDE_COMMA);
-
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"gravity_y",
-									cGravity_Y,
-									INCLUDE_COMMA);
-
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"gravity_z",
-									cGravity_Z,
-									INCLUDE_COMMA);
-
-		JsonResponse_Add_Double(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"gravity_t",
-									cGravity_T,
-									INCLUDE_COMMA);
-
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
 	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"gravity_x",
+								cGravity_X,
+								INCLUDE_COMMA);
+
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"gravity_y",
+								cGravity_Y,
+								INCLUDE_COMMA);
+
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"gravity_z",
+								cGravity_Z,
+								INCLUDE_COMMA);
+
+	JsonResponse_Add_Double(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"gravity_t",
+								cGravity_T,
+								INCLUDE_COMMA);
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 

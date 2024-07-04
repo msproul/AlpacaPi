@@ -62,7 +62,7 @@ class ShutterDriver: public AlpacaDriver
 
 				//*	commands added by MLS
 				TYPE_ASCOM_STATUS	Put_StopShutter(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-				TYPE_ASCOM_STATUS	Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS	Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		virtual	void	CheckSensors(void);
 

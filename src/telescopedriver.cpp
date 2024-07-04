@@ -80,6 +80,7 @@
 //*	May 15,	2024	<MLS> Added range checks to MoveAxis() to satisfy CONFORM
 //*	May 17,	2024	<MLS> Added ExtractRaDecArguments() & ExtractAltAzArguments()
 //*	May 17,	2024	<MLS> Added http error 400 processing to telescope driver
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from telescopedriver.cpp
 //*****************************************************************************
 
 
@@ -947,42 +948,35 @@ char					alignmentModeStr[64];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cTelescopeProp.AlginmentMode,
+							INCLUDE_COMMA);
+
+	switch(cTelescopeProp.AlginmentMode)
 	{
-		JsonResponse_Add_Int32(	reqData->socket,
+		case kAlignmentMode_algAltAz:		//*	Altitude-Azimuth alignment.
+			strcpy(alignmentModeStr, "Altitude-Azimuth mount");
+			break;
+
+		case kAlignmentMode_algPolar:		//*	Polar (equatorial) mount other than German equatorial.
+			strcpy(alignmentModeStr, "Polar (equatorial) mount");
+			break;
+
+		case kAlignmentMode_algGermanPolar:
+			strcpy(alignmentModeStr, "German equatorial mount");
+			break;
+
+	}
+	JsonResponse_Add_String(	reqData->socket,
 								reqData->jsonTextBuffer,
 								kMaxJsonBuffLen,
-								responseString,
-								cTelescopeProp.AlginmentMode,
+								"alignmentmode-str",
+								alignmentModeStr,
 								INCLUDE_COMMA);
-
-		switch(cTelescopeProp.AlginmentMode)
-		{
-			case kAlignmentMode_algAltAz:		//*	Altitude-Azimuth alignment.
-				strcpy(alignmentModeStr, "Altitude-Azimuth mount");
-				break;
-
-			case kAlignmentMode_algPolar:		//*	Polar (equatorial) mount other than German equatorial.
-				strcpy(alignmentModeStr, "Polar (equatorial) mount");
-				break;
-
-			case kAlignmentMode_algGermanPolar:
-				strcpy(alignmentModeStr, "German equatorial mount");
-				break;
-
-		}
-		JsonResponse_Add_String(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"alignmentmode-str",
-									alignmentModeStr,
-									INCLUDE_COMMA);
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -4022,105 +4016,98 @@ int		mySocket;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif // _DEBUG_CONFORM_
 
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData, alpacaErrMsg);
+	//*	do the common ones first
+	Get_Readall_Common(	reqData, alpacaErrMsg);
 
-		//*	make local copies of the data structure to make the code easier to read
-		mySocket	=	reqData->socket;
+	//*	make local copies of the data structure to make the code easier to read
+	mySocket	=	reqData->socket;
 
 
-		alpacaErrCode	=	Get_Alignmentmode(			reqData, alpacaErrMsg, "alignmentmode");
-		alpacaErrCode	=	Get_Altitude(				reqData, alpacaErrMsg, "altitude");
-		alpacaErrCode	=	Get_ApertureArea(			reqData, alpacaErrMsg, "apertureArea");
-		alpacaErrCode	=	Get_ApertureDiameter(		reqData, alpacaErrMsg, "apertureDiameter");
-		alpacaErrCode	=	Get_AtHome(					reqData, alpacaErrMsg, "atHome");
-		alpacaErrCode	=	Get_AtPark(					reqData, alpacaErrMsg, "atPark");
-		alpacaErrCode	=	Get_Azimuth(				reqData, alpacaErrMsg, "azimuth");
-		alpacaErrCode	=	Get_CanFindHome(			reqData, alpacaErrMsg, "CanFindHome");
-		alpacaErrCode	=	Get_CanPark(				reqData, alpacaErrMsg, "CanPark");
-		alpacaErrCode	=	Get_CanPulseGuide(			reqData, alpacaErrMsg, "CanPulseGuide");
-		alpacaErrCode	=	Get_CanSetDeclinationRate(	reqData, alpacaErrMsg, "CanSetDeclinationRate");
-		alpacaErrCode	=	Get_CanSetGuideRates(		reqData, alpacaErrMsg, "CanSetGuideRates");
-		alpacaErrCode	=	Get_CanSetPark(				reqData, alpacaErrMsg, "CanSetPark");
-		alpacaErrCode	=	Get_CanSetPierSide(			reqData, alpacaErrMsg, "CanSetPierSide");
-		alpacaErrCode	=	Get_CanSetRightAscensionRate(reqData, alpacaErrMsg, "CanSetRightAscensionRate");
-		alpacaErrCode	=	Get_CanSetTracking(			reqData, alpacaErrMsg, "CanSetTracking");
-		alpacaErrCode	=	Get_CanSlew(				reqData, alpacaErrMsg, "CanSlew");
-		alpacaErrCode	=	Get_CanSlewAltAz(			reqData, alpacaErrMsg, "CanSlewAltAz");
-		alpacaErrCode	=	Get_CanSlewAltAzAsync(		reqData, alpacaErrMsg, "CanSlewAltAzAsync");
-		alpacaErrCode	=	Get_CanSlewAsync(			reqData, alpacaErrMsg, "CanSlewAsync");
-		alpacaErrCode	=	Get_CanSync(				reqData, alpacaErrMsg, "CanSync");
-		alpacaErrCode	=	Get_CanSyncAltAz(			reqData, alpacaErrMsg, "CanSyncAltAz");
-		alpacaErrCode	=	Get_CanUnpark(				reqData, alpacaErrMsg, "CanUnpark");
-		alpacaErrCode	=	Get_Declination(			reqData, alpacaErrMsg, "Declination");
-		alpacaErrCode	=	Get_DeclinationRate(		reqData, alpacaErrMsg, "DeclinationRate");
+	alpacaErrCode	=	Get_Alignmentmode(			reqData, alpacaErrMsg, "alignmentmode");
+	alpacaErrCode	=	Get_Altitude(				reqData, alpacaErrMsg, "altitude");
+	alpacaErrCode	=	Get_ApertureArea(			reqData, alpacaErrMsg, "apertureArea");
+	alpacaErrCode	=	Get_ApertureDiameter(		reqData, alpacaErrMsg, "apertureDiameter");
+	alpacaErrCode	=	Get_AtHome(					reqData, alpacaErrMsg, "atHome");
+	alpacaErrCode	=	Get_AtPark(					reqData, alpacaErrMsg, "atPark");
+	alpacaErrCode	=	Get_Azimuth(				reqData, alpacaErrMsg, "azimuth");
+	alpacaErrCode	=	Get_CanFindHome(			reqData, alpacaErrMsg, "CanFindHome");
+	alpacaErrCode	=	Get_CanPark(				reqData, alpacaErrMsg, "CanPark");
+	alpacaErrCode	=	Get_CanPulseGuide(			reqData, alpacaErrMsg, "CanPulseGuide");
+	alpacaErrCode	=	Get_CanSetDeclinationRate(	reqData, alpacaErrMsg, "CanSetDeclinationRate");
+	alpacaErrCode	=	Get_CanSetGuideRates(		reqData, alpacaErrMsg, "CanSetGuideRates");
+	alpacaErrCode	=	Get_CanSetPark(				reqData, alpacaErrMsg, "CanSetPark");
+	alpacaErrCode	=	Get_CanSetPierSide(			reqData, alpacaErrMsg, "CanSetPierSide");
+	alpacaErrCode	=	Get_CanSetRightAscensionRate(reqData, alpacaErrMsg, "CanSetRightAscensionRate");
+	alpacaErrCode	=	Get_CanSetTracking(			reqData, alpacaErrMsg, "CanSetTracking");
+	alpacaErrCode	=	Get_CanSlew(				reqData, alpacaErrMsg, "CanSlew");
+	alpacaErrCode	=	Get_CanSlewAltAz(			reqData, alpacaErrMsg, "CanSlewAltAz");
+	alpacaErrCode	=	Get_CanSlewAltAzAsync(		reqData, alpacaErrMsg, "CanSlewAltAzAsync");
+	alpacaErrCode	=	Get_CanSlewAsync(			reqData, alpacaErrMsg, "CanSlewAsync");
+	alpacaErrCode	=	Get_CanSync(				reqData, alpacaErrMsg, "CanSync");
+	alpacaErrCode	=	Get_CanSyncAltAz(			reqData, alpacaErrMsg, "CanSyncAltAz");
+	alpacaErrCode	=	Get_CanUnpark(				reqData, alpacaErrMsg, "CanUnpark");
+	alpacaErrCode	=	Get_Declination(			reqData, alpacaErrMsg, "Declination");
+	alpacaErrCode	=	Get_DeclinationRate(		reqData, alpacaErrMsg, "DeclinationRate");
 //		alpacaErrCode	=	Get_DestinationSideOfPier(	reqData, alpacaErrMsg, "DestinationSideOfPier");
-		alpacaErrCode	=	Get_DoesRefraction(			reqData, alpacaErrMsg, "DoesRefraction");
-		alpacaErrCode	=	Get_EquatorialSystem(		reqData, alpacaErrMsg, "EquatorialSystem");
-		alpacaErrCode	=	Get_FocalLength(			reqData, alpacaErrMsg, "FocalLength");
-		alpacaErrCode	=	Get_GuideRateDeclination(	reqData, alpacaErrMsg, "GuideRateDeclination");
-		alpacaErrCode	=	Get_GuideRateRightAscension(reqData, alpacaErrMsg, "GuideRateRightAscension");
-		alpacaErrCode	=	Get_IsPulseGuiding(			reqData, alpacaErrMsg, "IsPulseGuiding");
-		alpacaErrCode	=	Get_RightAscension(			reqData, alpacaErrMsg, "RightAscension");
-		alpacaErrCode	=	Get_RightAscensionRate(		reqData, alpacaErrMsg, "RightAscensionRate");
-		alpacaErrCode	=	Get_SideOfPier(				reqData, alpacaErrMsg, "SideOfPier");
-		alpacaErrCode	=	Get_SiderealTime(			reqData, alpacaErrMsg, "SiderealTime");
-		alpacaErrCode	=	Get_SiteElevation(			reqData, alpacaErrMsg, "SiteElevation");
-		alpacaErrCode	=	Get_SiteLatitude(			reqData, alpacaErrMsg, "SiteLatitude");
-		alpacaErrCode	=	Get_SiteLongitude(			reqData, alpacaErrMsg, "SiteLongitude");
-		alpacaErrCode	=	Get_Slewing(				reqData, alpacaErrMsg, "Slewing");
-		alpacaErrCode	=	Get_SlewSettleTime(			reqData, alpacaErrMsg, "SlewSettleTime");
-		alpacaErrCode	=	Get_TargetDeclination(		reqData, alpacaErrMsg, "TargetDeclination");
-		alpacaErrCode	=	Get_TargetRightAscension(	reqData, alpacaErrMsg, "TargetRightAscension");
-		alpacaErrCode	=	Get_Tracking(				reqData, alpacaErrMsg, "Tracking");
-		alpacaErrCode	=	Get_TrackingRate(			reqData, alpacaErrMsg, "TrackingRate");
-		alpacaErrCode	=	Get_TrackingRates(			reqData, alpacaErrMsg, "TrackingRates");
-		alpacaErrCode	=	Get_UTCdate(				reqData, alpacaErrMsg, "UTCdate");
+	alpacaErrCode	=	Get_DoesRefraction(			reqData, alpacaErrMsg, "DoesRefraction");
+	alpacaErrCode	=	Get_EquatorialSystem(		reqData, alpacaErrMsg, "EquatorialSystem");
+	alpacaErrCode	=	Get_FocalLength(			reqData, alpacaErrMsg, "FocalLength");
+	alpacaErrCode	=	Get_GuideRateDeclination(	reqData, alpacaErrMsg, "GuideRateDeclination");
+	alpacaErrCode	=	Get_GuideRateRightAscension(reqData, alpacaErrMsg, "GuideRateRightAscension");
+	alpacaErrCode	=	Get_IsPulseGuiding(			reqData, alpacaErrMsg, "IsPulseGuiding");
+	alpacaErrCode	=	Get_RightAscension(			reqData, alpacaErrMsg, "RightAscension");
+	alpacaErrCode	=	Get_RightAscensionRate(		reqData, alpacaErrMsg, "RightAscensionRate");
+	alpacaErrCode	=	Get_SideOfPier(				reqData, alpacaErrMsg, "SideOfPier");
+	alpacaErrCode	=	Get_SiderealTime(			reqData, alpacaErrMsg, "SiderealTime");
+	alpacaErrCode	=	Get_SiteElevation(			reqData, alpacaErrMsg, "SiteElevation");
+	alpacaErrCode	=	Get_SiteLatitude(			reqData, alpacaErrMsg, "SiteLatitude");
+	alpacaErrCode	=	Get_SiteLongitude(			reqData, alpacaErrMsg, "SiteLongitude");
+	alpacaErrCode	=	Get_Slewing(				reqData, alpacaErrMsg, "Slewing");
+	alpacaErrCode	=	Get_SlewSettleTime(			reqData, alpacaErrMsg, "SlewSettleTime");
+	alpacaErrCode	=	Get_TargetDeclination(		reqData, alpacaErrMsg, "TargetDeclination");
+	alpacaErrCode	=	Get_TargetRightAscension(	reqData, alpacaErrMsg, "TargetRightAscension");
+	alpacaErrCode	=	Get_Tracking(				reqData, alpacaErrMsg, "Tracking");
+	alpacaErrCode	=	Get_TrackingRate(			reqData, alpacaErrMsg, "TrackingRate");
+	alpacaErrCode	=	Get_TrackingRates(			reqData, alpacaErrMsg, "TrackingRates");
+	alpacaErrCode	=	Get_UTCdate(				reqData, alpacaErrMsg, "UTCdate");
 
-		//*	these are considered methods by ASCOM
+	//*	these are considered methods by ASCOM
 //		alpacaErrCode	=	Get_AxisRates(				reqData, alpacaErrMsg, "AxisRates");
 //		alpacaErrCode	=	Get_CanMoveAxis(			reqData, alpacaErrMsg, "CanMoveAxis");
 
-		//===============================================================
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Comment",
-								"Non-standard alpaca commands follow",
-								INCLUDE_COMMA);
+	//===============================================================
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Comment",
+							"Non-standard alpaca commands follow",
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	Get_HourAngle(			reqData, alpacaErrMsg, "HourAngle");
-		alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PhysicalSideOfPier");
+	alpacaErrCode	=	Get_HourAngle(			reqData, alpacaErrMsg, "HourAngle");
+	alpacaErrCode	=	Get_PhysicalSideOfPier(	reqData, alpacaErrMsg, "PhysicalSideOfPier");
 #ifdef _ENABLE_IMU_
 char	imudataString[256];
-		alpacaErrCode	=	Get_IMU(				reqData, alpacaErrMsg, "IMU");
-		IMU_GetIMUtypeString(imudataString);
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"IMU-Type",
-								imudataString,
-								INCLUDE_COMMA);
+	alpacaErrCode	=	Get_IMU(				reqData, alpacaErrMsg, "IMU");
+	IMU_GetIMUtypeString(imudataString);
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"IMU-Type",
+							imudataString,
+							INCLUDE_COMMA);
 #endif // _ENABLE_IMU_
 
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"version",
-								gFullVersionString,
-								INCLUDE_COMMA);
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"version",
+							gFullVersionString,
+							INCLUDE_COMMA);
 
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 
@@ -4129,15 +4116,12 @@ void	TelescopeDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
 {
 int		mySocketFD;
 
-	if (reqData != NULL)
-	{
-		mySocketFD		=	reqData->socket;
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	mySocketFD		=	reqData->socket;
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 
-		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Telescope</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>AlpacaPi Telescope</H2>\r\n");
 
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-	}
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 }
 
 //*****************************************************************************

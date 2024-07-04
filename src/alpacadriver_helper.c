@@ -55,6 +55,7 @@ TYPE_DeviceTable	gDeviceTable[]	=
 TYPE_DeviceTable	gDeviceTableLowerCase[]	=
 {
 	{	"camera",				kDeviceType_Camera				},
+	{	"Camera",				kDeviceType_Camera				},
 	{	"dome",					kDeviceType_Dome				},
 	{	"filterwheel",			kDeviceType_Filterwheel			},
 	{	"focuser",				kDeviceType_Focuser				},

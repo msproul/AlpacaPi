@@ -47,6 +47,7 @@
 //*	May 17,	2023	<MLS> Updated GetSwitchID() to generate http errors
 //*	May 17,	2023	<MLS> CONFORUMU -> Found 0 errors, 3 issues and 3 information messages.
 //*	May 17,	2024	<MLS> Started on http 400 error support for switch driver
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from switchdriver.cpp
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -366,21 +367,14 @@ TYPE_ASCOM_STATUS	SwitchDriver::Get_Maxswitch(TYPE_GetPutRequestData *reqData, c
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	if (reqData != NULL)
-	{
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cSwitchProp.MaxSwitch,
-								INCLUDE_COMMA);
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cSwitchProp.MaxSwitch,
+							INCLUDE_COMMA);
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
 	return(alpacaErrCode);
 }
 
@@ -877,100 +871,93 @@ bool				switchState;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif
 
-	if (reqData != NULL)
+	//*	do the common ones first
+	Get_Readall_Common(	reqData, alpacaErrMsg);
+
+	//*	make local copies of the data structure to make the code easier to read
+	mySocket	=	reqData->socket;
+
+	Get_Maxswitch(	reqData, alpacaErrMsg, "maxswitch");	//*	The number of switch devices managed by this driver
+
+	for (iii=0; iii<cSwitchProp.MaxSwitch; iii++)
 	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData, alpacaErrMsg);
+		GetSwitchValue(iii);
 
-		//*	make local copies of the data structure to make the code easier to read
-		mySocket	=	reqData->socket;
+		sprintf(textBuffer, "getswitchname-%d", iii);
+		JsonResponse_Add_String(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									textBuffer,
+									cSwitchTable[iii].switchName,
+									INCLUDE_COMMA);
 
-		Get_Maxswitch(	reqData, alpacaErrMsg, "maxswitch");	//*	The number of switch devices managed by this driver
+		sprintf(textBuffer, "getswitchdescription-%d", iii);
+		JsonResponse_Add_String(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									textBuffer,
+									cSwitchTable[iii].switchDescription,
+									INCLUDE_COMMA);
 
-		for (iii=0; iii<cSwitchProp.MaxSwitch; iii++)
+		switchState	=	GetSwitchState(iii);
+		sprintf(textBuffer, "getswitch-%d", iii);
+		JsonResponse_Add_Bool(		mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									textBuffer,
+									switchState,
+									INCLUDE_COMMA);
+
+		sprintf(textBuffer, "minswitchvalue-%d", iii);
+		JsonResponse_Add_Double(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									textBuffer,
+									cMinSwitchValue[iii],
+									INCLUDE_COMMA);
+
+		sprintf(textBuffer, "maxswitchvalue-%d", iii);
+		JsonResponse_Add_Double(	mySocket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									textBuffer,
+									cMaxSwitchValue[iii],
+									INCLUDE_COMMA);
+
+
+//		if (cSwitchType[iii] == kSwitchType_Analog)
 		{
-			GetSwitchValue(iii);
-
-			sprintf(textBuffer, "getswitchname-%d", iii);
-			JsonResponse_Add_String(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										textBuffer,
-										cSwitchTable[iii].switchName,
-										INCLUDE_COMMA);
-
-			sprintf(textBuffer, "getswitchdescription-%d", iii);
-			JsonResponse_Add_String(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										textBuffer,
-										cSwitchTable[iii].switchDescription,
-										INCLUDE_COMMA);
-
-			switchState	=	GetSwitchState(iii);
-			sprintf(textBuffer, "getswitch-%d", iii);
-			JsonResponse_Add_Bool(		mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										textBuffer,
-										switchState,
-										INCLUDE_COMMA);
-
-			sprintf(textBuffer, "minswitchvalue-%d", iii);
-			JsonResponse_Add_Double(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										textBuffer,
-										cMinSwitchValue[iii],
-										INCLUDE_COMMA);
-
-			sprintf(textBuffer, "maxswitchvalue-%d", iii);
-			JsonResponse_Add_Double(	mySocket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										textBuffer,
-										cMaxSwitchValue[iii],
-										INCLUDE_COMMA);
-
-
-	//		if (cSwitchType[iii] == kSwitchType_Analog)
-			{
-				sprintf(textBuffer, "getswitchvalue-%d", iii);
-				JsonResponse_Add_Double(reqData->socket,
-										reqData->jsonTextBuffer,
-										kMaxJsonBuffLen,
-										textBuffer,
-										cCurSwitchValue[iii],
-										INCLUDE_COMMA);
-			}
+			sprintf(textBuffer, "getswitchvalue-%d", iii);
+			JsonResponse_Add_Double(reqData->socket,
+									reqData->jsonTextBuffer,
+									kMaxJsonBuffLen,
+									textBuffer,
+									cCurSwitchValue[iii],
+									INCLUDE_COMMA);
 		}
+	}
 
 //===============================================================
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Comment",
-								"Non-standard alpaca commands follow",
-								INCLUDE_COMMA);
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Comment",
+							"Non-standard alpaca commands follow",
+							INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"version",
-								gFullVersionString,
-								INCLUDE_COMMA);
-
-
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"version",
+							gFullVersionString,
+							INCLUDE_COMMA);
 
 
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 
@@ -984,53 +971,50 @@ bool	mySwitchState;
 char	lineBuffer[32];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	mySocketFD	=	reqData->socket;
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>AlpacaPi Switch</H2>\r\n");
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n\t<TH>");
+	SocketWriteData(mySocketFD,	"#");
+	SocketWriteData(mySocketFD,	"</TH>\r\n\t<TH>");
+	SocketWriteData(mySocketFD,	"Switch");
+	SocketWriteData(mySocketFD,	"</TH>\r\n\t<TH>");
+	SocketWriteData(mySocketFD,	"Description");
+	SocketWriteData(mySocketFD,	"</TH>\r\n\t<TH>");
+	SocketWriteData(mySocketFD,	"State");
+	SocketWriteData(mySocketFD,	"</TH>\r\n</TR>\r\n");
+
+	for (ii=0; ii<cSwitchProp.MaxSwitch; ii++)
 	{
-		mySocketFD	=	reqData->socket;
 
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>AlpacaPi Switch</H2>\r\n");
-		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-
-
-		SocketWriteData(mySocketFD,	"<TR>\r\n\t<TH>");
-		SocketWriteData(mySocketFD,	"#");
-		SocketWriteData(mySocketFD,	"</TH>\r\n\t<TH>");
-		SocketWriteData(mySocketFD,	"Switch");
-		SocketWriteData(mySocketFD,	"</TH>\r\n\t<TH>");
-		SocketWriteData(mySocketFD,	"Description");
-		SocketWriteData(mySocketFD,	"</TH>\r\n\t<TH>");
-		SocketWriteData(mySocketFD,	"State");
-		SocketWriteData(mySocketFD,	"</TH>\r\n</TR>\r\n");
-
-		for (ii=0; ii<cSwitchProp.MaxSwitch; ii++)
+		SocketWriteData(mySocketFD,	"<TR>\r\n\t<TD>");
+		sprintf(lineBuffer, "%d", ii);
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
+		SocketWriteData(mySocketFD,	cSwitchTable[ii].switchName);
+		SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
+		SocketWriteData(mySocketFD,	cSwitchTable[ii].switchDescription);
+		SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
+		mySwitchState	=	GetSwitchState(ii);
+		if (mySwitchState)
 		{
-
-			SocketWriteData(mySocketFD,	"<TR>\r\n\t<TD>");
-			sprintf(lineBuffer, "%d", ii);
-			SocketWriteData(mySocketFD,	lineBuffer);
-			SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
-			SocketWriteData(mySocketFD,	cSwitchTable[ii].switchName);
-			SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
-			SocketWriteData(mySocketFD,	cSwitchTable[ii].switchDescription);
-			SocketWriteData(mySocketFD,	"</TD>\r\n\t<TD>");
-			mySwitchState	=	GetSwitchState(ii);
-			if (mySwitchState)
-			{
-				strcpy(lineBuffer, "ON");
-			}
-			else
-			{
-				strcpy(lineBuffer, "OFF");
-			}
-
-			SocketWriteData(mySocketFD,	lineBuffer);
-			SocketWriteData(mySocketFD,	"</TD>\r\n</TR>\r\n");
+			strcpy(lineBuffer, "ON");
 		}
-		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<P>\r\n");
+		else
+		{
+			strcpy(lineBuffer, "OFF");
+		}
+
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	"</TD>\r\n</TR>\r\n");
 	}
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
 }
 
 //*****************************************************************************

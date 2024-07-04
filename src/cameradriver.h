@@ -424,7 +424,7 @@ class CameraDriver: public AlpacaDriver
 		TYPE_ASCOM_STATUS	Put_Filenameoptions(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		TYPE_ASCOM_STATUS	Get_RGBarray(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+virtual	TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 		//*	these are borrowed from the telescope device
 		TYPE_ASCOM_STATUS	Get_ApertureArea(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);

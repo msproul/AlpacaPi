@@ -54,12 +54,12 @@ class FilterwheelDriver: public AlpacaDriver
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 
 
-			TYPE_ASCOM_STATUS		Get_Position(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-			TYPE_ASCOM_STATUS		Put_Position(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-			TYPE_ASCOM_STATUS		Get_Focusoffsets(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-			TYPE_ASCOM_STATUS		Get_Names(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-			TYPE_ASCOM_STATUS		Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		virtual	bool				DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
+				TYPE_ASCOM_STATUS		Get_Position(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+				TYPE_ASCOM_STATUS		Put_Position(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+				TYPE_ASCOM_STATUS		Get_Focusoffsets(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+				TYPE_ASCOM_STATUS		Get_Names(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+		virtual	TYPE_ASCOM_STATUS		Get_Readall(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		virtual	bool					DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 
 		virtual void				ReadFilterNamesTextFile(void);
 		virtual	int					Read_CurrentFWstate(void);

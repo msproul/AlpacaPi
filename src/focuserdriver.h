@@ -44,37 +44,37 @@ class FocuserDriver: public AlpacaDriver
 		virtual bool				GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut);
 		virtual bool				GetCommandArgumentString(const int cmdNumber, char *agumentString, char *commentString);
 
-		TYPE_ASCOM_STATUS	Get_Absolute(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Ismoving(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Maxincrement(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Maxstep(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Position(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Stepsize(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Tempcomp(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Absolute(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Ismoving(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Maxincrement(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Maxstep(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Position(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Stepsize(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Tempcomp(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
 
-		TYPE_ASCOM_STATUS	Put_Tempcomp(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Get_Tempcompavailable(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Get_Temperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
-		TYPE_ASCOM_STATUS	Put_Halt(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Put_Move(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+			TYPE_ASCOM_STATUS	Put_Tempcomp(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+			TYPE_ASCOM_STATUS	Get_Tempcompavailable(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Get_Temperature(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg, const char *responseString);
+			TYPE_ASCOM_STATUS	Put_Halt(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+			TYPE_ASCOM_STATUS	Put_Move(				TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
-		//*	not part of the Alpaca standard
-		TYPE_ASCOM_STATUS	Put_MoveRelative(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
-		TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+			//*	not part of the Alpaca standard
+			TYPE_ASCOM_STATUS	Put_MoveRelative(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+	virtual	TYPE_ASCOM_STATUS	Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 	virtual	bool		DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
 
-		bool	RotationSupported(void);
+			bool	RotationSupported(void);
 
 
-		//*	these are access functions for FITS output
-		int32_t	GetFocuserPosition(void);
-		void	GetFocuserManufacturer(char *manufactString);
-		void	GetFocuserModel(char *modelName);
-		void	GetFocuserVersion(char *versionString);
-		void	GetFocuserSerialNumber(char *serialNumString);
-		double	GetFocuserTemperature(void);
-		double	GetFocuserVoltage(void);
+			//*	these are access functions for FITS output
+			int32_t	GetFocuserPosition(void);
+			void	GetFocuserManufacturer(char *manufactString);
+			void	GetFocuserModel(char *modelName);
+			void	GetFocuserVersion(char *versionString);
+			void	GetFocuserSerialNumber(char *serialNumString);
+			double	GetFocuserTemperature(void);
+			double	GetFocuserVoltage(void);
 
 
 		//*	focuser specific commands

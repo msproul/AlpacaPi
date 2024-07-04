@@ -67,7 +67,7 @@ char	lineBuff[256];
 
 	mySocketFD	=	reqData->socket;
 
-	SocketWriteData(mySocketFD,	gHtmlHeader);
+	SocketWriteData(mySocketFD,	gHtmlHeader_html);
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
 	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");
 	SocketWriteData(mySocketFD,	"<TITLE>Form Testing</TITLE>\r\n");
@@ -144,7 +144,7 @@ int		mySocketFD;
 	mySocketFD	=	reqData->socket;
 
 
-	SocketWriteData(mySocketFD,	gHtmlHeader);
+	SocketWriteData(mySocketFD,	gHtmlHeader_html);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
 	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");

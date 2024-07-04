@@ -216,6 +216,7 @@ class AlpacaDriver
 
 				TYPE_ASCOM_STATUS		Get_Readall_Common(		TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 				TYPE_ASCOM_STATUS		Get_Readall_CPUstats(	TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS		Get_Readall(			TYPE_GetPutRequestData *reqData, char *alpacaErrMsg);
 
 
 		virtual	bool	DeviceState_Add_Content(const int socketFD, char *jsonTextBuffer, const int maxLen);
@@ -428,7 +429,7 @@ extern	bool			gErrorLogging;		//*	write errors to log file if true
 extern	bool			gConformLogging;	//*	log all commands to log file to match up with Conform
 extern	char			gFullVersionString[];
 extern	char			gHostName[];
-extern	const char		gHtmlHeader[];
+extern	const char		gHtmlHeader_html[];
 
 #ifdef __cplusplus
 	extern "C" {

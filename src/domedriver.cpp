@@ -2378,7 +2378,7 @@ const char	domeTitle[]	=	"AlpacaPi Dome Driver setup";
 	mySocketFD	=	reqData->socket;
 
 
-	SocketWriteData(mySocketFD,	gHtmlHeader);
+	SocketWriteData(mySocketFD,	gHtmlHeader_html);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
 	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");

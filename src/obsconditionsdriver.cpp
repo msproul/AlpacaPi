@@ -22,6 +22,7 @@
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
+//*	May  7,	2019	<MLS> Created obsconditionsdriver.c
 //*	May  7,	2019	<MLS> Started on observingconditions
 //*	May  7,	2019	<MLS> Pi hat sensor pressure/temp working
 //*	May  7,	2019	<MLS> Pi hat sensor humidity working
@@ -42,6 +43,7 @@
 //*	Jun  4,	2023	<MLS> Updated compile time ifdefs
 //*	Jun 18,	2023	<MLS> Added DeviceState_Add_Content() to obsConditions driver
 //*	May 17,	2024	<MLS> Added http error 400 processing to obsConditions driver
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from observingconditions.cpp
 //*****************************************************************************
 
 
@@ -468,28 +470,21 @@ TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_AveragePeriod(		TYPE_GetPutRequestDat
 {
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		//*	this MUST be supported so there is no check
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								responseString,
-								cObsConditionProp.Averageperiod.Value,
-								INCLUDE_COMMA);
+//	CONSOLE_DEBUG(__FUNCTION__);
+	//*	this MUST be supported so there is no check
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							responseString,
+							cObsConditionProp.Averageperiod.Value,
+							INCLUDE_COMMA);
 
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Units-period",
-								"Hours",
-								INCLUDE_COMMA);
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Units-period",
+							"Hours",
+							INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -1204,32 +1199,22 @@ TYPE_ASCOM_STATUS	ObsConditionsDriver::Get_Readall(TYPE_GetPutRequestData *reqDa
 TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData, alpacaErrMsg);
+	//*	do the common ones first
+	Get_Readall_Common(		reqData, alpacaErrMsg);
+	Get_AveragePeriod(		reqData, alpacaErrMsg, "averageperiod");
+	Get_CloudCover(			reqData, alpacaErrMsg, "cloudcover");
+	Get_DewPoint(			reqData, alpacaErrMsg, "dewpoint");
+	Get_Humidity(			reqData, alpacaErrMsg, "humidity");
+	Get_Pressure(			reqData, alpacaErrMsg, "pressure");
+	Get_RainRate(			reqData, alpacaErrMsg, "rainrate");
+	Get_SkyBrightness(		reqData, alpacaErrMsg, "skybrightness");
+	Get_SkyQuality(			reqData, alpacaErrMsg, "skyquality");
+	Get_SkyTemperature(		reqData, alpacaErrMsg, "skytemperature");
+	Get_StarFWHM(			reqData, alpacaErrMsg, "starfwhm");
+	Get_Temperature(		reqData, alpacaErrMsg, "temperature");
+//	Get_TimeSinceLastUpdate(reqData, alpacaErrMsg, "timesincelastupdate");
 
-
-		Get_AveragePeriod(		reqData, alpacaErrMsg, "averageperiod");
-		Get_CloudCover(			reqData, alpacaErrMsg, "cloudcover");
-		Get_DewPoint(			reqData, alpacaErrMsg, "dewpoint");
-		Get_Humidity(			reqData, alpacaErrMsg, "humidity");
-		Get_Pressure(			reqData, alpacaErrMsg, "pressure");
-		Get_RainRate(			reqData, alpacaErrMsg, "rainrate");
-		Get_SkyBrightness(		reqData, alpacaErrMsg, "skybrightness");
-		Get_SkyQuality(			reqData, alpacaErrMsg, "skyquality");
-		Get_SkyTemperature(		reqData, alpacaErrMsg, "skytemperature");
-		Get_StarFWHM(			reqData, alpacaErrMsg, "starfwhm");
-		Get_Temperature(		reqData, alpacaErrMsg, "temperature");
-//		Get_TimeSinceLastUpdate(reqData, alpacaErrMsg, "timesincelastupdate");
-
-
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 
@@ -1245,64 +1230,62 @@ double		degreesF;
 double		pressure_PSI;
 
 	CONSOLE_DEBUG(__FUNCTION__);
-	if (reqData != NULL)
+	mySocketFD	=	reqData->socket;
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Observing Conditions</H2>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
+
+	if (cSuccesfullReadCnt > 0)
 	{
-		mySocketFD	=	reqData->socket;
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>Observing Conditions</H2>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
-		if (cSuccesfullReadCnt > 0)
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+
+		//*-----------------------------------------------------------
+		if (cObsConditionProp.Temperature.IsSupported)
 		{
-			SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+			SocketWriteData(mySocketFD,	"<TR>\r\n");
+			SocketWriteData(mySocketFD,	"\t<TD>Temperature:</TD>");
+			sprintf(lineBuffer,	"\t<TD>%1.2f&deg;C</TD>",	cObsConditionProp.Temperature.Value);
+			SocketWriteData(mySocketFD,	lineBuffer);
 
-			SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+			degreesF	=	(cObsConditionProp.Temperature.Value * 1.8) + 32.0;
+			sprintf(lineBuffer,	"\t<TD>%1.2f&deg;F</TD>",	degreesF);
+			SocketWriteData(mySocketFD,	lineBuffer);
 
-			//*-----------------------------------------------------------
-			if (cObsConditionProp.Temperature.IsSupported)
-			{
-				SocketWriteData(mySocketFD,	"<TR>\r\n");
-				SocketWriteData(mySocketFD,	"\t<TD>Temperature:</TD>");
-				sprintf(lineBuffer,	"\t<TD>%1.2f&deg;C</TD>",	cObsConditionProp.Temperature.Value);
-				SocketWriteData(mySocketFD,	lineBuffer);
+			SocketWriteData(mySocketFD,	"</TR>\r\n");
+		}
 
-				degreesF	=	(cObsConditionProp.Temperature.Value * 1.8) + 32.0;
-				sprintf(lineBuffer,	"\t<TD>%1.2f&deg;F</TD>",	degreesF);
-				SocketWriteData(mySocketFD,	lineBuffer);
+		//*-----------------------------------------------------------
+		if (cObsConditionProp.Pressure.IsSupported)
+		{
+			SocketWriteData(mySocketFD,	"<TR>\r\n");
+			SocketWriteData(mySocketFD,	"\t<TD>Pressure:</TD>");
+			sprintf(lineBuffer,	"\t<TD>%1.2f kPa</TD>",	cCurrentPressure_kPa);
+			SocketWriteData(mySocketFD,	lineBuffer);
 
-				SocketWriteData(mySocketFD,	"</TR>\r\n");
-			}
+			pressure_PSI	=	(cCurrentPressure_kPa * 1000)  * kPascals_to_lbf_in2_Constant;
+			sprintf(lineBuffer,	"\t<TD>%1.2f PSI</TD>",	pressure_PSI);
+			SocketWriteData(mySocketFD,	lineBuffer);
+			SocketWriteData(mySocketFD,	"</TR>\r\n");
+		}
 
-			//*-----------------------------------------------------------
-			if (cObsConditionProp.Pressure.IsSupported)
-			{
-				SocketWriteData(mySocketFD,	"<TR>\r\n");
-				SocketWriteData(mySocketFD,	"\t<TD>Pressure:</TD>");
-				sprintf(lineBuffer,	"\t<TD>%1.2f kPa</TD>",	cCurrentPressure_kPa);
-				SocketWriteData(mySocketFD,	lineBuffer);
+		//*-----------------------------------------------------------
+		if (cObsConditionProp.Humidity.IsSupported)
+		{
+			SocketWriteData(mySocketFD,	"<TR>\r\n");
+			SocketWriteData(mySocketFD,	"\t<TD>Humidity:</TD>");
+			sprintf(lineBuffer,	"\t<TD>%1.1f %%</TD>",	cObsConditionProp.Humidity.Value);
+			SocketWriteData(mySocketFD,	lineBuffer);
+			SocketWriteData(mySocketFD,	"</TR>\r\n");
 
-				pressure_PSI	=	(cCurrentPressure_kPa * 1000)  * kPascals_to_lbf_in2_Constant;
-				sprintf(lineBuffer,	"\t<TD>%1.2f PSI</TD>",	pressure_PSI);
-				SocketWriteData(mySocketFD,	lineBuffer);
-				SocketWriteData(mySocketFD,	"</TR>\r\n");
-			}
-
-			//*-----------------------------------------------------------
-			if (cObsConditionProp.Humidity.IsSupported)
-			{
-				SocketWriteData(mySocketFD,	"<TR>\r\n");
-				SocketWriteData(mySocketFD,	"\t<TD>Humidity:</TD>");
-				sprintf(lineBuffer,	"\t<TD>%1.1f %%</TD>",	cObsConditionProp.Humidity.Value);
-				SocketWriteData(mySocketFD,	lineBuffer);
-				SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-				SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-				SocketWriteData(mySocketFD,	"<P>\r\n");
-				SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-			}
+			SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+			SocketWriteData(mySocketFD,	"<P>\r\n");
+			SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 		}
 	}
 }
+
 
 //*****************************************************************************
 bool	ObsConditionsDriver::GetCmdNameFromMyCmdTable(const int cmdNumber, char *comandName, char *getPut)

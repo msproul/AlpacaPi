@@ -22,6 +22,7 @@
 //*	Apr 27,	2023	<MLS> Changed multicam commands to match camera commands
 //*	Jun 16,	2023	<MLS> Added readall to multicam
 //*	Jun 23,	2023	<MLS> Added GetCmdNameFromMyCmdTable() to multicam
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from multicam.cpp
 //*****************************************************************************
 
 #ifdef _ENABLE_MULTICAM_
@@ -404,138 +405,131 @@ char				myFileNameSuffix[kFileNamePrefixMaxLen];
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
-	{
-//		CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
+//	CONSOLE_DEBUG_W_STR("contentData\t=",	reqData->contentData);
 
 
-		objectNameFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Object",
-													myObjectName,
-													kObjectNameMaxLen);
+	objectNameFound		=	GetKeyWordArgument(	reqData->contentData,
+												"Object",
+												myObjectName,
+												kObjectNameMaxLen);
 
-		telescopeNameFound	=	GetKeyWordArgument(	reqData->contentData,
-													"Telescope",
-													myTelescopeName,
-													kTelescopeNameMaxLen);
+	telescopeNameFound	=	GetKeyWordArgument(	reqData->contentData,
+												"Telescope",
+												myTelescopeName,
+												kTelescopeNameMaxLen);
 
-		filenamePrefixFound	=	GetKeyWordArgument(	reqData->contentData,
-													"Prefix",
-													myFileNamePrefix,
-													kFileNamePrefixMaxLen);
+	filenamePrefixFound	=	GetKeyWordArgument(	reqData->contentData,
+												"Prefix",
+												myFileNamePrefix,
+												kFileNamePrefixMaxLen);
 
-		filenameSuffixFound	=	GetKeyWordArgument(	reqData->contentData,
-													"Suffix",
-													myFileNameSuffix,
-													kFileNamePrefixMaxLen);
+	filenameSuffixFound	=	GetKeyWordArgument(	reqData->contentData,
+												"Suffix",
+												myFileNameSuffix,
+												kFileNamePrefixMaxLen);
 
 //		imageTypeFound		=	GetKeyWordArgument(	reqData->contentData,
 //													"Imagetype",
 //													myImageType,
 //													30);
 
-		//*	Duration=1000.0&Light=true HTTP/1.1
-		durationFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Duration",
-													durationString,
-													100);
-		if (durationFound)
-		{
-			ExtractDurationList(durationString, expDurationValues_secs, kMaxDevices);
-		}
-		else
-		{
-			//*	have to have a fallback default
-			for (iii=0; iii<kMaxDevices; iii++)
-			{
-				expDurationValues_secs[iii]	=	0.01;
-			}
-		}
-		//****************************************************
-		//*	first we are going to step through all the cameras and
-		//*		Turn serial number naming on
-		//*		Set the object name if it was specified
-		//*		Set the telescope name if it was specified
-		//****************************************************
-		for (iii=0; iii<gDeviceCnt; iii++)
-		{
-			if (gAlpacaDeviceList[iii] != NULL)
-			{
-				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
-				{
-					cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
-					//*	in order to use multiple camers,
-					//*	we need the serial number included in the file name
-					cameraObj->SetSerialNumInFileName(true);
-					if (objectNameFound)
-					{
-						cameraObj->SetObjectName(myObjectName);
-					}
-					if (telescopeNameFound)
-					{
-						cameraObj->SetTelescopeName(myTelescopeName);
-					}
-					if (filenamePrefixFound)
-					{
-						cameraObj->SetFileNamePrefix(myFileNamePrefix);
-					}
-					if (filenameSuffixFound)
-					{
-						cameraObj->SetFileNameSuffix(myFileNameSuffix);
-					}
-				}
-			}
-		}
-
-		//****************************************************
-		//*	sit here and waste time until we change millisecs
-		//*	this way, the 2 images will have the same time stamp
-		gettimeofday(&currentTime, NULL);
-		prev_millisec	=	currentTime.tv_usec / 1000;
-		curr_millisec	=	currentTime.tv_usec / 1000;
-		while (curr_millisec == prev_millisec)
-		{
-			gettimeofday(&currentTime, NULL);
-			curr_millisec	=	currentTime.tv_usec / 1000;
-		}
-
-		//****************************************************
-		//*	now start the exposures
-		//****************************************************
-		ccc	=	0;		//*	set the camera counter to zero
-		for (iii=0; iii<gDeviceCnt; iii++)
-		{
-			if (gAlpacaDeviceList[iii] != NULL)
-			{
-				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
-				{
-					cameraObj				=	(CameraDriver *)gAlpacaDeviceList[iii];
-					CONSOLE_DEBUG("---------------------------------------------------------");
-					CONSOLE_DEBUG_W_STR("We have a camera:", cameraObj->cCommonProp.Name);
-
-				//	exposureDuration_usecs	=	exposureDuration_secs * 1000 * 1000;
-					exposureDuration_usecs	=	expDurationValues_secs[ccc] * 1000 * 1000;
-					alpacaErrCode			=	cameraObj->Start_CameraExposure(exposureDuration_usecs);
-					cameraObj->SaveNextImage();
-
-
-					if (alpacaErrCode != 0)
-					{
-						CONSOLE_DEBUG_W_NUM("Start_CameraExposure->alpacaErrCode\t=",	alpacaErrCode);
-						GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cameraObj->cLastCameraErrMsg);
-						CONSOLE_DEBUG(alpacaErrMsg);
-					}
-
-					ccc++;
-				}
-			}
-		}
-//		CONSOLE_DEBUG_W_INT32("currentTime\t=",		millis());
+	//*	Duration=1000.0&Light=true HTTP/1.1
+	durationFound		=	GetKeyWordArgument(	reqData->contentData,
+												"Duration",
+												durationString,
+												100);
+	if (durationFound)
+	{
+		ExtractDurationList(durationString, expDurationValues_secs, kMaxDevices);
 	}
 	else
 	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
+		//*	have to have a fallback default
+		for (iii=0; iii<kMaxDevices; iii++)
+		{
+			expDurationValues_secs[iii]	=	0.01;
+		}
 	}
+	//****************************************************
+	//*	first we are going to step through all the cameras and
+	//*		Turn serial number naming on
+	//*		Set the object name if it was specified
+	//*		Set the telescope name if it was specified
+	//****************************************************
+	for (iii=0; iii<gDeviceCnt; iii++)
+	{
+		if (gAlpacaDeviceList[iii] != NULL)
+		{
+			if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
+			{
+				cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
+				//*	in order to use multiple camers,
+				//*	we need the serial number included in the file name
+				cameraObj->SetSerialNumInFileName(true);
+				if (objectNameFound)
+				{
+					cameraObj->SetObjectName(myObjectName);
+				}
+				if (telescopeNameFound)
+				{
+					cameraObj->SetTelescopeName(myTelescopeName);
+				}
+				if (filenamePrefixFound)
+				{
+					cameraObj->SetFileNamePrefix(myFileNamePrefix);
+				}
+				if (filenameSuffixFound)
+				{
+					cameraObj->SetFileNameSuffix(myFileNameSuffix);
+				}
+			}
+		}
+	}
+
+	//****************************************************
+	//*	sit here and waste time until we change millisecs
+	//*	this way, the 2 images will have the same time stamp
+	gettimeofday(&currentTime, NULL);
+	prev_millisec	=	currentTime.tv_usec / 1000;
+	curr_millisec	=	currentTime.tv_usec / 1000;
+	while (curr_millisec == prev_millisec)
+	{
+		gettimeofday(&currentTime, NULL);
+		curr_millisec	=	currentTime.tv_usec / 1000;
+	}
+
+	//****************************************************
+	//*	now start the exposures
+	//****************************************************
+	ccc	=	0;		//*	set the camera counter to zero
+	for (iii=0; iii<gDeviceCnt; iii++)
+	{
+		if (gAlpacaDeviceList[iii] != NULL)
+		{
+			if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
+			{
+				cameraObj				=	(CameraDriver *)gAlpacaDeviceList[iii];
+				CONSOLE_DEBUG("---------------------------------------------------------");
+				CONSOLE_DEBUG_W_STR("We have a camera:", cameraObj->cCommonProp.Name);
+
+			//	exposureDuration_usecs	=	exposureDuration_secs * 1000 * 1000;
+				exposureDuration_usecs	=	expDurationValues_secs[ccc] * 1000 * 1000;
+				alpacaErrCode			=	cameraObj->Start_CameraExposure(exposureDuration_usecs);
+				cameraObj->SaveNextImage();
+
+
+				if (alpacaErrCode != 0)
+				{
+					CONSOLE_DEBUG_W_NUM("Start_CameraExposure->alpacaErrCode\t=",	alpacaErrCode);
+					GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, cameraObj->cLastCameraErrMsg);
+					CONSOLE_DEBUG(alpacaErrMsg);
+				}
+
+				ccc++;
+			}
+		}
+	}
+//	CONSOLE_DEBUG_W_INT32("currentTime\t=",		millis());
 	return(alpacaErrCode);
 }
 
@@ -553,42 +547,35 @@ char				durationString[128];
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	if (reqData != NULL)
+	durationFound		=	GetKeyWordArgument(	reqData->contentData,
+												"Duration",
+												durationString,
+												100);
+	if (durationFound)
 	{
-		durationFound		=	GetKeyWordArgument(	reqData->contentData,
-													"Duration",
-													durationString,
-													100);
-		if (durationFound)
+		alpacaErrCode	=	kASCOM_Err_Success;
+		CONSOLE_DEBUG_W_STR("durationString\t=",	durationString);
+
+		ExtractDurationList(durationString, expDurationValues_secs, kMaxDevices);
+
+		//****************************************************
+		//*	Step through all the cameras and set the exposure
+		//****************************************************
+		ccc	=	0;		//*	set the camera counter to zero
+		for (iii=0; iii<gDeviceCnt; iii++)
 		{
-			alpacaErrCode	=	kASCOM_Err_Success;
-			CONSOLE_DEBUG_W_STR("durationString\t=",	durationString);
-
-			ExtractDurationList(durationString, expDurationValues_secs, kMaxDevices);
-
-			//****************************************************
-			//*	Step through all the cameras and set the exposure
-			//****************************************************
-			ccc	=	0;		//*	set the camera counter to zero
-			for (iii=0; iii<gDeviceCnt; iii++)
+			if (gAlpacaDeviceList[iii] != NULL)
 			{
-				if (gAlpacaDeviceList[iii] != NULL)
+				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
 				{
-					if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
-					{
-						exposureDuration_usecs	=	expDurationValues_secs[ccc] * 1000 * 1000;
+					exposureDuration_usecs	=	expDurationValues_secs[ccc] * 1000 * 1000;
 
-						cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
-						cameraObj->Start_CameraExposure(exposureDuration_usecs);
-						ccc++;
-					}
+					cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
+					cameraObj->Start_CameraExposure(exposureDuration_usecs);
+					ccc++;
 				}
 			}
 		}
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
 	return(alpacaErrCode);
 }
@@ -601,43 +588,40 @@ char			lineBuffer[512];
 int				iii;
 CameraDriver	*cameraObj;
 
-	if (reqData != NULL)
+	mySocketFD	=	reqData->socket;
+
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
+	//*-----------------------------------------------------------
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"\t<TD COLSPAN=3><CENTER>Multicam</TD>");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"\t<TD COLSPAN=3><CENTER>Available cameras</TD>");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR><TH>Manuf</TH><TH>Model</TH><TH>Serial #</TH></TR>\r\n");
+
+	for (iii=0; iii<gDeviceCnt; iii++)
 	{
-		mySocketFD	=	reqData->socket;
-
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
-		//*-----------------------------------------------------------
-		SocketWriteData(mySocketFD,	"<TR>\r\n");
-		SocketWriteData(mySocketFD,	"\t<TD COLSPAN=3><CENTER>Multicam</TD>");
-		SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-		SocketWriteData(mySocketFD,	"<TR>\r\n");
-		SocketWriteData(mySocketFD,	"\t<TD COLSPAN=3><CENTER>Available cameras</TD>");
-		SocketWriteData(mySocketFD,	"</TR>\r\n");
-
-		SocketWriteData(mySocketFD,	"<TR><TH>Manuf</TH><TH>Model</TH><TH>Serial #</TH></TR>\r\n");
-
-		for (iii=0; iii<gDeviceCnt; iii++)
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
-			if (gAlpacaDeviceList[iii] != NULL)
+			if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
 			{
-				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
-				{
-					cameraObj	=	(CameraDriver *)gAlpacaDeviceList[iii];
+				cameraObj	=	(CameraDriver *)gAlpacaDeviceList[iii];
 
-					sprintf(lineBuffer, "\t<TR><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>",
-												cameraObj->cDeviceManufacturer,
-												cameraObj->cCommonProp.Name,
-												cameraObj->cDeviceSerialNum);
-					SocketWriteData(mySocketFD,	lineBuffer);
-				}
+				sprintf(lineBuffer, "\t<TR><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>",
+											cameraObj->cDeviceManufacturer,
+											cameraObj->cCommonProp.Name,
+											cameraObj->cDeviceSerialNum);
+				SocketWriteData(mySocketFD,	lineBuffer);
 			}
 		}
-		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
-		SocketWriteData(mySocketFD,	"<P>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 	}
+	SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+	SocketWriteData(mySocketFD,	"<P>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 }
 
 //*****************************************************************************
@@ -683,52 +667,45 @@ int					ccc;
 char				cameraSring[32];
 CameraDriver		*cameraObj;
 
-	if (reqData != NULL)
+	//*	do the common ones first
+	Get_Readall_Common(	reqData,	alpacaErrMsg);
+
+	//---------------------------------------------------
+	//*	output a list of cameras
+	ccc	=	0;		//*	set the camera counter to zero
+	for (iii=0; iii<gDeviceCnt; iii++)
 	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData,	alpacaErrMsg);
-
-		//---------------------------------------------------
-		//*	output a list of cameras
-		ccc	=	0;		//*	set the camera counter to zero
-		for (iii=0; iii<gDeviceCnt; iii++)
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
-			if (gAlpacaDeviceList[iii] != NULL)
+			if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
 			{
-				if (gAlpacaDeviceList[iii]->cDeviceType == kDeviceType_Camera)
-				{
-					cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
+				cameraObj		=	(CameraDriver *)gAlpacaDeviceList[iii];
 
-					sprintf(cameraSring, "camera-%d", ccc);
-					cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
-																		reqData->jsonTextBuffer,
-																		kMaxJsonBuffLen,
-																		cameraSring,
-																		cameraObj->cCommonProp.Name,
-																		INCLUDE_COMMA);
+				sprintf(cameraSring, "camera-%d", ccc);
+				cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+																	reqData->jsonTextBuffer,
+																	kMaxJsonBuffLen,
+																	cameraSring,
+																	cameraObj->cCommonProp.Name,
+																	INCLUDE_COMMA);
 
-					ccc++;
-				}
+				ccc++;
 			}
 		}
-
-
-		//===============================================================
-		cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
-															reqData->jsonTextBuffer,
-															kMaxJsonBuffLen,
-															"version",
-															gFullVersionString,
-															INCLUDE_COMMA);
-
-
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
 	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+
+
+	//===============================================================
+	cBytesWrittenForThisCmd	+=	JsonResponse_Add_String(reqData->socket,
+														reqData->jsonTextBuffer,
+														kMaxJsonBuffLen,
+														"version",
+														gFullVersionString,
+														INCLUDE_COMMA);
+
+
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 

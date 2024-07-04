@@ -39,6 +39,7 @@
 //*	Nov 30,	2022	<MLS> Peter Simpson relaxed conformu to allow non-standard devices
 //*	Dec 22,	2022	<MLS> Added timestamp to configured devices output
 //*	May 18,	2024	<MLS> Added _DEBUG_MANAGEMENT_
+//*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from managementdriver.cpp
 //*****************************************************************************
 
 //#define	_DEBUG_MANAGEMENT_
@@ -526,151 +527,143 @@ char				timeStampString[128];
 	CONSOLE_DEBUG_W_NUM("gDeviceCnt\t=", gDeviceCnt);
 #endif
 
-	if (reqData != NULL)
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Version",
+							gFullVersionString,
+							INCLUDE_COMMA);
+
+	//====================================================
+	//*	add a time stamp
+	gettimeofday(&timeStamp, NULL);
+	FormatDateTimeString_Local(&timeStamp, timeStampString);
+	JsonResponse_Add_String(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"TimeStamp",
+							timeStampString,
+							INCLUDE_COMMA);
+
+	//====================================================
+	upTime		=	CPUstats_GetUptime();
+	upTime_Days	=	upTime / (24 * 60 * 60);
+
+	JsonResponse_Add_Int32(	reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"upTime_Days",
+							upTime_Days,
+							INCLUDE_COMMA);
+
+
+	//====================================================
+	cpuTemp_DegC	=	CPUstats_GetTemperature(NULL);
+	cpuTemp_DegF	=	((cpuTemp_DegC * (9.0/5.0)) + 32);
+	JsonResponse_Add_Double(reqData->socket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"cpuTemp_DegF",
+							cpuTemp_DegF,
+							INCLUDE_COMMA);
+
+	JsonResponse_Add_ArrayStart(reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"Value");
+	JsonResponse_Add_RawText(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								"\r\n");
+
+	//----------------------------------------------------------------------------
+	//*	to keep the new CONFORMU happy, we have to ONLY report standard devices
+	//*	calculate the the standard device count.
+	displayNonStandardDevices	=	true;
+	if (reqData->clientIs_ConformU)
 	{
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Version",
-								gFullVersionString,
-								INCLUDE_COMMA);
+		displayNonStandardDevices	=	false;
+	}
 
-		//====================================================
-		//*	add a time stamp
-		gettimeofday(&timeStamp, NULL);
-		FormatDateTimeString_Local(&timeStamp, timeStampString);
-		JsonResponse_Add_String(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"TimeStamp",
-								timeStampString,
-								INCLUDE_COMMA);
-
-		//====================================================
-		upTime		=	CPUstats_GetUptime();
-		upTime_Days	=	upTime / (24 * 60 * 60);
-
-		JsonResponse_Add_Int32(	reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"upTime_Days",
-								upTime_Days,
-								INCLUDE_COMMA);
-
-
-		//====================================================
-		cpuTemp_DegC	=	CPUstats_GetTemperature(NULL);
-		cpuTemp_DegF	=	((cpuTemp_DegC * (9.0/5.0)) + 32);
-		JsonResponse_Add_Double(reqData->socket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"cpuTemp_DegF",
-								cpuTemp_DegF,
-								INCLUDE_COMMA);
-
-		JsonResponse_Add_ArrayStart(reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"Value");
-		JsonResponse_Add_RawText(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									"\r\n");
-
-		//----------------------------------------------------------------------------
-		//*	to keep the new CONFORMU happy, we have to ONLY report standard devices
-		//*	calculate the the standard device count.
-		displayNonStandardDevices	=	true;
-		if (reqData->clientIs_ConformU)
+	//*	determine the number of standard devices.
+	//*	the TOTAL number of devices is gDeviceCnt
+	standardDeviceCnt	=	0;
+	for (iii=0; iii<gDeviceCnt; iii++)
+	{
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
-			displayNonStandardDevices	=	false;
-		}
-
-		//*	determine the number of standard devices.
-		//*	the TOTAL number of devices is gDeviceCnt
-		standardDeviceCnt	=	0;
-		for (iii=0; iii<gDeviceCnt; iii++)
-		{
-			if (gAlpacaDeviceList[iii] != NULL)
+			devicePtr	=	gAlpacaDeviceList[iii];
+			switch(devicePtr->cDeviceType)
 			{
-				devicePtr	=	gAlpacaDeviceList[iii];
-				switch(devicePtr->cDeviceType)
-				{
-					case kDeviceType_Camera:
-					case kDeviceType_CoverCalibrator:
-					case kDeviceType_Dome:
-					case kDeviceType_Filterwheel:
-					case kDeviceType_Focuser:
-					case kDeviceType_Observingconditions:
-					case kDeviceType_Rotator:
-					case kDeviceType_SafetyMonitor:
-					case kDeviceType_Switch:
-					case kDeviceType_Telescope:
-						standardDeviceCnt++;
-						break;
+				case kDeviceType_Camera:
+				case kDeviceType_CoverCalibrator:
+				case kDeviceType_Dome:
+				case kDeviceType_Filterwheel:
+				case kDeviceType_Focuser:
+				case kDeviceType_Observingconditions:
+				case kDeviceType_Rotator:
+				case kDeviceType_SafetyMonitor:
+				case kDeviceType_Switch:
+				case kDeviceType_Telescope:
+					standardDeviceCnt++;
+					break;
 
-					default:
-						break;
-				}
+				default:
+					break;
 			}
 		}
+	}
 
-		displayedCnt		=	0;
-		for (iii=0; iii<gDeviceCnt; iii++)
+	displayedCnt		=	0;
+	for (iii=0; iii<gDeviceCnt; iii++)
+	{
+		if (gAlpacaDeviceList[iii] != NULL)
 		{
-			if (gAlpacaDeviceList[iii] != NULL)
+			//*	figure out if we need a comma or not
+			if (displayNonStandardDevices)
 			{
-				//*	figure out if we need a comma or not
-				if (displayNonStandardDevices)
-				{
-					includeCommaFlag	=	(displayedCnt < (gDeviceCnt - 1));
-				}
-				else
-				{
-					includeCommaFlag	=	(displayedCnt < (standardDeviceCnt - 1));
-				}
-				//*	get the pointer to the device object
-				devicePtr	=	gAlpacaDeviceList[iii];
-				switch (devicePtr->cDeviceType)
-				{
-					case kDeviceType_Camera:
-					case kDeviceType_CoverCalibrator:
-					case kDeviceType_Dome:
-					case kDeviceType_Filterwheel:
-					case kDeviceType_Focuser:
-					case kDeviceType_Observingconditions:
-					case kDeviceType_Rotator:
-					case kDeviceType_SafetyMonitor:
-					case kDeviceType_Switch:
-					case kDeviceType_Telescope:
+				includeCommaFlag	=	(displayedCnt < (gDeviceCnt - 1));
+			}
+			else
+			{
+				includeCommaFlag	=	(displayedCnt < (standardDeviceCnt - 1));
+			}
+			//*	get the pointer to the device object
+			devicePtr	=	gAlpacaDeviceList[iii];
+			switch (devicePtr->cDeviceType)
+			{
+				case kDeviceType_Camera:
+				case kDeviceType_CoverCalibrator:
+				case kDeviceType_Dome:
+				case kDeviceType_Filterwheel:
+				case kDeviceType_Focuser:
+				case kDeviceType_Observingconditions:
+				case kDeviceType_Rotator:
+				case kDeviceType_SafetyMonitor:
+				case kDeviceType_Switch:
+				case kDeviceType_Telescope:
+					ReportOneDevice(reqData, devicePtr, includeCommaFlag);
+					displayedCnt++;
+					break;
+
+				case kDeviceType_Management:
+				default:
+					//*	these are NOT to be included when talking to ConformU
+					//*	this got fixed in ConformU on Nov 30, 2022
+					if (displayNonStandardDevices)
+					{
 						ReportOneDevice(reqData, devicePtr, includeCommaFlag);
 						displayedCnt++;
-						break;
-
-					case kDeviceType_Management:
-					default:
-						//*	these are NOT to be included when talking to ConformU
-						//*	this got fixed in ConformU on Nov 30, 2022
-						if (displayNonStandardDevices)
-						{
-							ReportOneDevice(reqData, devicePtr, includeCommaFlag);
-							displayedCnt++;
-						}
-						break;
-				}
+					}
+					break;
 			}
 		}
+	}
 
-		JsonResponse_Add_ArrayEnd(	reqData->socket,
-									reqData->jsonTextBuffer,
-									kMaxJsonBuffLen,
-									INCLUDE_COMMA);
-	}
-	else
-	{
-		CONSOLE_DEBUG("MAJOR ERROR WE SHOULD NOT BE HERE!!!!!!!!!!!!!!!!!!!!");
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	JsonResponse_Add_ArrayEnd(	reqData->socket,
+								reqData->jsonTextBuffer,
+								kMaxJsonBuffLen,
+								INCLUDE_COMMA);
 	return(alpacaErrCode);
 }
 
@@ -725,41 +718,34 @@ int					mySocket;
 	CONSOLE_DEBUG_W_STR("contentData\t=", reqData->contentData);
 #endif // _DEBUG_CONFORM_
 
-	if (reqData != NULL)
-	{
-		//*	do the common ones first
-		Get_Readall_Common(	reqData, alpacaErrMsg);
+	//*	do the common ones first
+	Get_Readall_Common(	reqData, alpacaErrMsg);
 
-		//*	make local copies of the data structure to make the code easier to read
-		mySocket	=	reqData->socket;
+	//*	make local copies of the data structure to make the code easier to read
+	mySocket	=	reqData->socket;
 
 
-		//===============================================================
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"Comment",
-								"Non-standard alpaca commands follow",
-								INCLUDE_COMMA);
+	//===============================================================
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"Comment",
+							"Non-standard alpaca commands follow",
+							INCLUDE_COMMA);
 
-		JsonResponse_Add_String(mySocket,
-								reqData->jsonTextBuffer,
-								kMaxJsonBuffLen,
-								"version",
-								gFullVersionString,
-								INCLUDE_COMMA);
+	JsonResponse_Add_String(mySocket,
+							reqData->jsonTextBuffer,
+							kMaxJsonBuffLen,
+							"version",
+							gFullVersionString,
+							INCLUDE_COMMA);
 
 
 
 
 
-		alpacaErrCode	=	kASCOM_Err_Success;
-		strcpy(alpacaErrMsg, "");
-	}
-	else
-	{
-		alpacaErrCode	=	kASCOM_Err_InternalError;
-	}
+	alpacaErrCode	=	kASCOM_Err_Success;
+	strcpy(alpacaErrMsg, "");
 	return(alpacaErrCode);
 }
 
@@ -770,13 +756,10 @@ void	ManagementDriver::OutputHTML(TYPE_GetPutRequestData *reqData)
 {
 int			mySocketFD;
 
-	if (reqData != NULL)
-	{
-		mySocketFD		=	reqData->socket;
-		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
-		SocketWriteData(mySocketFD,	"<H2>Management</H2>\r\n");
-		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
-	}
+	mySocketFD		=	reqData->socket;
+	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+	SocketWriteData(mySocketFD,	"<H2>Management</H2>\r\n");
+	SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 }
 
 //*****************************************************************************
