@@ -42,6 +42,7 @@
 //*	Jun 17,	2024	<MLS> Fixed bug in CreateCameraObjects_QSI() invalid camera count
 //*	Jun 21,	2024	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp() to QSI camera
 //*	Jun 28,	2024	<MLS> cCommonProp.Connected set to false if QSI_NOTCONNECTED error occurs
+//*	Jul  4,	2024	<MLS> Implemented Read_SensorTargetTemp() && Write_SensorTargetTemp()
 //*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
@@ -858,20 +859,59 @@ std::string			lastError("");
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Read_SensorTargetTemp(void)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
+double				targetTemp;
 
-	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
-//	CONSOLE_DEBUG(cLastCameraErrMsg);
+	qsi_Result	=	cQSIcam.get_SetCCDTemperature(&targetTemp);
+	if (qsi_Result == QSI_OK)
+	{
+		alpacaErrCode	=	kASCOM_Err_Success;
+		CONSOLE_DEBUG_W_DBL("targetTemp\t=",	targetTemp);
+	}
+	else if (qsi_Result == QSI_NOTCONNECTED)
+	{
+		alpacaErrCode			=	kASCOM_Err_NotConnected;
+		cCommonProp.Connected	=	false;
+		strcpy(cLastCameraErrMsg, "QSI Result: not connected");
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
+		cQSIcam.get_LastError(lastError);
+		strcpy(cLastCameraErrMsg, "QSI Result:");
+		strcat(cLastCameraErrMsg, lastError.c_str());
+	}
 	return(alpacaErrCode);
 }
 
 //**************************************************************************
 TYPE_ASCOM_STATUS	CameraDriverQSI::Write_SensorTargetTemp(const double newCCDtargetTemp)
 {
-TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_NotImplemented;
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_NotImplemented;
+unsigned int		qsi_Result;
+std::string			lastError("");
 
-	GENERATE_ALPACAPI_ERRMSG(cLastCameraErrMsg, "Not implemented");
-	CONSOLE_DEBUG(cLastCameraErrMsg);
+	qsi_Result	=	cQSIcam.put_SetCCDTemperature(newCCDtargetTemp);
+	if (qsi_Result == QSI_OK)
+	{
+		alpacaErrCode	=	kASCOM_Err_Success;
+		CONSOLE_DEBUG_W_DBL("new CCDtemperature\t=",	newCCDtargetTemp);
+	}
+	else if (qsi_Result == QSI_NOTCONNECTED)
+	{
+		alpacaErrCode			=	kASCOM_Err_NotConnected;
+		cCommonProp.Connected	=	false;
+		strcpy(cLastCameraErrMsg, "QSI Result: not connected");
+	}
+	else
+	{
+		alpacaErrCode	=	kASCOM_Err_UnspecifiedError;
+		cQSIcam.get_LastError(lastError);
+		strcpy(cLastCameraErrMsg, "QSI Result:");
+		strcat(cLastCameraErrMsg, lastError.c_str());
+	}
 	return(alpacaErrCode);
 }
 
