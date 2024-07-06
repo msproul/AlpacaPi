@@ -4373,7 +4373,7 @@ char				httpHeader[1024];
 char				lineBuff[128];
 size_t				httpHeaderSize;
 int					returnedDataLen;
-//char				dataTypeString[32];
+char				dataTypeString[32];
 bool				xmit16BitAs32Bit	=	false;
 
 	CONSOLE_DEBUG(__FUNCTION__);

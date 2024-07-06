@@ -3538,15 +3538,15 @@ spectrodriver.cpp:34     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAn
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
 History Comments found   = 3537 in 523 files
 Total lines              = 246539
-Total comment Lines      = 40630 (16.5%)
-Total comments           = 45611 (18.5%)
+Total comment Lines      = 40629 (16.5%)
+Total comments           = 45610 (18.5%)
 Total history comments   = 3537 (1.4%)
 Total C files            = 69
 Total C++ files          = 197
 Total H files            = 255
 Preprocssor cnt          = 7894
-Total SLOC               = 156422
-Total SLOC-Logical       = 120906
+Total SLOC               = 156423
+Total SLOC-Logical       = 120907
 Programmer comment summary
 MLS             = 3127
 TODO            =   11
