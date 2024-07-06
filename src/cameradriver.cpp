@@ -457,6 +457,7 @@ int	mkdirErrCode;
 
 	cUUID.part3						=	'CA';					//*	model number
 	cCameraProp.SensorType			=   kSensorType_Monochrome;
+	CONSOLE_DEBUG_W_STR("AlpacaDriver SensorType:", cCameraProp.SensorType);
 	cCameraProp.BinX				=	1;
 	cCameraProp.BinY				=	1;
 	cCameraProp.MaxbinX				=	1;
@@ -1858,6 +1859,7 @@ char				argumentString[32];
 bool				foundKeyWord;
 int					newBinValue;
 
+//printf("cmd : %s\n", reqData->contentData);
 //	CONSOLE_DEBUG(__FUNCTION__);
 	foundKeyWord	=	GetKeyWordArgument(	reqData->contentData,
 											"BinX",
@@ -3323,16 +3325,19 @@ TYPE_IMAGE_TYPE		newImageType;
 //					CONSOLE_DEBUG_W_NUM("newImageType\t\t=", newImageType);
 					alpacaErrCode	=	SetImageType(newImageType);
 					//*	now update the sensor type based on the image type
-					if (newImageType == kImageType_RGB24)
-					{
-//						CONSOLE_DEBUG("Setting sensorType to kSensorType_Color");
-						cCameraProp.SensorType	=	kSensorType_Color;
-					}
-					else
-					{
-//						CONSOLE_DEBUG("Setting sensorType to kSensorType_Monochrome");
-						cCameraProp.SensorType	=	kSensorType_Monochrome;
-					}
+					//*	fix by EZT 7/6/2024
+//					if (newImageType == kImageType_RGB24)
+//					{
+////						CONSOLE_DEBUG("Setting sensorType to kSensorType_Color");
+//						cCameraProp.SensorType	=	kSensorType_Color;
+//						printf("set SensorType =%d\n", cCameraProp.SensorType);
+//					}
+//					else
+//					{
+////						CONSOLE_DEBUG("Setting sensorType to kSensorType_Monochrome");
+//						cCameraProp.SensorType	=	kSensorType_Monochrome;
+//						printf("set SensorType =%d\n", cCameraProp.SensorType);
+//					}
 				}
 				else
 				{
@@ -4407,20 +4412,21 @@ bool				xmit16BitAs32Bit	=	false;
 		case kImageType_MONO8:
 			CONSOLE_DEBUG("kImageType_RAW8");
 			binaryImageHdr.Dimension3				=	0;							//	(0 for 2D array)
-			if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
+			//if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
+			//*	fix by EZT 7/6/2024
 		//	if (reqData->cHTTPclientType == kHTTPclient_last)
-			{
+		//	{
 				bytesPerPixel							=	1;
 				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
 				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
-			}
-			else
-			{
-				bytesPerPixel							=	4;
-				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;		//	Element type of the source image array
-//				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
-				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int16;		//	Element type as sent over the network
-			}
+//			}
+//			else
+//			{
+//				bytesPerPixel							=	4;
+//				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;		//	Element type of the source image array
+////				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
+//				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int16;		//	Element type as sent over the network
+//			}
 			break;
 
 		case kImageType_RAW16:
@@ -4445,41 +4451,44 @@ bool				xmit16BitAs32Bit	=	false;
 			CONSOLE_DEBUG("kImageType_RGB24");
 			binaryImageHdr.Rank						=	3;	//	Image array rank
 			binaryImageHdr.Dimension3				=	3;	//	Length of image array third dimension (0 for 2D array)
-			if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
-			{
+			//*	fix by EZT 7/6/2024
+//			if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
+//			{
 				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
 				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
-				bytesPerPixel							=	3;
-			}
-			else
-			{
-				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;		//	Element type of the source image array
-				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
-				bytesPerPixel							=	12;
-			}
+				bytesPerPixel							=	1;
+//			}
+//			else
+//			{
+//				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Int32;		//	Element type of the source image array
+//				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;		//	Element type as sent over the network
+//				bytesPerPixel							=	12;
+//			}
 			break;
 
 		default:
 			break;
 	}
 
-//	CONSOLE_DEBUG_W_NUM("MetadataVersion\t\t=",			binaryImageHdr.MetadataVersion);
-//	CONSOLE_DEBUG_W_NUM("ErrorNumber\t\t=",				binaryImageHdr.ErrorNumber);
-//	CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
-//	CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
-//	CONSOLE_DEBUG_W_NUM("DataStart\t\t\t=",				binaryImageHdr.DataStart);
-//	GetAlpacaImageDataTypeString(binaryImageHdr.ImageElementType, dataTypeString);
-//	CONSOLE_DEBUG_W_NUM("ImageElementType\t\t=",		binaryImageHdr.ImageElementType);
-//	CONSOLE_DEBUG_W_STR("ImageElementType\t\t=",		dataTypeString);
-//	GetAlpacaImageDataTypeString(binaryImageHdr.TransmissionElementType, dataTypeString);
-//	CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
-//	CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	dataTypeString);
-//	CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
-//	CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
-//	CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
-//	CONSOLE_DEBUG_W_NUM("Dimension3\t\t=",				binaryImageHdr.Dimension3);
+	CONSOLE_DEBUG_W_NUM("MetadataVersion\t\t=",			binaryImageHdr.MetadataVersion);
+	CONSOLE_DEBUG_W_NUM("ErrorNumber\t\t=",				binaryImageHdr.ErrorNumber);
+	CONSOLE_DEBUG_W_NUM("ClientTransactionID\t=",		binaryImageHdr.ClientTransactionID);
+	CONSOLE_DEBUG_W_NUM("ServerTransactionID\t=",		binaryImageHdr.ServerTransactionID);
+	CONSOLE_DEBUG_W_NUM("DataStart\t\t\t=",				binaryImageHdr.DataStart);
+	GetAlpacaImageDataTypeString(binaryImageHdr.ImageElementType, dataTypeString);
+	CONSOLE_DEBUG_W_NUM("ImageElementType\t\t=",		binaryImageHdr.ImageElementType);
+	CONSOLE_DEBUG_W_STR("ImageElementType\t\t=",		dataTypeString);
+	GetAlpacaImageDataTypeString(binaryImageHdr.TransmissionElementType, dataTypeString);
+	CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
+	CONSOLE_DEBUG_W_STR("TransmissionElementType\t=",	dataTypeString);
+	CONSOLE_DEBUG_W_NUM("Rank\t\t\t=",					binaryImageHdr.Rank);
+	CONSOLE_DEBUG_W_NUM("Dimension1\t\t=",				binaryImageHdr.Dimension1);
+	CONSOLE_DEBUG_W_NUM("Dimension2\t\t=",				binaryImageHdr.Dimension2);
+	CONSOLE_DEBUG_W_NUM("Dimension3\t\t=",				binaryImageHdr.Dimension3);
 
 	dataPayloadSize		=	totalPixels * bytesPerPixel;
+	if(binaryImageHdr.Dimension3!=0)
+		dataPayloadSize *= binaryImageHdr.Dimension3;
 	dataPayloadSize		+=	sizeof(TYPE_BinaryImageHdr);		//*	this should be 44 for version 1.
 
 	CONSOLE_DEBUG_W_NUM("bytesPerPixel\t\t=",			bytesPerPixel);
@@ -4490,7 +4499,10 @@ bool				xmit16BitAs32Bit	=	false;
 	strcpy(httpHeader,	"HTTP/1.0 200 OK\r\n");
 	sprintf(lineBuff,	"Content-Length: %d\r\n", dataPayloadSize);
 	strcat(httpHeader,	lineBuff);
-	strcat(httpHeader,	"Content-type: application/imagebytes; charset=utf-8\r\n");
+	//*	fix by EZT 7/6/2024
+	strcat(httpHeader,	"Content-type: application/imagebytes\r\n");
+//	strcat(httpHeader,	"Content-type: application/imagebytes; charset=utf-8\r\n");
+
 	strcat(httpHeader,	"Server: AlpacaPi\r\n");
 	strcat(httpHeader, "\r\n");
 
@@ -4523,6 +4535,9 @@ bool				xmit16BitAs32Bit	=	false;
 
 			//*	now copy the image over
 			returnedDataLen	=	0;
+			CONSOLE_DEBUG_W_NUM("currentROIimageType    \t=",	cLastExposure_ROIinfo.currentROIimageType);
+			CONSOLE_DEBUG_W_NUM("TransmissionElementType\t=",	binaryImageHdr.TransmissionElementType);
+
 			switch(cLastExposure_ROIinfo.currentROIimageType)
 			{
 				case kImageType_RAW8:
@@ -4565,15 +4580,16 @@ bool				xmit16BitAs32Bit	=	false;
 					break;
 
 				case kImageType_RGB24:
+					//*	fix by EZT 7/6/2024
 					CONSOLE_DEBUG("kImageType_RGB24");
-					if (bytesPerPixel == 3)
-					{
-						returnedDataLen	=	BuildBinaryImage_RGB24(binaryDataBuffer, imgDataOffset, bufferSize);
-					}
-					else
-					{
+					//if (bytesPerPixel == 3)
+					//{
+					//	returnedDataLen	=	BuildBinaryImage_RGB24(binaryDataBuffer, imgDataOffset, bufferSize);
+					//}
+					//else
+					//{
 						returnedDataLen	=	BuildBinaryImage_RGB24_32bit((uint32_t *)binaryDataBuffer, imgDataOffset, bufferSize);
-					}
+					//}
 					break;
 
 				default:
