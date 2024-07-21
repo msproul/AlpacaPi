@@ -68,8 +68,115 @@ This only requires one copy of the alpacapi driver, which handles all of 4 of th
 <A HREF=https://github.com/msproul/AlpacaPi target=github>https://github.com/msproul/AlpacaPi</A>
 
 
+<HR>
+<CENTER>
+<H1>Installation</H1>
+</CENTER>
+AlpacaPi uses opencv for all of the graphics and image processing such as saving images from the camera.
+In almost all cases, opencv is required.
+The only time it is not required is when AlpacaPi is only used for a driver such as a roll off roof.
+<P>
+OpenCV version 4.5.1 or earlier must be used in order to get support for the mouse wheel.
+The mouse wheel stopped working after that and they refuse to fix the bug.
+<P>
+The AlpacaPi project was started with opencv version 3 which supported the C interface as well as the C++ interface.
+Version 4 and later no longer support the C interface.  AlpcaPi is now using the C++ interface.
+It will still compile with older versions back to 2.9, however that support is being phased out.
+<P>
+You can copy the text that is in <FONT COLOR=#00FF00>green</FONT> and paste into your terminal window.
+The command to paste into a terminal window is SHIFT-CTRL-V
+<OL>
+	<LI><H2><FONT COLOR=BLACK>Make sure git is installed</FONT></H2>
+	<PRE>
+	<FONT COLOR=#00FF00>git --version</FONT>
+		git version 2.39.2
+	</PRE>
+	If it is not installed (any version will work)
+	<PRE>
+	<FONT COLOR=#00FF00>sudo apt install git</FONT>
+	</PRE>
 
 
+	<LI><H2><FONT COLOR=BLACK>Make sure gcc is installed</FONT></H2>
+	<PRE>
+	<FONT COLOR=#00FF00>gcc --version</FONT>
+		gcc (Debian 12.2.0-14) 12.2.0
+		Copyright (C) 2022 Free Software Foundation, Inc.
+		This is free software; see the source for copying conditions.  There is NO
+		warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+	<FONT COLOR=#00FF00>g++ --version</FONT>
+		g++ (Debian 12.2.0-14) 12.2.0
+		Copyright (C) 2022 Free Software Foundation, Inc.
+		This is free software; see the source for copying conditions.  There is NO
+		warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+	<FONT COLOR=#00FF00>make --version</FONT>
+		GNU Make 4.3
+		Built for aarch64-unknown-linux-gnu
+		Copyright (C) 1988-2020 Free Software Foundation, Inc.
+		License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+		This is free software: you are free to change and redistribute it.
+		There is NO WARRANTY, to the extent permitted by law.
+	</PRE>
+	Your version numbers may be different. The above output is from a Raspberry-Pi 5.
+	<P>
+	If any of these fail, install the build tools with this command.
+	Note: this is not normally needed on the Raspberry Pi but is needed on the current Ubuntu release.
+	<PRE>
+	<FONT COLOR=#00FF00>sudo apt-get install build-essential</FONT>
+	</PRE>
+
+
+	<LI><H2><FONT COLOR=BLACK>Install OpenCV 4.5.1</FONT></H2>
+	<PRE>
+	<FONT COLOR=#00FF00>
+	git clone https://github.com/msproul/opencv451.git
+	cd opencv451
+	./install_opencv451.sh
+	cd
+	</FONT>
+	</PRE>
+	NOTE: This downloads, compiles, and installs opencv version 4.5.1.
+	It is best if opencv has not been previously installed, however, it normally works even if
+	there is another version.
+	<P>
+	IMPORTANT!!!!:  This can take several HOURS to complete.
+
+	<LI><H2><FONT COLOR=BLACK>Install AlpacaPi</FONT></H2>
+	<PRE>
+	<FONT COLOR=#00FF00>
+	git clone https://github.com/msproul/AlpacaPi.git
+	cd AlpacaPi
+	./install_everything.sh
+	</FONT>
+	</PRE>
+	To build SkyTravel
+	<PRE>
+	<FONT COLOR=#00FF00>
+	make skycv4
+	./skytravel
+	</FONT>
+	</PRE>
+
+	If you are using skytravel,
+	you can download the NGC data and Milkyway outline data with this command.
+	This can be done at anytime.
+	<PRE>
+	<FONT COLOR=#00FF00>
+	./download_extra_data.sh
+	</FONT>
+	</PRE>
+	To build the various drivers, click on the DRIVERS link at the top of this page.
+	There are a very large number of options in the building of drivers.
+	If what you are looking for is not listed on the drivers page,
+	PLEASE contact me for specifics on how to build a particular driver.
+	msproul -at- skychariot.com
+
+
+</OL>
+<HR>
 
 	<div id="google_translate_element"></div>
 
