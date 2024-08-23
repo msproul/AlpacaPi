@@ -633,10 +633,10 @@ bool		foundSomething;
 		//*	check the time
 		updateEndMillis		=	millis();
 		updateDeltaMills	=	updateEndMillis - updateStartMillis;
-//		if (updateDeltaMills > 0)
-//		{
-//			CONSOLE_DEBUG_W_NUM("Millisecs required to update windows:", updateDeltaMills);
-//		}
+		if (updateDeltaMills > 0)
+		{
+		//	CONSOLE_DEBUG_W_NUM("Millisecs required to update windows:", updateDeltaMills);
+		}
 	}
 	if (deltaSeconds >= 1)
 	{

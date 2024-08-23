@@ -10,7 +10,7 @@
 //*	Edit History
 //**************************************************************************************
 //*	Apr 26,	2024	<MLS> Created web_graphics_opencv.cpp
-//*	Apr 26,	2024	<MLS> Started on opencv version of web_graphics librar
+//*	Apr 26,	2024	<MLS> Started on opencv version of web_graphics library
 //**************************************************************************************
 
 #include	<opencv2/opencv.hpp>

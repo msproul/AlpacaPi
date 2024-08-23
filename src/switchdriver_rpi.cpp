@@ -16,7 +16,7 @@
 //*	that you agree that the author(s) have no warranty, obligations or liability.  You
 //*	must determine the suitability of this source code for your use.
 //*
-//*	Redistributions of this source code must retain this copyright notice.
+//*	Re-distributions of this source code must retain this copyright notice.
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
@@ -353,8 +353,9 @@ bool	switchState;
 }
 
 //*****************************************************************************
-void	SwitchDriverRPi::SetSwitchState(const int switchNumber, bool on_off)
+bool	SwitchDriverRPi::SetSwitchState(const int switchNumber, bool on_off)
 {
+bool	successFlag	=	false;
 int		pinNumber;
 //int		pinValue;
 
@@ -364,6 +365,7 @@ int		pinNumber;
 //	CONSOLE_DEBUG_W_NUM("switchNumber\t=", switchNumber);
 	if (pinNumber > 0)
 	{
+		successFlag	=	true;
 		if (on_off)
 		{
 			//*	some boards have reverse logic
@@ -384,14 +386,18 @@ int		pinNumber;
 	{
 		CONSOLE_DEBUG_W_NUM("Switch number out of bounds:", switchNumber);
 	}
+	return(successFlag);
 }
 
 //*****************************************************************************
-void	SwitchDriverRPi::SetSwitchValue(const int switchNumber, double switchValue)
+bool	SwitchDriverRPi::SetSwitchValue(const int switchNumber, double switchValue)
 {
+bool	successFlag	=	false;
+
 	CONSOLE_DEBUG(__FUNCTION__);
 	if ((switchNumber >= 0) && (switchNumber < cSwitchProp.MaxSwitch))
 	{
+		successFlag	=	true;
 #ifdef _ENABLE_PWM_SWITCH_
 		if (switchNumber == kAnalogSwitch1)
 		{
@@ -413,6 +419,7 @@ void	SwitchDriverRPi::SetSwitchValue(const int switchNumber, double switchValue)
 	{
 		CONSOLE_DEBUG_W_NUM("Switch number out of bounds:", switchNumber);
 	}
+	return(successFlag);
 }
 
 

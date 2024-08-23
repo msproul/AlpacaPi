@@ -48,6 +48,7 @@
 //*	May 17,	2023	<MLS> CONFORUMU -> Found 0 errors, 3 issues and 3 information messages.
 //*	May 17,	2024	<MLS> Started on http 400 error support for switch driver
 //*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from switchdriver.cpp
+//*	Jul 20,	2024	<MLS> Updated set switch functions to return true if successful
 //*****************************************************************************
 
 #ifdef _ENABLE_SWITCH_
@@ -79,6 +80,9 @@
 #ifdef _ENABLE_SWITCH_SIMULATOR_
 	#include	"switchdriver_sim.h"
 #endif
+#ifdef _ENABLE_SWITCH_STEPPER_
+	#include	"switchdriver_stepper.h"
+#endif
 
 #include	"switch_AlpacaCmds.cpp"
 
@@ -90,6 +94,9 @@ void	CreateSwitchObjects(void)
 	CONSOLE_DEBUG(__FUNCTION__);
 #if defined(_ENABLE_SWITCH_RPI_) && defined(__arm__)
 	CreateSwitchObjects_RPi();
+#endif
+#ifdef _ENABLE_SWITCH_STEPPER_
+	CreateSwitchObjects_Stepper();
 #endif
 
 #ifdef _ENABLE_SWITCH_SIMULATOR_
@@ -406,7 +413,7 @@ bool				canWriteSwitch;
 								canWriteSwitch,
 								INCLUDE_COMMA);
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -445,7 +452,7 @@ bool				switchState;
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -476,7 +483,7 @@ int					switchNum;
 
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -510,7 +517,7 @@ int					switchNum;
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -538,7 +545,7 @@ int					switchNum;
 								INCLUDE_COMMA);
 		alpacaErrCode	=	kASCOM_Err_Success;
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -570,7 +577,7 @@ int					switchNum;
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -602,7 +609,7 @@ int					switchNum;
 	{
 		alpacaErrCode	=	kASCOM_Err_InternalError;
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -680,7 +687,7 @@ bool				newSwitchState;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "parameters missing");
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -724,7 +731,7 @@ int					switchNum;
 		reqData->httpRetCode	=	400;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "parameters missing");
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -796,7 +803,7 @@ double				newSwitchValue;
 		}
 		CONSOLE_DEBUG(alpacaErrMsg);
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -818,7 +825,7 @@ int					switchNum;
 								1.0,
 								INCLUDE_COMMA);
 	}
-	DumpRequestStructure(__FUNCTION__, reqData);
+//	DumpRequestStructure(__FUNCTION__, reqData);
 	return(alpacaErrCode);
 }
 
@@ -1027,13 +1034,16 @@ bool	foundIt;
 }
 
 //*****************************************************************************
-void	SwitchDriver::ConfigureSwitch(	const int	switchNumber,
+bool	SwitchDriver::ConfigureSwitch(	const int	switchNumber,
 										const int	switchType,
 										const int	hardWarePinNumber,
 										const int	trueValue)		//*	default is 1, for inverted logic pass 0
 {
+bool	successFlag	=	false;
+
 	if (switchNumber < kMaxSwitchCnt)
 	{
+		successFlag	=	true;
 		cSwitchTable[switchNumber].switchType	=	switchType;
 		cSwitchTable[switchNumber].hwPinNumber	=	hardWarePinNumber;
 		cSwitchTable[switchNumber].valueForTrue	=	trueValue;
@@ -1044,6 +1054,7 @@ void	SwitchDriver::ConfigureSwitch(	const int	switchNumber,
 		}
 //		CONSOLE_DEBUG_W_NUM("cSwitchProp.MaxSwitch\t=", cSwitchProp.MaxSwitch);
 	}
+	return(successFlag);
 }
 
 #define	kSwitchDataFileName	"switchdescription.txt"
@@ -1179,15 +1190,21 @@ bool	SwitchDriver::GetSwitchState(const int switchNumber)
 }
 
 //*****************************************************************************
-void	SwitchDriver::SetSwitchState(const int switchNumber, bool on_off)
+//*	returns true if successful
+//*****************************************************************************
+bool	SwitchDriver::SetSwitchState(const int switchNumber, bool on_off)
 {
 	//*	this function meant to be overloaded
+	return(false);
 }
 
 //*****************************************************************************
-void	SwitchDriver::SetSwitchValue(const int switchNumber, double switchValue)
+//*	returns true if successful
+//*****************************************************************************
+bool	SwitchDriver::SetSwitchValue(const int switchNumber, double switchValue)
 {
 	//*	this function meant to be overloaded
+	return(false);
 }
 
 //*****************************************************************************

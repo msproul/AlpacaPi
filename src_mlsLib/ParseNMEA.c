@@ -69,6 +69,7 @@
 //*	May 30,	2024	<MLS> https://docs.emlid.com/reachrs3/specifications/nmea-format/
 //*	May 31,	2024	<MLS> Emlid Reach uses "$GNxxx" instead of "$GPxxx"
 //*	May 31,	2024	<MLS> Added FormatGoogleMapsRequest()
+//*	Jul 21,	2024	<MLS> Added parsing for GNGSA
 //**************************************************************************************
 
 #include	<stdio.h>
@@ -206,23 +207,20 @@ char	eastWestChar;
 	{
 		eastWestChar	=	'W';
 	}
-
 	sprintf(urlString,	"https://www.google.com/maps/place/%10.9f%c+%10.9f%c",
 						fabs(latValue),
 						northSouthChar,
 						fabs(lonValue),
 						eastWestChar);
-	CONSOLE_DEBUG_W_DBL("latValue\t=",	latValue);
-	CONSOLE_DEBUG_W_DBL("lonValue\t=",	lonValue);
-	CONSOLE_DEBUG(urlString);
+//	CONSOLE_DEBUG_W_DBL("latValue\t=",	latValue);
+//	CONSOLE_DEBUG_W_DBL("lonValue\t=",	lonValue);
+//	CONSOLE_DEBUG(urlString);
 
 	sprintf(urlString,	"https://www.google.com/maps/place/%10.9f,%10.9f",
 						latValue,
 						lonValue);
-	CONSOLE_DEBUG(urlString);
-
+//	CONSOLE_DEBUG(urlString);
 }
-
 
 //**************************************************************************************
 void	ParseNMEA_FormatLatLonStrings(double latValue, char *latString, double lonValue, char *lonString)
@@ -1140,8 +1138,9 @@ char			urlString[256];
 
 		//---------------------------------------------------------------------
 		//	$GPGLL,4027.001,N,07428.738,W,005605,A*3B
-//		case	0x50474C4C:	//='PGLL':			//	GEOGRAPHICAL		GLL,XXXX.XX,N,XXXXX.XX,W
+		//	$GNGLL,4121.667008,N,07458.824614,W,143041.000,A,D*59
 		case	'PGLL':		//='PGLL':			//	GEOGRAPHICAL		GLL,XXXX.XX,N,XXXXX.XX,W
+		case	'NGLL':
 		{
 			strcpy(theNNptr->Lat,			nmeaArgs[1].argString);
 			strcpy(theNNptr->LatC,			nmeaArgs[2].argString);
@@ -1412,6 +1411,8 @@ char			urlString[256];
 		case	'AGSA':					//	GPS DOP and Active Satellites
 		case	'BGSA':					//	GPS DOP and Active Satellites
 		case	'LGSA':					//	GPS DOP and Active Satellites
+		//	$GNGSA,A,3,06,25,19,17,12,20,05,09,11,,,,1.52,0.75,1.32,1*07
+		case	'NGSA':
 			//*	arg	1	=	Mode, M= Manual, A=Automatic
 			//*	arg 2	=	Mode,	1=Fix not available
 			//*						2=2D

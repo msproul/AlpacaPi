@@ -9,6 +9,7 @@
 //*	Mar  8,	2021	<MLS> Added ReadUSBfsMemorySetting()
 //*	Dec  2,	2023	<MLS> Using enums and lookup tables in CPUstats_ReadInfo()
 //*	Dec  2,	2023	<MLS> Added "Hardware" to /procs/cpuinfo processing
+//*	Aug 15,	2024	<MLS> Minor tweak to Raspberry-Pi 5 indentifcation
 //*****************************************************************************
 
 
@@ -273,16 +274,34 @@ bool	vendorIDfound;
 
 					case kCPUinfo_Model:
 						//*	so far I have only found this is only on Raspberry Pi
-//						ExtractArgValue(lineBuff, ':', gPlatformString);
 						ExtractArgValue(lineBuff, ':', argValueString);
 						if (vendorIDfound)
 						{
 							strcat(gPlatformString, "-");
 							strcat(gPlatformString, argValueString);
 						}
+						else
+						{
+							strcpy(gPlatformString, argValueString);
+						}
 						stillNeedModel	=	false;
-//						CONSOLE_DEBUG_W_STR("lineBuff       \t=", lineBuff);
-//						CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
+						CONSOLE_DEBUG_W_STR("lineBuff       \t=", lineBuff);
+						CONSOLE_DEBUG_W_STR("gHardwareString\t=", gHardwareString);
+						CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
+						//*	we need to check if the hardware string has been set properly
+						if (strcmp(gHardwareString, "Jetson") == 0)
+						{
+							if (strncmp(gPlatformString, "Raspberry Pi 5", 14) == 0)
+							{
+								strcpy(gHardwareString, "RPi-5");
+							}
+							else if (strncmp(gPlatformString, "Raspberry Pi 4", 14) == 0)
+							{
+								strcpy(gHardwareString, "unknown");
+							}
+						}
+						CONSOLE_DEBUG_W_STR("gHardwareString\t=", gHardwareString);
+//						CONSOLE_ABORT(__FUNCTION__);
 						break;
 
 					case kCPUinfo_ModelName:

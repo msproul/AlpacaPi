@@ -44,9 +44,9 @@ class SwitchDriverSIM: public SwitchDriver
 	protected:
 
 		virtual	bool	GetSwitchState(const int switchNumber);
-		virtual	void	SetSwitchState(const int switchNumber, bool on_off);
+		virtual	bool	SetSwitchState(const int switchNumber, bool on_off);
 
-		virtual	void	SetSwitchValue(const int switchNumber, double switchValue);
+		virtual	bool	SetSwitchValue(const int switchNumber, double switchValue);
 
 		bool			cSwitchValues[kMaxSwitchCnt];
 };

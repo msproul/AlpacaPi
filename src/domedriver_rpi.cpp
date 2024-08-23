@@ -31,6 +31,9 @@
 //*	Dec 23,	2021	<MLS> Added OutputHTML_Part2() to output hardware configuration
 //*	Mar  2,	2023	<MLS> Added _ENABLE_DOME_RPI_
 //*	Sep 12,	2023	<MLS> Installed Arduino dev platform on Dome R-Pi
+//*	Aug 17,	2024	<MLS> Added _ENABLE_EXPLORADOME_
+//*	Aug 17,	2024	<MLS> Working on exlporadome option for Larry
+//*	Aug 17,	2024	<MLS> Added OutputHTMLsensorPin()
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -90,24 +93,75 @@
 //*	Using BCM pin numbering scheme
 #define	_USE_BCM_PIN_NUMBERS_
 	//*	inputs
-	#define	kHWpin_ButtonCW		23
-	#define	kHWpin_ButtonCCW	24
-	#define	kHWpin_Stop			25
+	#define	kHWpin_ButtonCW			23
+	#define	kHWpin_ButtonCCW		24
+	#define	kHWpin_Stop				25
 	//*	outputs
-	#define	kHWpin_Direction	27
-	#define	kHWpin_PowerPWM		18
+	#define	kHWpin_Direction		27
+	#define	kHWpin_PowerPWM			18
 
-	#define	kHWpin_HomeSensor	5
-	#define	kHWpin_ParkSensor	6
+	#define	kHWpin_HomeSensor		5
+	#define	kHWpin_ParkSensor		6
 
 //	#define	kHWpin_PowerOnOff		17
 	#define	kHWpin_CommutatorPwr	17
 
 
-#define	kMaxPWMvalue	1023
+	#define	kMaxPWMvalue	1023
 
+#ifdef _ENABLE_EXPLORADOME_
+	#define	kHWpin_OpenCompleteSensor	20
+	#define	kHWpin_CloseCompleteSensor	21
+
+	#define	kHWpin_ButtonShutterOpen	13
+	#define	kHWpin_ButtonShutterClose	19
+	#define	kHWpin_ButtonShutterStop	26
+
+
+	#define	kHWpin_ShutterDirectionCtrl	12
+	#define	kHWpin_ShutterMotorCtrl		16
+
+#endif // _ENABLE_EXPLORADOME_
+// +-----+-----+---------+------+---+---Pi 4B--+---+------+---------+-----+-----+
+// | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
+// +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
+// |     |     |    3.3v |      |   |  1 || 2  |   |      | 5v      |     |     |
+// |   2 |   8 |   SDA.1 |   IN | 1 |  3 || 4  |   |      | 5v      |     |     |
+// |   3 |   9 |   SCL.1 |   IN | 1 |  5 || 6  |   |      | 0v      |     |     |
+// |   4 |   7 | GPIO. 7 |   IN | 1 |  7 || 8  | 1 | IN   | TxD     | 15  | 14  |
+// |     |     |      0v |      |   |  9 || 10 | 1 | IN   | RxD     | 16  | 15  |
+// |  17 |   0 | GPIO. 0 |   IN | 0 | 11 || 12 | 0 | IN   | GPIO. 1 | 1   | 18  |
+// |  27 |   2 | GPIO. 2 |   IN | 0 | 13 || 14 |   |      | 0v      |     |     |
+// |  22 |   3 | GPIO. 3 |   IN | 0 | 15 || 16 | 0 | IN   | GPIO. 4 | 4   | 23  |
+// |     |     |    3.3v |      |   | 17 || 18 | 0 | IN   | GPIO. 5 | 5   | 24  |
+// |  10 |  12 |    MOSI |   IN | 0 | 19 || 20 |   |      | 0v      |     |     |
+// |   9 |  13 |    MISO |   IN | 0 | 21 || 22 | 0 | IN   | GPIO. 6 | 6   | 25  |
+// |  11 |  14 |    SCLK |   IN | 0 | 23 || 24 | 1 | IN   | CE0     | 10  | 8   |
+// |     |     |      0v |      |   | 25 || 26 | 1 | IN   | CE1     | 11  | 7   |
+// |   0 |  30 |   SDA.0 |   IN | 1 | 27 || 28 | 1 | IN   | SCL.0   | 31  | 1   |
+// |   5 |  21 | GPIO.21 |   IN | 1 | 29 || 30 |   |      | 0v      |     |     |
+// |   6 |  22 | GPIO.22 |   IN | 1 | 31 || 32 | 0 | IN   | GPIO.26 | 26  | 12  |
+// |  13 |  23 | GPIO.23 |   IN | 0 | 33 || 34 |   |      | 0v      |     |     |
+// |  19 |  24 | GPIO.24 |   IN | 0 | 35 || 36 | 0 | IN   | GPIO.27 | 27  | 16  |
+// |  26 |  25 | GPIO.25 |   IN | 0 | 37 || 38 | 0 | IN   | GPIO.28 | 28  | 20  |
+// |     |     |      0v |      |   | 39 || 40 | 0 | IN   | GPIO.29 | 29  | 21  |
+// +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
+// | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
+// +-----+-----+---------+------+---+---Pi 4B--+---+------+---------+-----+-----+
 
 #ifndef _ENABLE_DOME_HARDWARE_
+#define INPUT 0
+#define OUTPUT 1
+#define PUD_UP 2
+//*****************************************************************************
+static void	pinMode(int pinNum, int mode)
+{
+}
+
+//*****************************************************************************
+static void	pullUpDnControl(int pinNum, int mode)
+{
+}
 
 //*****************************************************************************
 static void	delayMicroseconds(long microsecs)
@@ -146,10 +200,14 @@ void	CreateDomeObjectsRPi(void)
 //*****************************************************************************
 BUTTON_ENTRY	gDomeButtons[]	=
 {
-	{	kHWpin_ButtonCW,	0,	kButtonReleased,	kButtonReleased},
-	{	kHWpin_ButtonCCW,	0,	kButtonReleased,	kButtonReleased},
-	{	kHWpin_Stop,		0,	kButtonReleased,	kButtonReleased},
-
+	{	kHWpin_ButtonCW,			0,	kButtonReleased,	kButtonReleased},
+	{	kHWpin_ButtonCCW,			0,	kButtonReleased,	kButtonReleased},
+	{	kHWpin_Stop,				0,	kButtonReleased,	kButtonReleased},
+#ifdef _ENABLE_EXPLORADOME_
+	{	kHWpin_ButtonShutterOpen,	0,	kButtonReleased,	kButtonReleased},
+	{	kHWpin_ButtonShutterClose,	0,	kButtonReleased,	kButtonReleased},
+	{	kHWpin_ButtonShutterStop,	0,	kButtonReleased,	kButtonReleased},
+#endif // _ENABLE_EXPLORADOME_
 	{	-1,					0,	0,	0},
 
 };
@@ -191,12 +249,42 @@ DomeDriverRPi::~DomeDriverRPi( void )
 {
 }
 
+//*****************************************************************************
+static void	OutputHTMLsensorPin(int socketFD, int pinNumber, const char *descripton)
+{
+char		lineBuffer[256];
+int			sensorState;
+
+	SocketWriteData(socketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>%s</TD><TD>%d</TD><TD>Input</TD>\r\n",
+							descripton,
+							pinNumber);
+	SocketWriteData(socketFD,	lineBuffer);
+	sensorState	=	digitalRead(pinNumber);
+	sprintf(lineBuffer,	"\t<TD>%d</TD>\r\n",	sensorState);
+	SocketWriteData(socketFD,	lineBuffer);
+	SocketWriteData(socketFD,	"</TR>\r\n");
+
+}
+
+//*****************************************************************************
+static void	OutputHTMLcontrolPin(int socketFD, int pinNumber, const char *descripton)
+{
+char		lineBuffer[256];
+
+	SocketWriteData(socketFD,	"<TR>\r\n");
+	sprintf(lineBuffer,	"\t<TD>%s</TD><TD>%d</TD><TD>Output</TD>\r\n",
+							descripton,
+							pinNumber);
+	SocketWriteData(socketFD,	lineBuffer);
+	SocketWriteData(socketFD,	"</TR>\r\n");
+
+}
 
 //*****************************************************************************
 void	DomeDriverRPi::OutputHTML_Part2(TYPE_GetPutRequestData *reqData)
 {
-char				lineBuffer[256];
-int					mySocketFD;
+int			mySocketFD;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -206,46 +294,50 @@ int					mySocketFD;
 
 	SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 	SocketWriteData(mySocketFD,	"<H2>Raspberry-Pi Dome Driver</H2>\r\n");
+#ifdef _ENABLE_EXPLORADOME_
+	SocketWriteData(mySocketFD,	"<H3>ExploraDome implementation</H3>\r\n");
+#endif // _ENABLE_EXPLORADOME_
 	//===============================================================
 	SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 	SocketWriteData(mySocketFD,	"<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Raspberry-Pi Dome Driver</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
-	SocketWriteData(mySocketFD,	"<TH COLSPAN=3>Hardware configuration</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=4>Raspberry-Pi Dome Driver</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
+
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=4>Hardware configuration</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 #ifdef _USE_BCM_PIN_NUMBERS_
-	SocketWriteData(mySocketFD,	"<TD COLSPAN=3><CENTER>Using BCM Pin numbering</TH>\r\n");
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
-
+	SocketWriteData(mySocketFD,	"<TR>\r\n");
+	SocketWriteData(mySocketFD,	"<TD COLSPAN=4><CENTER>Using BCM Pin numbering</TH>\r\n");
+	SocketWriteData(mySocketFD,	"</TR>\r\n");
 #endif // _USE_BCM_PIN_NUMBERS_
-	sprintf(lineBuffer,	"\t<TD>Clockwise button pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_ButtonCW);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
 
-	sprintf(lineBuffer,	"\t<TD>Counter Clockwise button pin</TD><TD>%d</TD><TD>Input</TD>\r\n", kHWpin_ButtonCCW);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_ButtonCW,		"Clockwise button pin");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_ButtonCCW,		"Counter Clockwise button pin");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_Stop,			"Stop button pin");
 
-	sprintf(lineBuffer,	"\t<TD>Stop button pin</TD><TD>%d</TD><TD>Input</TD>\r\n",	kHWpin_Stop);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	OutputHTMLcontrolPin(mySocketFD,	kHWpin_Direction,		"Direction Control pin");
+	OutputHTMLcontrolPin(mySocketFD,	kHWpin_PowerPWM,		"Power PWM pin");
 
-	sprintf(lineBuffer,	"\t<TD>Direction Control pin</TD><TD>%d</TD><TD>Output</TD>\r\n", kHWpin_Direction);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_HomeSensor,		"Home Sensor pin");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_ParkSensor,		"Park Sensor pin");
 
-	sprintf(lineBuffer,	"\t<TD>Power PWM pin</TD><TD>%d</TD><TD>Output</TD>\r\n",		kHWpin_PowerPWM);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+#ifdef _ENABLE_EXPLORADOME_
+	SocketWriteData(mySocketFD,	"<TH COLSPAN=4>Specific to ExlporaDome implementation</TH>\r\n");
 
-	sprintf(lineBuffer,	"\t<TD>Home Sensor pin</TD><TD>%d</TD><TD>Input</TD>\r\n",	kHWpin_HomeSensor);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_OpenCompleteSensor,	"<FONT COLOR=RED>Open Complete Sensor pin");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_CloseCompleteSensor,	"<FONT COLOR=RED>Close Complete Sensor pin");
 
-	sprintf(lineBuffer,	"\t<TD>Park Sensor pin</TD><TD>%d</TD><TD>Input</TD>\r\n",	kHWpin_ParkSensor);
-	SocketWriteData(mySocketFD,	lineBuffer);
-	SocketWriteData(mySocketFD,	"</TR>\r\n<TR>\r\n");
+
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_ButtonShutterOpen,	"<FONT COLOR=RED>Shutter Open Button pin");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_ButtonShutterClose,	"<FONT COLOR=RED>Shutter Close Button pin");
+	OutputHTMLsensorPin(mySocketFD,		kHWpin_ButtonShutterStop,	"<FONT COLOR=RED>Shutter Stop Button pin");
+
+	OutputHTMLcontrolPin(mySocketFD,	kHWpin_ShutterDirectionCtrl,	"<FONT COLOR=RED>Shutter Direction Control pin");
+	OutputHTMLcontrolPin(mySocketFD,	kHWpin_ShutterMotorCtrl,		"<FONT COLOR=RED>Shutter Motor Control pin");
+
+#endif // _ENABLE_EXPLORADOME_
 
 
 	SocketWriteData(reqData->socket,	"</TABLE>\r\n");
@@ -253,6 +345,51 @@ int					mySocketFD;
 	SocketWriteData(reqData->socket,	"<P>\r\n");
 
 }
+
+#define	kRpiPinCount	30
+static void		SetupPin(int pinNumber, int pinMode, int initialState=0);
+static short	gPinAllocation[kRpiPinCount];
+static bool		gPinAllocationInit	=	true;
+//*****************************************************************************
+static void	SetupPin(int pinNumber, int pinModeValue, int initialState)
+{
+int	iii;
+
+	if ((pinNumber>= 0) && (pinNumber < kRpiPinCount))
+	{
+		CONSOLE_DEBUG_W_NUM("Pin #", pinNumber);
+		if (gPinAllocationInit)
+		{
+			for (iii=0; iii<kRpiPinCount; iii++)
+			{
+				gPinAllocation[iii]	=	0;
+			}
+			gPinAllocationInit	=	false;
+		}
+		if (gPinAllocation[pinNumber] == true)
+		{
+			CONSOLE_DEBUG_W_NUM("Pin is already allocated", pinNumber);
+			CONSOLE_ABORT(__FUNCTION__);
+		}
+		gPinAllocation[pinNumber]	=	true;
+		pinMode(pinNumber,			pinModeValue);
+
+		if (pinModeValue == INPUT)
+		{
+			pullUpDnControl(pinNumber,	PUD_UP);
+		}
+		else if (pinModeValue == OUTPUT)
+		{
+			digitalWrite(pinNumber,		initialState);
+		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("Pin # is invalid, (out of bounds)", pinNumber);
+		CONSOLE_ABORT(__FUNCTION__);
+	}
+}
+
 
 //*****************************************************************************
 void	DomeDriverRPi::Init_Hardware(void)
@@ -277,30 +414,37 @@ char	wiringPi_VerString[32];
 
 	CONSOLE_DEBUG_W_NUM("wiringPi_rc", wiringPi_rc);
 
-	pinMode(kHWpin_CommutatorPwr,	OUTPUT);
-	pinMode(kHWpin_Direction,	OUTPUT);
+	SetupPin(kHWpin_CommutatorPwr,		OUTPUT);
+	SetupPin(kHWpin_Direction,			OUTPUT);
 
-	pinMode(kHWpin_PowerPWM,	PWM_OUTPUT);
-	pwmWrite(kHWpin_PowerPWM,	0);				//*	make sure its zero.
+	SetupPin(kHWpin_PowerPWM,			PWM_OUTPUT);
+	pwmWrite(kHWpin_PowerPWM,			0);				//*	make sure its zero.
 
-	pinMode(kHWpin_ButtonCW,	INPUT);
-	pinMode(kHWpin_ButtonCCW,	INPUT);
-	pinMode(kHWpin_Stop,		INPUT);
-	pinMode(kHWpin_HomeSensor,	INPUT);
-	pinMode(kHWpin_ParkSensor,	INPUT);
+	SetupPin(kHWpin_ButtonCW,			INPUT);
+	SetupPin(kHWpin_ButtonCCW,			INPUT);
+	SetupPin(kHWpin_Stop,				INPUT);
+	SetupPin(kHWpin_HomeSensor,			INPUT);
+	SetupPin(kHWpin_ParkSensor,			INPUT);
 
 	//*	set the internal pullup resisters
-	pullUpDnControl(kHWpin_ButtonCW,	PUD_UP);
-	pullUpDnControl(kHWpin_ButtonCCW,	PUD_UP);
-	pullUpDnControl(kHWpin_Stop,		PUD_UP);
-	pullUpDnControl(kHWpin_HomeSensor,	PUD_UP);
-	pullUpDnControl(kHWpin_ParkSensor,	PUD_UP);
+//	pullUpDnControl(kHWpin_ButtonCW,	PUD_UP);
+//	pullUpDnControl(kHWpin_ButtonCCW,	PUD_UP);
+//	pullUpDnControl(kHWpin_Stop,		PUD_UP);
+//	pullUpDnControl(kHWpin_HomeSensor,	PUD_UP);
+//	pullUpDnControl(kHWpin_ParkSensor,	PUD_UP);
 
-#ifdef _ENABLE_COMMUTATOR_POWER_
-	pinMode(kHWpin_CommutatorPwr,	OUTPUT);
-	digitalWrite(kHWpin_CommutatorPwr, LOW);
+
+#ifdef _ENABLE_EXPLORADOME_
+	//*	this option created for Larry, August 2024
+	SetupPin(kHWpin_ShutterDirectionCtrl,		OUTPUT, LOW);
+	SetupPin(kHWpin_ShutterMotorCtrl,			OUTPUT, LOW);
+
+	SetupPin(kHWpin_OpenCompleteSensor,			INPUT);
+	SetupPin(kHWpin_CloseCompleteSensor,		INPUT);
+	SetupPin(kHWpin_ButtonShutterOpen,			INPUT);
+	SetupPin(kHWpin_ButtonShutterClose,			INPUT);
+	SetupPin(kHWpin_ButtonShutterStop,			INPUT);
 #endif
-
 
 #endif	//	_ENABLE_DOME_HARDWARE_
 }
@@ -455,6 +599,56 @@ char		command[64];
 				StopDomeMoving(kStopNormal);
 			}
 			break;
+
+#ifdef _ENABLE_EXPLORADOME_
+		case kHWpin_ButtonShutterOpen:
+			strcpy(command, "Shutter Open");
+			switch(cDomeProp.ShutterStatus)
+			{
+				case kShutterStatus_Unknown:		//*	not part of the alpaca standard
+				case kShutterStatus_Closed:
+				case kShutterStatus_Error:
+					OpenShutter(alpacaErrMsg);
+					break;
+
+				case kShutterStatus_Closing:
+					StopShutter(alpacaErrMsg);
+					break;
+
+				case kShutterStatus_Open:
+				case kShutterStatus_Opening:
+					//*	do nothing
+					break;
+			}
+			break;
+
+		case kHWpin_ButtonShutterClose:
+			strcpy(command, "Shutter Close");
+			switch(cDomeProp.ShutterStatus)
+			{
+				case kShutterStatus_Unknown:		//*	not part of the alpaca standard
+				case kShutterStatus_Open:
+				case kShutterStatus_Error:
+					CloseShutter(alpacaErrMsg);
+					break;
+
+				case kShutterStatus_Opening:
+					StopShutter(alpacaErrMsg);
+					break;
+
+				case kShutterStatus_Closed:
+				case kShutterStatus_Closing:
+					//*	do nothing
+					break;
+			}
+			break;
+
+		case kHWpin_ButtonShutterStop:
+			strcpy(command, "Shutter Stop");
+			StopShutter(alpacaErrMsg);
+			break;
+
+#endif // _ENABLE_EXPLORADOME_
 	}
 	LogEvent(	"dome",
 				command,
@@ -593,6 +787,31 @@ int			sensorState;
 		digitalWrite(kHWpin_CommutatorPwr, LOW);
 	}
 #endif // _ENABLE_COMMUTATOR_POWER_
+
+
+#ifdef _ENABLE_EXPLORADOME_
+	sensorState	=	digitalRead(kHWpin_OpenCompleteSensor);
+	if (sensorState == 0)
+	{
+		if (cDomeProp.ShutterStatus != kShutterStatus_Open)
+		{
+			CONSOLE_DEBUG("ShutterStatus state changed");
+		}
+		cDomeProp.ShutterStatus	=	kShutterStatus_Open;
+	}
+
+	sensorState	=	digitalRead(kHWpin_CloseCompleteSensor);
+	if (sensorState == 0)
+	{
+		if (cDomeProp.ShutterStatus != kShutterStatus_Closed)
+		{
+			CONSOLE_DEBUG("ShutterStatus state changed");
+		}
+		cDomeProp.ShutterStatus	=	kShutterStatus_Closed;
+	}
+
+#endif // _ENABLE_EXPLORADOME_
+
 }
 
 //*****************************************************************************
@@ -673,5 +892,45 @@ int				switchUpDown;
 	}
 	return(newSwitchState);
 }
+
+
+#ifdef _ENABLE_EXPLORADOME_
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriverRPi::OpenShutter(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	digitalWrite(kHWpin_ShutterDirectionCtrl,	HIGH);
+	usleep(5000);
+	digitalWrite(kHWpin_ShutterMotorCtrl,		HIGH);
+
+	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriverRPi::CloseShutter(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
+
+	digitalWrite(kHWpin_ShutterDirectionCtrl,	LOW);
+	usleep(5000);
+	digitalWrite(kHWpin_ShutterMotorCtrl,		HIGH);
+
+	cDomeProp.ShutterStatus	=	kShutterStatus_Opening;
+
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriverRPi::StopShutter(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_ActionNotImplemented;
+
+	return(alpacaErrCode);
+}
+
+#endif // _ENABLE_EXPLORADOME_
 
 #endif // _ENABLE_DOME_RPI_

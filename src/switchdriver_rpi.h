@@ -48,11 +48,10 @@ class SwitchDriverRPi: public SwitchDriver
 				int		TranslateSwitchToPin(const int switchNumber);
 
 		virtual	bool	GetSwitchState(const int switchNumber);
-		virtual	void	SetSwitchState(const int switchNumber, bool on_off);
+		virtual	bool	SetSwitchState(const int switchNumber, bool on_off);
 
-		virtual	void	SetSwitchValue(const int switchNumber, double switchValue);
-
-
+//		virtual	double	GetSwitchValue(const int switchNumber);
+		virtual	bool	SetSwitchValue(const int switchNumber, double switchValue);
 
 };
 

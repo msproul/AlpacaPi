@@ -254,7 +254,14 @@ and use wireless to talk to the dome rotation controller that is mounted on the 
 <TR>
 </TABLE>
 NOTE: These pin numbers can be changed, this is the default list.
+<BR>
+Pin 18 cannot be changed, it is the only pin on the Raspberry Pi that supports PWM.
 </CENTER>
+<H3>Exploradome driver</H3>
+The driver for the Exploradome is almost identical to the example above,
+same hardware with the addition of shutter control logic.
+Also, this option requires the stepper motor on the ExlporaDome to be replaced with a DC motor.
+I hope to do a version that utilizes the stepper motor in the future.
 
 <?-------------------------------------------------------------->
 <HR size=4 color=white>
@@ -321,8 +328,15 @@ At present, the wiringpi library only works on the 32-bit versions of Raspberry 
 		<TD><FONT COLOR=white>keyestudio 4 Relay</TD>
 		<TD>
 			<CENTER>
+			<IMG SRC=images/Keystudio-Relay-Ks0212-1.png>
+			<BR>
 			<FONT COLOR=white>
+			<A HREF="https://www.amazon.com/KEYESTUDIO-4-Channel-Shield-Expansion-Raspberry/dp/B072XGF4Z3/ref=sr_1_1?crid=2BH7ARNF2R4W4&dib=eyJ2IjoiMSJ9.sgbpyZjiTK2G2h0BOBWGZw.1gMBf8TQwaJzzJ8ullqzBU-Khs-cP_-Mmo3ILgnWJOA&dib_tag=se&keywords=KS0212&qid=1721538353&sprefix=ks0212%2Caps%2C73&sr=8-1" target=amazon>
+			Click here for Amazon description</A>
+			<BR>
 			<A HREF=https://wiki.keyestudio.com/KS0212_keyestudio_RPI_4-channel_Relay_Shield target=keyestudio>Keyestudio 4 relay</A>
+
+
 		<TD><FONT COLOR=white><pre>make piswitch4ks<P>./piswitch4</pre></TD>
 	</TR>
 </TABLE>

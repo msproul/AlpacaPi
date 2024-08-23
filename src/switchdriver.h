@@ -89,14 +89,14 @@ class SwitchDriver: public AlpacaDriver
 
 
 		virtual	bool	GetSwitchState(const int switchNumber);
-		virtual	void	SetSwitchState(const int switchNumber, bool on_off);
+		virtual	bool	SetSwitchState(const int switchNumber, bool on_off);
 
-		virtual	void	SetSwitchValue(const int switchNumber, double switchValue);
 		virtual	double	GetSwitchValue(const int switchNumber);
+		virtual	bool	SetSwitchValue(const int switchNumber, double switchValue);
 
 
 
-				void	ConfigureSwitch(	const int	switchNumber,
+				bool	ConfigureSwitch(	const int	switchNumber,
 											const int	switchType,
 											const int	hardWarePinNumber,
 											const int	trueValue=1);

@@ -1060,7 +1060,7 @@ char				returnDataString[128];
 											NULL,
 											returnDataString,
 											&rtnValidData);
-	if (validData && returnDataString)
+	if (validData)
 	{
 		SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeName,	returnDataString);
 		SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeName,	CV_RGB(0, 255, 0));

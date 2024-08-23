@@ -20,7 +20,12 @@
 #
 #	https://www.gnu.org/software/make/manual/make.html
 #
-#	https://github.com/TheNextLVL/wiringPi
+######################################################################################
+#	WiringPi
+#		https://github.com/WiringPi/WiringPi
+#		https://github.com/TheNextLVL/wiringPi
+#	Version 2.7 and later
+#		git clone https://github.com/WiringPi/WiringPi.git
 ######################################################################################
 #	Edit History
 ######################################################################################
@@ -66,6 +71,7 @@
 #++	Dec  2,	2023	<MLS> Added piswitch3
 #++	Apr 22,	2024	<MLS> Added _INCLUDE_MULTI_LANGUAGE_SUPPORT_
 #++	Jun 16,	2024	<MLS> Updated QSI Makefile entry
+#++	Aug 17,	2024	<MLS> Added _ENABLE_EXPLORADOME_
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -371,6 +377,8 @@ SHUTTER_DRIVER_OBJECTS=										\
 				$(OBJECT_DIR)shutterdriver.o				\
 				$(OBJECT_DIR)shutterdriver_arduino.o		\
 
+
+
 ######################################################################################
 # Filterwheel objects
 FITLERWHEEL_DRIVER_OBJECTS=									\
@@ -407,6 +415,7 @@ SWITCH_DRIVER_OBJECTS=										\
 				$(OBJECT_DIR)switchdriver.o					\
 				$(OBJECT_DIR)switchdriver_rpi.o				\
 				$(OBJECT_DIR)switchdriver_sim.o				\
+				$(OBJECT_DIR)switchdriver_stepper.o			\
 
 ######################################################################################
 TELESCOPE_DRIVER_OBJECTS=									\
@@ -1849,6 +1858,36 @@ dome		:									\
 
 
 ######################################################################################
+#pragma mark expdome
+#make expdome
+#dome		:	DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
+expdome		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
+expdome		:	DEFINEFLAGS		+=	-D_ENABLE_EXPLORADOME_
+expdome		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_SHUTTER_
+expdome		:	DEFINEFLAGS		+=	-D_ENABLE_DOME_RPI_
+expdome		:	DEFINEFLAGS		+=	-D_ENABLE_REMOTE_SHUTTER_
+expdome		:	DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+expdome		:									\
+					$(DRIVER_OBJECTS)			\
+					$(DOME_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+
+				$(LINK)  						\
+					$(DRIVER_OBJECTS)			\
+					$(DOME_DRIVER_OBJECTS)		\
+					$(HELPER_OBJECTS)			\
+					$(SOCKET_OBJECTS)			\
+					-lusb-1.0					\
+					-lpthread					\
+					-lwiringPi					\
+					-o alpacapi-expdome
+
+#							-ludev						\
+#							$(ASI_CAMERA_OBJECTS)		\
+
+
+######################################################################################
 #pragma mark ROR
 #make rortest
 #rortest	:	DEFINEFLAGS		+=	-D_ENABLE_DOME_
@@ -2389,6 +2428,28 @@ piswitch8	:									\
 					-lpthread					\
 					-o piswitch8
 
+######################################################################################
+#pragma mark Raspberry pi - switch
+#make stepper using waveshare stepper motor controller
+stepper	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
+stepper	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_
+stepper	:		DEFINEFLAGS		+=	-D_ENABLE_SWITCH_STEPPER_
+stepper	:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
+stepper	:										\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+
+		$(LINK)  								\
+					$(DRIVER_OBJECTS)			\
+					$(SWITCH_DRIVER_OBJECTS)	\
+					$(SOCKET_OBJECTS)			\
+					$(HELPER_OBJECTS)			\
+					-lpthread					\
+					-o alpacapi
+
+#					-lwiringPi					\
 
 ######################################################################################
 #pragma mark make qhypi
@@ -2757,6 +2818,8 @@ shutter		:									\
 					-lwiringPi					\
 					-lpthread					\
 					-o alpacapi
+
+
 
 
 ######################################################################################
@@ -4062,6 +4125,7 @@ SKYIMAGE_OBJECTS=											\
 
 ######################################################################################
 # make si skyimage
+si			:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 si			:	DEFINEFLAGS		+=	-D_ENABLE_SKYIMAGE_
 si			:	DEFINEFLAGS		+=	-D_INCLUDE_CTRL_MAIN_
 si			:	DEFINEFLAGS		+=	-D_ENABLE_CTRL_IMAGE_
@@ -4615,6 +4679,12 @@ $(OBJECT_DIR)switchdriver_sim.o :		$(SRC_DIR)switchdriver_sim.cpp		\
 										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)switchdriver_sim.cpp -o$(OBJECT_DIR)switchdriver_sim.o
 
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)switchdriver_stepper.o :	$(SRC_DIR)switchdriver_stepper.cpp	\
+										$(SRC_DIR)switchdriver_stepper.h	\
+										$(SRC_DIR)switchdriver.h		 	\
+										$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES) $(SRC_DIR)switchdriver_stepper.cpp -o$(OBJECT_DIR)switchdriver_stepper.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)obsconditionsdriver.o :	$(SRC_DIR)obsconditionsdriver.cpp	\
@@ -5716,3 +5786,6 @@ $(OBJECT_DIR)imu_lib_bno055.o : 		$(SRC_IMU)imu_lib_bno055.c	\
 $(OBJECT_DIR)i2c_bno055.o : 			$(SRC_IMU)i2c_bno055.c	\
 										$(SRC_IMU)getbno055.h
 	$(COMPILE) $(INCLUDES) $(SRC_IMU)i2c_bno055.c -o$(OBJECT_DIR)i2c_bno055.o
+
+
+

@@ -807,7 +807,7 @@ const char	webpageTitle[]	=	"AlpacaPi Slit-tracker setup";
 	cSetupChangeOccured	=	false;
 	mySocketFD			=	reqData->socket;
 
-	SocketWriteData(mySocketFD,	gHtmlHeader);
+	SocketWriteData(mySocketFD,	gHtmlHeader_html);
 
 	SocketWriteData(mySocketFD,	"<!DOCTYPE html>\r\n");
 	SocketWriteData(mySocketFD,	"<HTML lang=\"en\">\r\n");

@@ -105,7 +105,7 @@ bool	switchState;
 }
 
 //*****************************************************************************
-void	SwitchDriverSIM::SetSwitchState(const int switchNumber, bool on_off)
+bool	SwitchDriverSIM::SetSwitchState(const int switchNumber, bool on_off)
 {
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -117,10 +117,11 @@ void	SwitchDriverSIM::SetSwitchState(const int switchNumber, bool on_off)
 	{
 		CONSOLE_DEBUG_W_NUM("Switch number out of bounds:", switchNumber);
 	}
+	return(true);
 }
 
 //*****************************************************************************
-void	SwitchDriverSIM::SetSwitchValue(const int switchNumber, double switchValue)
+bool	SwitchDriverSIM::SetSwitchValue(const int switchNumber, double switchValue)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if ((switchNumber >= 0) && (switchNumber < cSwitchProp.MaxSwitch))
@@ -131,6 +132,7 @@ void	SwitchDriverSIM::SetSwitchValue(const int switchNumber, double switchValue)
 	{
 		CONSOLE_DEBUG_W_NUM("Switch number out of bounds:", switchNumber);
 	}
+	return(true);
 }
 
 #endif // _ENABLE_SWITCH_SIMULATOR_

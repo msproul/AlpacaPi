@@ -385,6 +385,8 @@ int			objCntr;
 bool		windowExists;
 char		myWindowName[128];
 
+	CONSOLE_DEBUG(__FUNCTION__);
+
 	if (alpacaDevice != NULL)
 	{
 		CONSOLE_DEBUG_W_STR(alpacaDevice->deviceTypeStr, argWindowName);
@@ -508,6 +510,7 @@ char		myWindowName[128];
 	cHeight				=	ySize;
 	cUpdateWindow		=	true;
 	cLastAlpacaErrNum	=	kASCOM_Err_Success;
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	cBackGrndColor		=	CV_RGB(0,	0,	0);
 
@@ -517,39 +520,48 @@ char		myWindowName[128];
 #else
 	cOpenCV_Image		=	cvCreateImage(cvSize(cWidth, cHeight), IPL_DEPTH_8U, 3);
 #endif // _USE_OPENCV_CPP_
+	CONSOLE_DEBUG(__FUNCTION__);
 
-	cv::namedWindow(	cWindowName,
-				//	(CV_WINDOW_NORMAL)
-//	--->>>>good		(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
-				#if (CV_MAJOR_VERSION >= 3)
-					(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
-				#else
-					(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO)
-				#endif
-				//	(CV_WINDOW_AUTOSIZE)
-				//	(CV_WINDOW_NORMAL | CV_GUI_EXPANDED)
-				//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
-				//	(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
-				//+	(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
-				//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
-				//	(CV_WINDOW_AUTOSIZE)
-					);
-
-	if (showWindow)
+	try
 	{
-		cv::resizeWindow(	cWindowName, cWidth, cHeight);
-		cv::moveWindow(cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
+		cv::namedWindow(	cWindowName,
+					//	(CV_WINDOW_NORMAL)
+	//	--->>>>good		(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+					#if (CV_MAJOR_VERSION >= 3)
+						(cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO)
+					#else
+						(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO)
+					#endif
+					//	(CV_WINDOW_AUTOSIZE)
+					//	(CV_WINDOW_NORMAL | CV_GUI_EXPANDED)
+					//	(CV_WINDOW_NORMAL | CV_WINDOW_FULLSCREEN | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+					//	(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
+					//+	(CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL)
+					//	(CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED)
+					//	(CV_WINDOW_AUTOSIZE)
+						);
+		if (showWindow)
+		{
+			cv::resizeWindow(	cWindowName, cWidth, cHeight);
+			cv::moveWindow(cWindowName, (20 + ((gControllerCnt - 1) * (150))), 10);
+		}
+		else
+		{
+			cv::moveWindow(cWindowName, 1000, 1000);
+			cv::waitKey(10);
+		}
+		CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		cv::setMouseCallback(	cWindowName,
+								LiveWindowMouseCallback,
+								(void *)this);
 	}
-	else
+	catch(cv::Exception& ex)
 	{
-		cv::moveWindow(cWindowName, 1000, 1000);
-		cv::waitKey(10);
+		CONSOLE_DEBUG("delete cOpenCV_matImage; had an exception");
+		CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
 	}
+	CONSOLE_DEBUG(__FUNCTION__);
 
-//	CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-	cv::setMouseCallback(	cWindowName,
-							LiveWindowMouseCallback,
-							(void *)this);
 
 
 

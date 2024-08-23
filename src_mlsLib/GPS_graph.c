@@ -411,12 +411,15 @@ int			saveImgRetCode;
 	labelStepY	=	1;
 	if (maxSatsInUse > 8)
 	{
-		endY		=	11.8;
+	//	endY		=	11.8;
+		endY		=	15;
 	}
 	else
 	{
-		endY		=	9.8;
+	//	endY		=	9.8;
+		endY		=	10;
 	}
+	endY		=	15;
 	WebGraph_GraphDataArray(startX, endX, labelStepX,
 							startY, endY, labelStepY,
 							kSatsInUseTracking_ArraySize, hourValues, satMode,	kGraphPointMode_DkGreenLine, &scaleFactorX, &scaleFactorY, true, true, true);

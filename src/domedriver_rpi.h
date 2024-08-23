@@ -21,6 +21,10 @@
 //*****************************************************************************
 //#include	"domedriver_rpi.h"
 
+#ifndef _DOMEDRIVER_RPI_H_
+
+#define _DOMEDRIVER_RPI_H_
+
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
 #endif
@@ -53,10 +57,15 @@ class DomeDriverRPi: public DomeDriver
 		virtual	void	StartDomeMoving(const int direction);
 		virtual	void	StopDomeMoving(bool rightNow);
 
-//		virtual	TYPE_ASCOM_STATUS 	OpenShutter(void);
-//		virtual	TYPE_ASCOM_STATUS 	CloseShutter(void);
-
+#ifdef _ENABLE_EXPLORADOME_
+		virtual	TYPE_ASCOM_STATUS 	OpenShutter(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS 	CloseShutter(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS 	StopShutter(char *alpacaErrMsg);
+#endif // _ENABLE_EXPLORADOME_
 };
 
 
 void	CreateDomeObjectsRPi(void);
+
+
+#endif // _DOMEDRIVER_RPI_H_

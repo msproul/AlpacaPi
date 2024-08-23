@@ -164,7 +164,6 @@ int		ccc;
 TYPE_OutlineData	*Milkyway_ReadOutlines(const char *filePath, long *milkyWayPtCnt)
 {
 FILE				*filePointer;
-long				recordCount;
 char				lineBuff[512];
 char				dataPointString[128];
 int					bytesRead;

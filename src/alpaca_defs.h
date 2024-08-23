@@ -99,6 +99,7 @@
 //*	May 26,	2024	<MLS> Build 178
 //*	Jun 16,	2024	<MLS> Build 179 - pushed to github
 //*	Jun 25,	2024	<MLS> Build 180 - pushed to github
+//*	Aug 23,	2024	<MLS> Build 181 - pushed to github
 //*****************************************************************************
 //#include	"alpaca_defs.h"
 
@@ -118,7 +119,7 @@
 
 #define	kApplicationName		"AlpacaPi"
 #define	kVersionString			"V0.7.2"
-#define	kBuildNumber			180
+#define	kBuildNumber			181
 #define kAlpacaDiscoveryPORT	32227
 #define kAlpacaPiDefaultPORT	6800
 

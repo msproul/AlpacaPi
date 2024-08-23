@@ -279,7 +279,12 @@
 #endif
 #ifdef _ENABLE_SWITCH_
 	#include	"switchdriver.h"
-	#include	"switchdriver_rpi.h"
+	#ifdef _ENABLE_SWITCH_RPI_
+		#include	"switchdriver_rpi.h"
+	#endif
+	#ifdef _ENABLE_SWITCH_STEPPER_
+		#include	"switchdriver_stepper.h"
+	#endif
 #endif
 #ifdef _ENABLE_OBSERVINGCONDITIONS_
 	#include	"obsconditionsdriver.h"
@@ -2494,10 +2499,17 @@ int		iii;
 
 
 #ifdef _ENABLE_FITS_
+
 		//*	cfitsio version
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>FITS (cfitsio)</TD>\r\n");
+		#ifdef CFITSIO_MICRO
+			CONSOLE_DEBUG("CFITSIO_MICRO");
+			sprintf(lineBuffer,	"<TD>%d.%d.%d</TD>\r\n", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
+		#else
 			sprintf(lineBuffer,	"<TD>%d.%d</TD>\r\n", CFITSIO_MAJOR, CFITSIO_MINOR);
+		#endif
+			CONSOLE_DEBUG_W_STR("cfitsio version:", lineBuffer);
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 #endif // _ENABLE_FITS_
@@ -4876,14 +4888,27 @@ struct tm		*linuxTime;
 
 	GetMyHostName();
 
-
+//----------------------------------------------------------
 #ifdef _ENABLE_FITS_
-	//*	cfitsio version
-	sprintf(lineBuffer,	"%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR);
+//*	cfitsio version
+int		fitsRetCode;
+float	fitsVersion;
+		fitsRetCode	=	fits_get_version(&fitsVersion);
+		if (fitsRetCode != 0)
+		{
+			CONSOLE_DEBUG_W_NUM("fits_get_version returned:", fitsRetCode);
+		}
+		CONSOLE_DEBUG_W_DBL("fitsVersion\t=", fitsVersion);
+	#ifdef CFITSIO_MICRO
+		sprintf(lineBuffer,	"%d.%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
+	#else
+		sprintf(lineBuffer,	"%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR);
+	#endif
 	AddLibraryVersion("software", "cfitsio", lineBuffer);
 	CONSOLE_DEBUG_W_STR("cfitsio version\t=", lineBuffer);
 #endif // _ENABLE_FITS_
 
+//----------------------------------------------------------
 #ifdef _USE_OPENCV_
 	//*	openCV version
 	#if (CV_MAJOR_VERSION >= 4)
@@ -4895,6 +4920,7 @@ struct tm		*linuxTime;
 	CONSOLE_DEBUG_W_STR("opencv version (include)\t=", CV_VERSION);
 #endif
 
+//----------------------------------------------------------
 #ifdef _ENABLE_JPEGLIB_
 	//*	jpeg lib version
 	sprintf(lineBuffer,	"%d", JPEG_LIB_VERSION);

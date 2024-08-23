@@ -84,6 +84,7 @@
 //*	Jul 17,	2023	<MLS> Added better logic for remote shutter check when shutter is moving
 //*	Jul 17,	2023	<MLS> Added watchdog timer enable/disable to dome setup web page
 //*	May 17,	2024	<MLS> Added http error 400 processing to dome driver
+//*	Aug 17,	2024	<MLS> Added StopShutter()
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -1919,6 +1920,16 @@ TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_Success;
 	GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Close shutter not implemented");
 	CONSOLE_DEBUG(alpacaErrMsg);
 #endif // _ENABLE_REMOTE_SHUTTER_
+	return(alpacaErrCode);
+}
+
+//*****************************************************************************
+//*	this can be over ridden
+//*****************************************************************************
+TYPE_ASCOM_STATUS	DomeDriver::StopShutter(char *alpacaErrMsg)
+{
+TYPE_ASCOM_STATUS	alpacaErrCode	=	kASCOM_Err_MethodNotImplemented;
+
 	return(alpacaErrCode);
 }
 

@@ -5,6 +5,7 @@
 ###	Jan 25,	2021	<MLS> Updated ZWO files
 ### Mar 21,	2022	<MLS> Added !/bin/bash to start of script
 ### Oct  1,	2022	<MLS> Added libcfitsio-dev in install script
+###	Jul 20,	2024	<MLS> Removed opencv installation commands
 ###############################################################################
 clear
 echo "Getting ready to update (sudo apt-get update)"
@@ -20,9 +21,6 @@ echo "**************************************************************************
 echo "Getting ready to install libudev-dev"
 sudo apt-get install libudev-dev
 
-#echo "****************************************************************************"
-#echo "Getting ready to install libopencv-dev"
-#sudo apt-get install libopencv-dev
 
 echo "****************************************************************************"
 echo "Getting ready to install libi2c-dev"
@@ -200,27 +198,6 @@ setupCfitsio()
 	echo	"------------------------------------------------------------------"
 }
 
-################################################################################
-#setupOPENCV()
-#{
-#	echo	"*******************************************************"
-#	echo	"Checking to see if openCV is installed"
-#	echo -n "Hit return to continue"
-#	read WAITINPUT
-#
-#	cd
-#
-#	#check to see if opencv is installed
-#	if [ -d /usr/include/opencv ]
-#	then
-#		echo "OpenCV appears to be installed"
-#	else
-#		echo "CANT FIND OpenCV"
-#		echo "Installing opencv"
-#		sudo apt-get -y install libopencv-dev
-#	fi
-#	echo	"------------------------------------------------------------------"
-#}
 
 ###############################################################################
 setupASI()
@@ -453,7 +430,6 @@ setupLibUSB()
 
 	checkfiles
 	setupDirectories
-#	setupOPENCV
 	setupCfitsio
 	setupASI
 	setupEFW

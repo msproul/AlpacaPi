@@ -293,7 +293,6 @@ uint32_t	gLastGrapicsSave_ms	=	0;
 void	SendHtml_GPS(TYPE_GetPutRequestData *reqData)
 {
 char		lineBuffer[512];
-char		urlString[512];
 int			mySocketFD;
 char		gpsWebTitle[]	=	"GPS Information";
 
@@ -334,6 +333,7 @@ uint32_t	delta_ms;
 	char		lonString[256];
 	int			returnCode;
 	struct stat	fileStatus;
+	char		urlString[512];
 
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");

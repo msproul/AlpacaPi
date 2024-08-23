@@ -151,6 +151,7 @@ class DomeDriver: public AlpacaDriver
 		virtual	TYPE_ASCOM_STATUS	GetAuxiliary(bool *onOffFla);
 		virtual	TYPE_ASCOM_STATUS 	OpenShutter(char *alpacaErrMsg);
 		virtual	TYPE_ASCOM_STATUS 	CloseShutter(char *alpacaErrMsg);
+		virtual	TYPE_ASCOM_STATUS 	StopShutter(char *alpacaErrMsg);
 
 
 				DOME_STATE_TYPE	cDomeState;

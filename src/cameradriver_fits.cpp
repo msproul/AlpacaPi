@@ -105,6 +105,8 @@
 //*	Apr 18,	2024	<MLS> Added filter wheel serial number to fits output if it exists
 //*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
 //*****************************************************************************
+//*	https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/cfitsio.html
+//*****************************************************************************
 
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_FITS_)
 
@@ -1960,9 +1962,9 @@ void	CameraDriver::WriteFITS_RotatorInfo(fitsfile *fitsFilePtr)
 //*****************************************************************************
 void	CameraDriver::WriteFITS_SoftwareInfo(fitsfile *fitsFilePtr)
 {
-int				fitsStatus;
-char			stringBuf[128];
-
+int		fitsStatus;
+char	stringBuf[128];
+char	fitsVersionStr[32];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	WriteFITS_Seperator(fitsFilePtr, "Software Info");
@@ -1997,7 +1999,12 @@ char			stringBuf[128];
 											NULL, &fitsStatus);
 
 	//*	cfitsio version
-	sprintf(stringBuf,	"Using FITS library (cfitsio) Version: %d.%d", CFITSIO_MAJOR, CFITSIO_MINOR);
+#ifdef CFITSIO_MICRO
+	sprintf(fitsVersionStr,	"%d.%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
+#else
+	sprintf(fitsVersionStr,	"%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR);
+#endif
+	sprintf(stringBuf,	"Using FITS library (cfitsio) Version: %s", fitsVersionStr);
 	fitsStatus	=	0;
 	fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 											stringBuf,

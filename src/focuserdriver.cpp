@@ -75,6 +75,9 @@
 #ifdef _ENABLE_FOCUSER_MOONLITE_
 	#include	"focuserdriver_nc.h"
 #endif
+#ifdef _ENABLE_FOCUSER_ZWO_
+	#include	"focuserdriver_ZWO.h"
+#endif
 #ifdef _ENABLE_FOCUSER_SIMULATOR_
 	#include	"focuserdriver_sim.h"
 #endif
@@ -100,6 +103,10 @@ int		focuserCnt;
 #ifdef _ENABLE_FOCUSER_SIMULATOR_
 	focuserCnt	+=	CreateFocuserObjects_SIM();
 #endif
+#ifdef _ENABLE_FOCUSER_ZWO_
+	focuserCnt	+=	CreateFocuserObjects_ZWO();
+#endif
+
 	return(focuserCnt);
 }
 
