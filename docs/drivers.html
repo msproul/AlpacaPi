@@ -195,6 +195,14 @@ This allows the door controller to be mounted on dome
 and use wireless to talk to the dome rotation controller that is mounted on the wall.
 
 <P>
+<B><FONT COLOR=RED>Important Note: </FONT></B>
+The Raspberry Pi is 3.3 logic, the input pins cannot accept voltage higer than 3.3 and
+the output pins only output 3.3 volts.
+<BR>
+The switch inputs are designed to go through a normal open swith that switches to ground.
+So the logic levels are inverted.  Reading a logic 1 means the switch is open and a logic 0 means it is closed.
+
+<P>
 <CENTER>
 <TABLE BORDER=1 >
 	<TR>
@@ -257,12 +265,151 @@ NOTE: These pin numbers can be changed, this is the default list.
 <BR>
 Pin 18 cannot be changed, it is the only pin on the Raspberry Pi that supports PWM.
 </CENTER>
+
+<P>
+These drivers require the wiringPi library, to install this library, run this script
+<PRE>
+	cd AlpacaPi 		(if not already connected to the directory)
+	./install_wiringpi.sh
+</PRE>
+to check to see if it worked properly
+<PRE>
+	gpio readall
+</PRE>
+You should get an output that looks like this
+<PRE>
+ +-----+-----+---------+------+---+---Pi 4B--+---+------+---------+-----+-----+
+ | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
+ +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
+ |     |     |    3.3v |      |   |  1 || 2  |   |      | 5v      |     |     |
+ |   2 |   8 |   SDA.1 |   IN | 1 |  3 || 4  |   |      | 5v      |     |     |
+ |   3 |   9 |   SCL.1 |   IN | 1 |  5 || 6  |   |      | 0v      |     |     |
+ |   4 |   7 | GPIO. 7 |   IN | 1 |  7 || 8  | 1 | IN   | TxD     | 15  | 14  |
+ |     |     |      0v |      |   |  9 || 10 | 1 | IN   | RxD     | 16  | 15  |
+ |  17 |   0 | GPIO. 0 |  OUT | 0 | 11 || 12 | 0 | ALT5 | GPIO. 1 | 1   | 18  |
+ |  27 |   2 | GPIO. 2 |  OUT | 1 | 13 || 14 |   |      | 0v      |     |     |
+ |  22 |   3 | GPIO. 3 |   IN | 0 | 15 || 16 | 1 | IN   | GPIO. 4 | 4   | 23  |
+ |     |     |    3.3v |      |   | 17 || 18 | 1 | IN   | GPIO. 5 | 5   | 24  |
+ |  10 |  12 |    MOSI |   IN | 0 | 19 || 20 |   |      | 0v      |     |     |
+ |   9 |  13 |    MISO |   IN | 0 | 21 || 22 | 1 | IN   | GPIO. 6 | 6   | 25  |
+ |  11 |  14 |    SCLK |   IN | 0 | 23 || 24 | 1 | IN   | CE0     | 10  | 8   |
+ |     |     |      0v |      |   | 25 || 26 | 1 | IN   | CE1     | 11  | 7   |
+ |   0 |  30 |   SDA.0 |   IN | 1 | 27 || 28 | 1 | IN   | SCL.0   | 31  | 1   |
+ |   5 |  21 | GPIO.21 |   IN | 1 | 29 || 30 |   |      | 0v      |     |     |
+ |   6 |  22 | GPIO.22 |   IN | 1 | 31 || 32 | 0 | OUT  | GPIO.26 | 26  | 12  |
+ |  13 |  23 | GPIO.23 |   IN | 1 | 33 || 34 |   |      | 0v      |     |     |
+ |  19 |  24 | GPIO.24 |   IN | 1 | 35 || 36 | 0 | OUT  | GPIO.27 | 27  | 16  |
+ |  26 |  25 | GPIO.25 |   IN | 1 | 37 || 38 | 1 | IN   | GPIO.28 | 28  | 20  |
+ |     |     |      0v |      |   | 39 || 40 | 1 | IN   | GPIO.29 | 29  | 21  |
+ +-----+-----+---------+------+---+----++----+---+------+---------+-----+-----+
+ | BCM | wPi |   Name  | Mode | V | Physical | V | Mode | Name    | wPi | BCM |
+ +-----+-----+---------+------+---+---Pi 4B--+---+------+---------+-----+-----+
+
+</PRE>
+<HR>
 <H3>Exploradome driver</H3>
 The driver for the Exploradome is almost identical to the example above,
 same hardware with the addition of shutter control logic.
 Also, this option requires the stepper motor on the ExlporaDome to be replaced with a DC motor.
 I hope to do a version that utilizes the stepper motor in the future.
 
+
+<CENTER>
+<H2>Raspberry-Pi Dome Driver</H2>
+<H3>ExploraDome implementation</H3>
+<TABLE BORDER=1>
+<TR>
+<TH COLSPAN=4><FONT COLOR=white>Raspberry-Pi Dome Driver</TH>
+</TR>
+<TR>
+<TH COLSPAN=4><FONT COLOR=white>Hardware configuration</TH>
+</TR>
+<TR>
+<TD COLSPAN=4><CENTER><FONT COLOR=white>Using BCM Pin numbering</TH>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Clockwise button pin</TD>
+	<TD><FONT COLOR=white>23</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Counter Clockwise button pin</TD>
+	<TD><FONT COLOR=white>24</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Stop button pin</TD>
+	<TD><FONT COLOR=white>25</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Direction Control pin</TD>
+	<TD><FONT COLOR=white>27</TD>
+	<TD><FONT COLOR=white>Output</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Power PWM pin</TD>
+	<TD><FONT COLOR=white>18</TD>
+	<TD><FONT COLOR=white>Output</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Home Sensor pin</TD>
+	<TD><FONT COLOR=white>5</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Park Sensor pin</TD>
+	<TD><FONT COLOR=white>6</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TH COLSPAN=4><FONT COLOR=white>Specific to ExlporaDome implementation</TH>
+<TR>
+	<TD><FONT COLOR=white>Open Complete Sensor pin</TD>
+	<TD><FONT COLOR=white>20</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Close Complete Sensor pin</TD>
+	<TD><FONT COLOR=white>21</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Shutter Open Button pin</TD>
+	<TD><FONT COLOR=white>13</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Shutter Close Button pin</TD>
+	<TD><FONT COLOR=white>19</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Shutter Stop Button pin</TD>
+	<TD><FONT COLOR=white>26</TD>
+	<TD><FONT COLOR=white>Input</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Shutter Direction Control pin</TD>
+	<TD><FONT COLOR=white>12</TD>
+	<TD><FONT COLOR=white>Output</TD>
+</TR>
+<TR>
+	<TD><FONT COLOR=white>Shutter Motor Control pin</TD>
+	<TD><FONT COLOR=white>16</TD>
+	<TD><FONT COLOR=white>Output</TD>
+</TR>
+</TABLE>
+</CENTER>
+<P>
+To build this version
+<PRE>
+	make clean
+	make expdome
+	./alpacapi-expdome
+
+	<I>Note: on some systems, sudo may be required, this is a wiringPi requirement</I>
+	sudo ./alpacapi-expdome
+</PRE>
 <?-------------------------------------------------------------->
 <HR size=4 color=white>
 <H3>Switch driver</H3>
