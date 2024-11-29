@@ -85,6 +85,7 @@
 //*	Jul 17,	2023	<MLS> Added watchdog timer enable/disable to dome setup web page
 //*	May 17,	2024	<MLS> Added http error 400 processing to dome driver
 //*	Aug 17,	2024	<MLS> Added StopShutter()
+//*	Sep 20,	2024	<MLS> Zoom meeting with Mike Bradshaw, discussed dome control and 2 door option
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt

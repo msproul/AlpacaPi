@@ -118,7 +118,7 @@ bool		isConnected;
 
 	SetImageType(kImageType_RGB24);
 
-	DumpCameraProperties(__FUNCTION__);
+//	DumpCameraProperties(__FUNCTION__);
 
 	isConnected		=	AlpacaConnect();
 	if (isConnected)
@@ -130,7 +130,7 @@ bool		isConnected;
 		CONSOLE_DEBUG("Failed to Connect!!!!!!!!");
 	}
 
-	DumpCameraProperties(__FUNCTION__);
+//	DumpCameraProperties(__FUNCTION__);
 
 #ifdef _USE_OPENCV_
 	sprintf(cOpenCV_ImgWindowName, "%s-%d", cCommonProp.Name, cCameraID);

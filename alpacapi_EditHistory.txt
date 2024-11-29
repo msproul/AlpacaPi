@@ -1,4 +1,4 @@
-History Comments found =3551 in 527 files
+History Comments found =3566 in 528 files
 PDS_ReadNASAfiles.c:28   	//*	Jan 26,	1992	Reading of PDS files into Mac program from CD working
 PDS_ReadNASAfiles.c:29   	//*	Mar 14,	1992	Starting on more detailed interpretation of label (header)
 PDS_ReadNASAfiles.c:30   	//*	Mar 16,	1992	Changed number of displayed bytes from 836 to 800
@@ -1017,7 +1017,6 @@ calibrationdriver.cpp:33 	//*	Oct 21,	2020	<MLS> Finished GetCmdNameFromMyCmdTab
 domedriver.h:21          	//*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 focuserdriver.h:11       	//*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 focuserdriver_nc.h:9     	//*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
-focuser_usis.h:6         	//*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 rotatordriver.h:11       	//*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 rotatordriver_nc.h:11    	//*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
 shutterdriver.h:21       	//*	Nov 28,	2020	<MLS> Updated return values to TYPE_ASCOM_STATUS
@@ -1635,7 +1634,7 @@ discovery_lib.h:2        	//*	Dec  6,	2021	<MLS> Increased max alpaca device cou
 windowtab_alpacalist.cpp:25	//*	Dec  6,	2021	<MLS> Added scrolling to alpaca device list
 GaiaData.c:12            	//*	Dec  8,	2021	<MLS> Added CalcSpectralClassFrom_BP_RP()
 alpaca_defs.h:25         	//*	Dec 11,	2021	<MLS> Build 123
-controllerImageArray.cpp:1063	//*	Dec 12,	2021	<MLS> Fixed bug in AlpacaGetImageArray() processing "]"
+controllerImageArray.cpp:1075	//*	Dec 12,	2021	<MLS> Fixed bug in AlpacaGetImageArray() processing "]"
 controller_camera.cpp:57 	//*	Dec 12,	2021	<MLS> ImageArray now has RGB correct
 alpacadriver.cpp:127     	//*	Dec 13,	2021	<MLS> Started working on watchdog time out processing
 alpacadriver.cpp:128     	//*	Dec 13,	2021	<MLS> Added CheckWatchDogTimeout() & WatchDog_TimeOut()
@@ -2492,7 +2491,7 @@ windowtab.cpp:77         	//*	Oct 21,	2022	<MLS> Added SetupWindowBottomBoxes()
 windowtab.cpp:78         	//*	Oct 21,	2022	<MLS> Updated all windowtabs to use SetupWindowBottomBoxes()
 windowtab.cpp:79         	//*	Oct 21,	2022	<MLS> Removed SetIPaddressBoxes() use SetupWindowBottomBoxes() instead
 windowtab.cpp:80         	//*	Oct 21,	2022	<MLS> Removed SetAlpacaLogo()
-controller.cpp:1790      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
+controller.cpp:1796      	//*	Oct 24,	2022	<MLS> Dont use openCV 4.5.4 (mousewheel bug), use 4.5.1 instead
 cameradriver_fits.cpp:91 	//*	Oct 25,	2022	<MLS> Now using cv::getVersionString().c_str() for openCV version string
 spectrodriver.cpp:27     	//*	Oct 25,	2022	<MLS> Added Get_PropertyInfo()
 controllerAlpaca.cpp:46  	//*	Oct 26,	2022	<MLS> Fixed return data valid bug in AlpacaGetStringValue()
@@ -3223,7 +3222,7 @@ telescopedriver_lx200.cpp:40	//*	Feb  7,	2024	<MLS> Working on LX200 to PiFinder
 telescopedriver_lx200.cpp:41	//*	Feb  7,	2024	<MLS> Added _DEBUG_LX200_
 alpaca_defs.h:92         	//*	Feb 10,	2024	<MLS> Version V0.7.2
 alpaca_defs.h:93         	//*	Feb 10,	2024	<MLS> Build 174
-alpaca_defs.h:94         	//*	Feb 10,	2024	<MLS> Pushed Build 174
+alpaca_defs.h:94         	//*	Feb 10,	2024	<MLS> Build 174 pushed to github
 controller_skytravel.cpp:22	//*	Feb 10,	2024	<MLS> Added Software Versions WindowTab
 discoverythread.c:35     	//*	Feb 10,	2024	<MLS> Added GetLibraryInfo()
 windowtab_sw_versions.cpp:21	//*	Feb 10,	2024	<MLS> Created windowtab_sw_versions.cpp
@@ -3524,6 +3523,7 @@ alpacadriver.cpp:198     	//*	Jul  1,	2024	<MLS> Added Get_Readall() to base cla
 alpacadriver.cpp:199     	//*	Jul  1,	2024	<MLS> Added details command to be compatible with AlpacaHub <PDR>
 cameradriver_QSI.cpp:45  	//*	Jul  4,	2024	<MLS> Implemented Read_SensorTargetTemp() && Write_SensorTargetTemp()
 domedriver_ror_rpi.cpp:32	//*	Jul  4,	2024	<MLS> github  Compile error #35, added kRelay_FlatScren
+cameradriver.cpp:221     	//*	Jul  6,	2024	<EZT> Several fixes dealing with tranmitted data size of binary image data
 switchdriver_stepper.cpp:25	//*	Jul 18,	2024	<MLS> Created switchdriver_stepper.cpp
 switchdriver_stepper.h:11	//*	Jul 19,	2024	<MLS> Created switchdriver_stepper.h
 switchdriver.cpp:51      	//*	Jul 20,	2024	<MLS> Updated set switch functions to return true if successful
@@ -3538,8 +3538,23 @@ domedriver_rpi.cpp:36    	//*	Aug 17,	2024	<MLS> Added OutputHTMLsensorPin()
 Makefile:74              	#++	Aug 17,	2024	<MLS> Added _ENABLE_EXPLORADOME_
 domedriver_rpi.cpp:37    	//*	Aug 22,	2024	<MLS> Added exlporadome shutter sensor logic
 alpaca_defs.h:102        	//*	Aug 23,	2024	<MLS> Build 181 - pushed to github
-cameradriver.cpp:222     	//*	Jan  1,	2119	<TODO> ----------------------------------------
-cameradriver.cpp:223     	//*	Jun 26,	2119	<TODO> Add support for sub frames
+domedriver.cpp:88        	//*	Sep 20,	2024	<MLS> Zoom meeting with Mike Bradshaw, discussed dome control and 2 door option
+domedriver_rpi.cpp:38    	//*	Sep 20,	2024	<MLS> Added rest of last move cmd to StartDomeMoving()
+windowtab_solarsystem.cpp:29	//*	Sep 29,	2024	<MLS> Added Kuiper Belt button ('k')
+cameradriver_auxinfo.cpp:27	//*	Nov 18,	2024	<MLS> Created cameradriver_auxinfo.cpp
+cameradriver_fits.cpp:107	//*	Nov 18,	2024	<MLS> Added local path option for saving file in case specified path fails
+alpaca_defs.h:103        	//*	Nov 21,	2024	<MLS> Build 182
+cameradriver_auxinfo.cpp:28	//*	Nov 21,	2024	<MLS> Added AuxInfo_CreateConfigTemplate()
+cameradriver.cpp:222     	//*	Nov 22,	2024	<MLS> Reverted back to 8 bit RGB binary images, need 32 bit official simulator to fully test
+windowtab.cpp:114        	//*	Nov 23,	2024	<MLS> Added IsWindowTabPtrValid()
+focuserdriver_ZWO.cpp:28 	//*	Nov 28,	2024	<MLS> Working on ZWO focuers driver (EAF)
+focuserdriver_ZWO.cpp:29 	//*	Nov 28,	2024	<MLS> ZWO EAF Focus movement working
+focuserdriver_ZWO.cpp:30 	//*	Nov 28,	2024	<MLS> ZWO EAF Temperature working
+Makefile:75              	#++	Nov 28,	2024	<MLS> Added support for ZWO EAF focuser
+focuserdriver_ZWO.cpp:31 	//*	Nov 29,	2024	<MLS> Added ProcessEAFerror()
+focuserdriver_ZWO.cpp:32 	//*	Nov 29,	2024	<MLS> Hot swapping works, must be plugged in at startup
+cameradriver.cpp:224     	//*	Jan  1,	2119	<TODO> ----------------------------------------
+cameradriver.cpp:225     	//*	Jun 26,	2119	<TODO> Add support for sub frames
 cameradriver_png.cpp:33  	//*	Jan 31,	2120	<TODO> Add support for libpng
 cameradriver_TOUP.cpp:48 	//*	Feb  4,	2120	<TODO> Add 16 bit readout to Toupcam
 cameradriver_TOUP.cpp:49 	//*	Feb 16,	2120	<TODO> Add gain setting to Toupcam
@@ -3550,25 +3565,25 @@ controller_camera.cpp:79 	//*	Feb  6,	2121	<TODO> Move downloading of images to 
 cameradriver_QHY.cpp:52  	//*	Oct 10,	2122	<TODO> Add support for percentcompleted to QHY camera driver
 spectrodriver.cpp:34     	//*	May  7,	2123	<TODO> Add support for SlitID, SlitAngle, SlitWidth
 controller_dome.cpp:47   	//*	Jun 25,	2123	<ADD> Add slaved to DeviceState
-History Comments found   = 3551 in 527 files
-Total lines              = 247459
-Total comment Lines      = 40863 (16.5%)
-Total comments           = 45864 (18.5%)
-Total history comments   = 3551 (1.4%)
+History Comments found   = 3566 in 528 files
+Total lines              = 247986
+Total comment Lines      = 40956 (16.5%)
+Total comments           = 45972 (18.5%)
+Total history comments   = 3566 (1.4%)
 Total C files            = 69
-Total C++ files          = 199
+Total C++ files          = 200
 Total H files            = 257
-Preprocssor cnt          = 8002
-Total SLOC               = 156908
-Total SLOC-Logical       = 121285
+Preprocssor cnt          = 8030
+Total SLOC               = 157301
+Total SLOC-Logical       = 121583
 Programmer comment summary
-MLS             = 3141
+MLS             = 3155
 TODO            =   11
 DDB             =    1
 JMH             =    3
+EZT             =    1
 PDB             =    6
 ADD             =    8
 SCV             =    1
 RNS             =  332
 KAS             =   14
-CRN             =    1

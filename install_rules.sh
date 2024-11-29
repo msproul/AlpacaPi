@@ -39,3 +39,5 @@ installRules	"toupcamsdk/linux/udev"		"99-toupcam.rules"
 installRules	FLIR-SDK					"40-flir-spinnaker.rules"
 installRules	"QHY/etc/udev/rules.d/"		"85-qhyccd.rules"
 
+
+installRules	ZWO_EAF_SDK/lib				"eaf.rules"

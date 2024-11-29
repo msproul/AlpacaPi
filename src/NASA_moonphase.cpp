@@ -753,9 +753,9 @@ double	decDeltaTotal;
 		decDeltaTotal	+=	decDelta;
 	}
 	decDetlta_Avg	=	decDeltaTotal / (gMoonPhaseCnt -1);
-	CONSOLE_DEBUG_W_DBL("decDetlta_Min\t=",	decDetlta_Min);
-	CONSOLE_DEBUG_W_DBL("decDetlta_Max\t=",	decDetlta_Max);
-	CONSOLE_DEBUG_W_DBL("decDetlta_Avg\t=",	decDetlta_Avg);
+//	CONSOLE_DEBUG_W_DBL("decDetlta_Min\t=",	decDetlta_Min);
+//	CONSOLE_DEBUG_W_DBL("decDetlta_Max\t=",	decDetlta_Max);
+//	CONSOLE_DEBUG_W_DBL("decDetlta_Avg\t=",	decDetlta_Avg);
 }
 
 

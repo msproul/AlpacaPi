@@ -103,7 +103,12 @@ int		iii;
 //**************************************************************************************
 WindowTabImage::~WindowTabImage(void)
 {
-//	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+
+	cMagicCookie	=	0;
+	cRunMode		=	false;
+	SetRunFastBackgroundMode(false);
+
 	if (cOpenCVdownLoadedImage != NULL)
 	{
 //		CONSOLE_DEBUG("destroy old image");
@@ -444,10 +449,10 @@ void	WindowTabImage::RunWindowBackgroundTasks(void)
 	uint32_t		deltaMs;
 	bool			newImageOK;
 
+		CONSOLE_DEBUG("cRunMode is true");
 		deltaMs	=	millis() - cLastImageChange_ms;
 		if (deltaMs > 150)
 		{
-
 			if (gCurrentImageIndex < (gImageCount -1))
 			{
 				newImageOK	=	LoadNextImageFromList((ControllerImage *)cParentObjPtr);
@@ -1247,6 +1252,7 @@ char		imageInfoText[80];
 					CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
 				//	CONSOLE_ABORT(__FUNCTION__);
 				}
+				CONSOLE_DEBUG(__FUNCTION__);
 			}
 
 		#else

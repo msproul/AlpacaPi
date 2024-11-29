@@ -29,6 +29,8 @@
 //*	May 15,	2024	<MLS> Added RA/Dec to moon phase display
 //*	May 23,	2024	<MLS> Added RA/Dec graph moon phase display
 //*****************************************************************************
+//*	https://svs.gsfc.nasa.gov/gallery/moonphase/
+//*****************************************************************************
 
 #include	<stdlib.h>
 #include	<sys/types.h>

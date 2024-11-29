@@ -120,7 +120,7 @@ ControllerImage::ControllerImage(	const char			*argWindowName,
 #endif // _USE_OPENCV_CPP_
 {
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	InitClassVariables();
 
@@ -607,7 +607,8 @@ bool		needToUpdate;
 		cLastUpdate_milliSecs	=	millis();
 	}
 
-	if (cImageTabObjPtr != NULL)
+//	if (cImageTabObjPtr != NULL)
+	if (IsWindowTabPtrValid(cImageTabObjPtr))
 	{
 		cImageTabObjPtr->RunWindowBackgroundTasks();
 	}

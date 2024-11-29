@@ -350,11 +350,10 @@ int				progressUpdateCnt;
 			cLastDownload_MegaBytesPerSec	=	0.0;
 		}
 
-		CONSOLE_DEBUG_W_NUM("cImgArrayType\t=", cImgArrayType);
-		CONSOLE_DEBUG_W_NUM("imgRank\t\t=", imgRank);
-		CONSOLE_DEBUG_W_NUM("cTotalBytesRead\t=", cTotalBytesRead);
-
-		CONSOLE_DEBUG_W_NUM("cLinesProcessed\t=", cLinesProcessed);
+		CONSOLE_DEBUG_W_NUM("cImgArrayType    \t=",	cImgArrayType);
+		CONSOLE_DEBUG_W_NUM("imgRank          \t=",	imgRank);
+		CONSOLE_DEBUG_W_NUM("cTotalBytesRead  \t=",	cTotalBytesRead);
+		CONSOLE_DEBUG_W_NUM("cLinesProcessed  \t=", cLinesProcessed);
 		CONSOLE_DEBUG_W_NUM("progressUpdateCnt\t=", progressUpdateCnt);
 
 		shutDownRetCode	=	shutdown(cSocket_desc, SHUT_RDWR);
@@ -462,13 +461,15 @@ void	ControllerCamera::AlpacaGetImageArray_Binary_Byte(	TYPE_ImageArray	*imageAr
 int				binaryDataValue;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("cBinaryImageHdr.Rank\t=", cBinaryImageHdr.Rank);
+//	CONSOLE_DEBUG_W_NUM("cRecvdByteCnt       \t=", cRecvdByteCnt);
 
 	if (cBinaryImageHdr.Rank == 3)
 	{
 		while ((cData_iii < cRecvdByteCnt))
 		{
 			binaryDataValue	=	(cReturnedData[cData_iii] & 0x00ff) << 8;
-		//	CONSOLE_DEBUG_W_HEX("binaryDataValue\t=", binaryDataValue);
+//			CONSOLE_DEBUG_W_HEX("binaryDataValue\t=", binaryDataValue);
 			if (cImageArrayIndex < imageArrayLen)
 			{
 				//*	deal with the individual R,G,B values
@@ -507,6 +508,11 @@ int				binaryDataValue;
 			cImageArrayIndex++;
 			cData_iii++;
 		}
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_NUM("cBinaryImageHdr.Rank\t=", cBinaryImageHdr.Rank);
+		CONSOLE_ABORT("cBinaryImageHdr.Rank not processed correctly");
 	}
 }
 
@@ -627,15 +633,20 @@ void	ControllerCamera::AlpacaGetImageArray_Binary_Int32(	TYPE_ImageArray	*imageA
 															int				imageArrayLen)
 {
 uint32_t		binaryDataValue;
+uint32_t		*returnedDataPtr32bit;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_NUM("Rank\t=", cBinaryImageHdr.Rank);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG_W_NUM("Rank\t=", cBinaryImageHdr.Rank);
+
+	returnedDataPtr32bit	=	(uint32_t *)cReturnedData;
 
 	if (cBinaryImageHdr.Rank == 3)
 	{
 		while ((cData_iii < cRecvdByteCnt))
 		{
-			binaryDataValue	=	(cReturnedData[cData_iii] & 0x00ff) << 8;
+//			binaryDataValue	=	(cReturnedData[cData_iii] & 0x00ff) << 8;
+			binaryDataValue	=	(returnedDataPtr32bit[cData_iii] & 0x00ffff);
+			binaryDataValue	=	returnedDataPtr32bit[cData_iii] >> 16;
 		//	CONSOLE_DEBUG_W_HEX("binaryDataValue\t=", binaryDataValue);
 			if (cImageArrayIndex < imageArrayLen)
 			{
@@ -816,6 +827,7 @@ int				dataBlkCount;
 				break;
 
 			case kAlpacaImageData_Int32:
+//				CONSOLE_DEBUG("kAlpacaImageData_Int32");
 				AlpacaGetImageArray_Binary_Int32(imageArray, imageArrayLen);
 				break;
 

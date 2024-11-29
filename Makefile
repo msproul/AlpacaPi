@@ -72,6 +72,7 @@
 #++	Apr 22,	2024	<MLS> Added _INCLUDE_MULTI_LANGUAGE_SUPPORT_
 #++	Jun 16,	2024	<MLS> Updated QSI Makefile entry
 #++	Aug 17,	2024	<MLS> Added _ENABLE_EXPLORADOME_
+#++	Nov 28,	2024	<MLS> Added support for ZWO EAF focuser
 ######################################################################################
 #	Cr_Core is for the Sony camera
 ######################################################################################
@@ -120,9 +121,13 @@ OBJECT_DIR			=	./Objectfiles/
 
 
 GD_DIR				=	../gd/
+############################################
+# ZWO libraires
 ASI_LIB_DIR			=	./ASI_lib
 ASI_INCLUDE_DIR		=	./ASI_lib/include
 EFW_LIB_DIR			=	./EFW_linux_mac_SDK
+ZWO_EAF_DIR			=	./ZWO_EAF_SDK/include
+ZWO_EAF_LIB_DIR		=	./ZWO_EAF_SDK/lib/$(PLATFORM)/
 
 ############################################
 #	as of Mar 18, 2021, supporting the AtikCamerasSDK_2020_10_19 version of ATIK
@@ -180,7 +185,7 @@ DEFINEFLAGS		+=	-D_ALPACA_PI_
 DEFINEFLAGS		+=	-D_INCLUDE_ALPACA_EXTENSIONS_
 DEFINEFLAGS		+=	-D_INCLUDE_HTTP_HEADER_
 DEFINEFLAGS		+=	-D_USE_CAMERA_READ_THREAD_
-DEFINEFLAGS		+=	-D_INCLUDE_MULTI_LANGUAGE_SUPPORT_
+#DEFINEFLAGS		+=	-D_INCLUDE_MULTI_LANGUAGE_SUPPORT_
 
 CFLAGS			=	-Wall -Wno-multichar -Wno-unknown-pragmas -Wstrict-prototypes
 CFLAGS			+=	-Wextra
@@ -230,6 +235,7 @@ INCLUDES		=	-I/usr/include					\
 					-I$(QHY_INCLUDE_DIR)			\
 					-I$(TOUP_INCLUDE_DIR)			\
 					-I$(SONY_INCLUDE_DIR)			\
+					-I$(ZWO_EAF_DIR)				\
 
 
 #					-I/usr/include/opencv2			\
@@ -335,6 +341,7 @@ CAMERA_DRIVER_OBJECTS=										\
 				$(OBJECT_DIR)cameradriverAnalysis.o			\
 				$(OBJECT_DIR)cameradriver_ASI.o				\
 				$(OBJECT_DIR)cameradriver_ATIK.o			\
+				$(OBJECT_DIR)cameradriver_auxinfo.o			\
 				$(OBJECT_DIR)cameradriver_fits.o			\
 				$(OBJECT_DIR)cameradriver_gps.o				\
 				$(OBJECT_DIR)cameradriver_FLIR.o			\
@@ -381,7 +388,7 @@ SHUTTER_DRIVER_OBJECTS=										\
 
 ######################################################################################
 # Filterwheel objects
-FITLERWHEEL_DRIVER_OBJECTS=									\
+FILTERWHEEL_DRIVER_OBJECTS=									\
 				$(OBJECT_DIR)filterwheeldriver.o			\
 				$(OBJECT_DIR)filterwheeldriver_ATIK.o		\
 				$(OBJECT_DIR)filterwheeldriver_Play1.o		\
@@ -394,6 +401,7 @@ FOCUSER_DRIVER_OBJECTS=										\
 				$(OBJECT_DIR)focuserdriver.o				\
 				$(OBJECT_DIR)focuserdriver_nc.o				\
 				$(OBJECT_DIR)focuserdriver_sim.o			\
+				$(OBJECT_DIR)focuserdriver_ZWO.o			\
 				$(OBJECT_DIR)moonlite_com.o					\
 				$(OBJECT_DIR)rotatordriver.o				\
 				$(OBJECT_DIR)rotatordriver_nc.o				\
@@ -592,6 +600,7 @@ alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FLIR_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
 alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
+alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_ZWO_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_MULTICAM_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_OBSERVINGCONDITIONS_
 #alpacapi		:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
@@ -610,7 +619,7 @@ alpacapi		:									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -621,7 +630,7 @@ alpacapi		:									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -630,6 +639,7 @@ alpacapi		:									\
 					$(ASI_CAMERA_OBJECTS)			\
 					$(OPENCV_LINK)					\
 					$(ZWO_EFW_OBJECTS)				\
+					$(ZWO_EAF_LIB_DIR)libEAFFocuser.a	\
 					-ludev							\
 					-lusb-1.0						\
 					-lpthread						\
@@ -757,7 +767,7 @@ alpacapicv4		:									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -769,7 +779,7 @@ alpacapicv4		:									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -816,7 +826,7 @@ mulc		:									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -827,7 +837,7 @@ mulc		:									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -881,7 +891,7 @@ simulator	:										\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(DOME_DRIVER_OBJECTS)			\
 					$(DRIVER_OBJECTS)				\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(GPS_OBJECTS)					\
 					$(HELPER_OBJECTS)				\
@@ -899,7 +909,7 @@ simulator	:										\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
 					$(DOME_DRIVER_OBJECTS)			\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(OBSCOND_DRIVER_OBJECTS)		\
 					$(SWITCH_DRIVER_OBJECTS)		\
@@ -1094,7 +1104,7 @@ pmc8	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 pmc8	:											\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(GPS_OBJECTS)					\
 					$(EXPSCI_OBJECTS)				\
@@ -1106,7 +1116,7 @@ pmc8	:											\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(GPS_OBJECTS)					\
 					$(EXPSCI_OBJECTS)				\
@@ -1297,7 +1307,7 @@ newt16		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 newt16		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(NMEA_OBJECTS)					\
@@ -1309,7 +1319,7 @@ newt16		:										\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(NMEA_OBJECTS)					\
@@ -1352,7 +1362,7 @@ wo71		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 wo71		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -1363,7 +1373,7 @@ wo71		:										\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -1411,7 +1421,7 @@ wo102		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 wo102		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
@@ -1424,7 +1434,7 @@ wo102		:										\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(CALIBRATION_DRIVER_OBJECTS)	\
@@ -2163,7 +2173,7 @@ pi		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 pi		:											\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -2173,7 +2183,7 @@ pi		:											\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -2212,7 +2222,7 @@ picv4		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 picv4		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -2222,7 +2232,7 @@ picv4		:										\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -2263,7 +2273,7 @@ pi64		:		CPLUSFLAGS		+=	-std=gnu++17
 pi64		:									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -2274,7 +2284,7 @@ pi64		:									\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -2467,7 +2477,7 @@ qhypi		:		DEFINEFLAGS		+=	-D_ENABLE_LIVE_CONTROLLER_
 qhypi		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -2478,7 +2488,7 @@ qhypi		:										\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -2653,7 +2663,7 @@ finder		:		DEFINEFLAGS		+=	-D_ENABLE_WIRING_PI_
 finder		:										\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(SWITCH_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
@@ -2664,7 +2674,7 @@ finder		:										\
 			$(LINK)  								\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -2708,7 +2718,7 @@ findercv4	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 findercv4		:								\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(SWITCH_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
@@ -2719,7 +2729,7 @@ findercv4		:								\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(SWITCH_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
@@ -2959,7 +2969,7 @@ jetson		:	DEFINEFLAGS		+=	-D_PLATFORM_STRING_=\"Nvidia-jetson\"
 jetson		:											\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -2973,7 +2983,7 @@ jetson		:											\
 				$(LINK)  							\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -3092,7 +3102,7 @@ atik	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 atik	:											\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -3100,7 +3110,7 @@ atik	:											\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -3122,14 +3132,14 @@ playerone	:		INCLUDES		+=	-I./PlayerOne/include_camera
 playerone	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 playerone	:										\
 					$(DRIVER_OBJECTS)				\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(CPP_OBJECTS)					\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					-L$(PLAYERONE_LIB)				\
@@ -3158,7 +3168,7 @@ poz	:		DEFINEFLAGS		+=	-D_USE_OPENCV_CPP_
 poz	:												\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(CPP_OBJECTS)					\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
@@ -3167,7 +3177,7 @@ poz	:												\
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
 					$(CAMERA_DRIVER_OBJECTS)		\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(HELPER_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(LIVE_WINDOW_OBJECTS)			\
@@ -3897,7 +3907,7 @@ spectro		:	DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_USIS_
 spectro		:	DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 spectro		:										\
 					$(DRIVER_OBJECTS)				\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
@@ -3906,14 +3916,14 @@ spectro		:										\
 
 				$(LINK)  							\
 					$(DRIVER_OBJECTS)				\
-					$(FITLERWHEEL_DRIVER_OBJECTS)	\
+					$(FILTERWHEEL_DRIVER_OBJECTS)	\
 					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(HELPER_OBJECTS)				\
 					$(SERIAL_OBJECTS)				\
 					$(SOCKET_OBJECTS)				\
 					$(SPECTROGRAPH_DRIVER_OBJECTS)	\
-						-lpthread					\
-						-o spectro
+					-lpthread						\
+					-o alpaca-spectro
 
 #spectro		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
 #spectro		:	DEFINEFLAGS		+=	-D_ENABLE_CAMERA_SIMULATOR_
@@ -4314,6 +4324,14 @@ $(OBJECT_DIR)cameradriver_ATIK.o :		$(SRC_DIR)cameradriver_ATIK.cpp		\
 										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_ATIK.cpp -o$(OBJECT_DIR)cameradriver_ATIK.o
 
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)cameradriver_auxinfo.o :	$(SRC_DIR)cameradriver_auxinfo.cpp		\
+										$(SRC_DIR)cameradriver_auxinfo.h		\
+										$(SRC_DIR)cameradriver.h			\
+										$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)cameradriver_auxinfo.cpp -o$(OBJECT_DIR)cameradriver_auxinfo.o
+
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)cameradriver_overlay.o :	$(SRC_DIR)cameradriver_overlay.cpp	\
 										$(SRC_DIR)cameradriver.h			\
@@ -4565,6 +4583,14 @@ $(OBJECT_DIR)focuserdriver_sim.o :		$(SRC_DIR)focuserdriver_sim.cpp		\
 										$(SRC_DIR)focuserdriver.h	 		\
 										$(SRC_DIR)alpacadriver.h
 	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)focuserdriver_sim.cpp -o$(OBJECT_DIR)focuserdriver_sim.o
+
+
+#-------------------------------------------------------------------------------------
+$(OBJECT_DIR)focuserdriver_ZWO.o :		$(SRC_DIR)focuserdriver_ZWO.cpp		\
+										$(SRC_DIR)focuserdriver_ZWO.h 		\
+										$(SRC_DIR)focuserdriver.h	 		\
+										$(SRC_DIR)alpacadriver.h
+	$(COMPILEPLUS) $(INCLUDES)			$(SRC_DIR)focuserdriver_ZWO.cpp -o$(OBJECT_DIR)focuserdriver_ZWO.o
 
 #-------------------------------------------------------------------------------------
 $(OBJECT_DIR)rotatordriver.o :			$(SRC_DIR)rotatordriver.cpp			\

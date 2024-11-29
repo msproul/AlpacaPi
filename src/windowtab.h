@@ -131,6 +131,7 @@ enum
 
 
 
+
 #define	kWindowNameLen	256
 
 //*****************************************************************************
@@ -348,6 +349,7 @@ class WindowTab
 		IplImage	*cOpenCV_Image;
 #endif // _USE_OPENCV_CPP_
 
+		uint32_t	cMagicCookie;		//*	an indicator so we know the object is valid
 		cv::Scalar	cCurrentColor;
 		int			cCurrentXloc;
 		int			cCurrentYloc;
@@ -446,6 +448,7 @@ class WindowTab
 		char				cLastAlpacaErrStr[512];
 };
 
+bool	IsWindowTabPtrValid(WindowTab *windotTabPtr);
 
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	void	SetRect(cv::Rect *theRect, const int top, const int left, const int bottom, const int right);

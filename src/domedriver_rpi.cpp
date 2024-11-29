@@ -35,6 +35,7 @@
 //*	Aug 17,	2024	<MLS> Working on exlporadome option for Larry
 //*	Aug 17,	2024	<MLS> Added OutputHTMLsensorPin()
 //*	Aug 22,	2024	<MLS> Added exlporadome shutter sensor logic
+//*	Sep 20,	2024	<MLS> Added rest of last move cmd to StartDomeMoving()
 //*****************************************************************************
 //*	cd /home/pi/dev-mark/alpaca
 //*	LOGFILE=logfile.txt
@@ -659,7 +660,6 @@ char		command[64];
 }
 
 
-
 //*****************************************************************************
 void	DomeDriverRPi::StartDomeMoving(const int direction)
 {
@@ -672,6 +672,7 @@ uint32_t	currentlTics;
 	//*	make sure the commutator power is off
 	digitalWrite(kHWpin_CommutatorPwr, LOW);
 #endif
+	cTimeOfLastMoveCmd	=	time(NULL);
 
 
 	//*	first set the direction

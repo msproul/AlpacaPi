@@ -266,10 +266,28 @@ char	*extensionPtr;
 		//*	down arrow key
 		case 0x00ff54:
 			imageIndex	+=	1;
+			SetNewSelectedDevice(imageIndex);
+			break;
+
+		//*	home key
+		case 0x00ff50:
+			SetNewSelectedDevice(0);
+			break;
+
+
+		//*	page up
+		case 0x00ff55:
+			imageIndex	-=	15;
 			if (imageIndex >= 0)
 			{
 				SetNewSelectedDevice(imageIndex);
 			}
+			break;
+
+		//*	page down
+		case 0x00ff56:
+			imageIndex	+=	15;
+			SetNewSelectedDevice(imageIndex);
 			break;
 
 		//*	delete key

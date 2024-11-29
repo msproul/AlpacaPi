@@ -1,7 +1,7 @@
 //**************************************************************************
 //*	Name:			cameradriver_fits.cpp
 //*
-//*	Author:			Mark Sproul (C) 2019-2020
+//*	Author:			Mark Sproul (C) 2019-2024
 //*
 //*	Description:	C++ Driver for Alpaca protocol
 //*
@@ -104,6 +104,7 @@
 //*	Apr 10,	2024	<MLS> FITS data now supports GPS from serial port
 //*	Apr 18,	2024	<MLS> Added filter wheel serial number to fits output if it exists
 //*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
+//*	Nov 18,	2024	<MLS> Added local path option for saving file in case specified path fails
 //*****************************************************************************
 //*	https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/cfitsio.html
 //*****************************************************************************
@@ -412,6 +413,7 @@ double			bscale;
 char			imageFileName[128];
 char			aviFileName[128];
 char			imageFilePath[128];
+char			localFilePath[128];		//*	this is on the local directory in case the specified one doesnt work
 char			errorString[64];
 int				fits_bitpix;
 int				fitsDataType;
@@ -431,6 +433,14 @@ int				iii;
 	strcpy(imageFilePath, gImageDataDir);
 	strcat(imageFilePath, "/");
 	strcat(imageFilePath, imageFileName);
+	//------------------------------------------------------------------------------------------
+	//*	the user has the option of specifying a different directory or drive for saving the image
+	//*	in case that fails (as it has for me), I want a backup location
+	strcpy(localFilePath, kImageDataDir_Default);
+	strcat(localFilePath, "/");
+	strcat(localFilePath, imageFileName);
+
+
 
 	naxes[0]		=	cCameraProp.CameraXsize;
 	naxes[1]		=	cCameraProp.CameraYsize;
@@ -493,6 +503,20 @@ int				iii;
 
 	fitsStatus	=	0;
 	fitsRetCode	=	fits_create_file(&fitsFilePtr, imageFilePath, &fitsStatus);
+	//------------------------------------------------------------------------------------------
+	//*	if it failed to create, try the local path
+	if (fitsRetCode != 0)
+	{
+		CONSOLE_DEBUG_W_STR("Failed to create FITS file:", imageFilePath)
+		//*	check to see if the backup path is different
+		if (strcmp(imageFilePath, localFilePath) != 0)
+		{
+			CONSOLE_DEBUG_W_STR("Trying alternate path:", localFilePath)
+			fitsStatus	=	0;
+			fitsRetCode	=	fits_create_file(&fitsFilePtr, localFilePath, &fitsStatus);
+		}
+	}
+
 	if (fitsRetCode == 0)
 	{
 //		CONSOLE_DEBUG("fits_create_file = SUCCESS");

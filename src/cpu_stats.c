@@ -285,9 +285,9 @@ bool	vendorIDfound;
 							strcpy(gPlatformString, argValueString);
 						}
 						stillNeedModel	=	false;
-						CONSOLE_DEBUG_W_STR("lineBuff       \t=", lineBuff);
-						CONSOLE_DEBUG_W_STR("gHardwareString\t=", gHardwareString);
-						CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
+//						CONSOLE_DEBUG_W_STR("lineBuff       \t=", lineBuff);
+//						CONSOLE_DEBUG_W_STR("gHardwareString\t=", gHardwareString);
+//						CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 						//*	we need to check if the hardware string has been set properly
 						if (strcmp(gHardwareString, "Jetson") == 0)
 						{
@@ -300,7 +300,7 @@ bool	vendorIDfound;
 								strcpy(gHardwareString, "unknown");
 							}
 						}
-						CONSOLE_DEBUG_W_STR("gHardwareString\t=", gHardwareString);
+//						CONSOLE_DEBUG_W_STR("gHardwareString\t=", gHardwareString);
 //						CONSOLE_ABORT(__FUNCTION__);
 						break;
 

@@ -95,7 +95,8 @@
 
 #include	"camera_defs.h"
 
-#define	kDefaultImageDataDir	"imagedata"
+#define	kImageDataDir_Default		"imagedata"
+
 extern	char	gImageDataDir[];
 
 //*****************************************************************************

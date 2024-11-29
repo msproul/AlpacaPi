@@ -96,6 +96,8 @@ class FocuserDriver: public AlpacaDriver
 		int32_t			cFocuserPGet_Readallostion;
 		int32_t			cPrevFocuserPosition;
 		int32_t			cNewFocuserPosition;
+		uint32_t		cLastTimeSecs_Temperature;
+		uint32_t		cLastTimeMilSecs_Position;
 												//*	i.e. the maximum number of steps allowed in one move operation
 
 		//*	this is for support of Moonlite NiteCrawler

@@ -343,8 +343,8 @@ bool	ControllerSkytravel::LookForIPaddress(void)
 int		iii;
 bool	foundSomething;
 
-	CONSOLE_DEBUG_W_NUM(__FUNCTION__, gDebugLFIP++);
-	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
+//	CONSOLE_DEBUG_W_NUM(__FUNCTION__, gDebugLFIP++);
+//	CONSOLE_DEBUG_W_NUM("gRemoteCnt\t=", gRemoteCnt);
 	foundSomething	=	false;
 	for (iii=0; iii<gRemoteCnt; iii++)
 	{
@@ -368,7 +368,7 @@ bool	foundSomething;
 			}
 		}
 	}
-	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
+//	CONSOLE_DEBUG_W_STR(__FUNCTION__, "Exit");
 	return(foundSomething);
 }
 

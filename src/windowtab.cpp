@@ -111,6 +111,7 @@
 //*	Mar 28,	2024	<MLS> Added SetWidgetTextColor() with color index arg
 //*	Apr  1,	2024	<MLS> Added SetWebHelpURLstring()
 //*	May 22,	2024	<MLS> Added ClearWidgetImage()
+//*	Nov 23,	2024	<MLS> Added IsWindowTabPtrValid()
 //*****************************************************************************
 
 
@@ -183,6 +184,22 @@ cv::Scalar	gColorTable[]	=
 	CV_RGB(255,	85,		85),	//*	W_FILTER_SII,
 };
 
+//**************************************************************************************
+bool	IsWindowTabPtrValid(WindowTab *windotTabPtr)
+{
+bool	isValid;
+
+	CONSOLE_DEBUG(__FUNCTION__);
+	isValid	=	false;
+	if (windotTabPtr != NULL)
+	{
+		if (windotTabPtr->cMagicCookie == kMagicCookieValue)
+		{
+			isValid	=	true;
+		}
+	}
+	return(isValid);
+}
 
 
 //**************************************************************************************
@@ -249,6 +266,8 @@ int		iii;
 		cWidgetList[iii].bgColorSelected	=	CV_RGB(100,	100,	100);
 		cWidgetList[iii].includeBorder		=	true;
 	}
+
+	cMagicCookie	=	kMagicCookieValue;
 }
 
 //**************************************************************************************
@@ -257,6 +276,7 @@ int		iii;
 WindowTab::~WindowTab(void)
 {
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
+	cMagicCookie	=	0;
 }
 
 //**************************************************************************************
@@ -265,6 +285,7 @@ void WindowTab::CloseWindow(void)
 Controller	*myControllerObj;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
+	SetRunFastBackgroundMode(false);
 
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)
@@ -1424,14 +1445,17 @@ void	WindowTab::HandleSpecialKeys(const int keyPressed)
 
 	switch(keyPressed)
 	{
+		case 0x00FF50:	//*	home key
 		case 0x10FF50:	//*	home key
 			cFirstLineIdx	=	0;
 			break;
 
+		case 0x00FF56:	//*	page down
 		case 0x10FF56:	//*	page down
 			cFirstLineIdx	+=	10;
 			break;
 
+		case 0x00FF55:	//*	page up
 		case 0x10FF55:	//*	page up
 			cFirstLineIdx	-=	10;
 			break;
@@ -2109,7 +2133,6 @@ int		iii;
 
 	for (iii=0; iii<kMaxWidgets; iii++)
 	{
-
 		switch(cWidgetList[iii].widgetType)
 		{
 			case	kWidgetType_Default:

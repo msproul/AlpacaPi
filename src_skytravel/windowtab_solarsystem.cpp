@@ -26,6 +26,7 @@
 //*	Jun 12,	2024	<MLS> Added DrawCrossHairs()
 //*	Jun 13,	2024	<MLS> Added DrawKuiperBelt()
 //*	Jun 14,	2024	<MLS> Added DrawOrbits()
+//*	Sep 29,	2024	<MLS> Added Kuiper Belt button ('k')
 //*****************************************************************************
 //
 //	https://ssd.jpl.nasa.gov/planets/approx_pos.html
@@ -128,10 +129,10 @@ int		buttonBoxWidth;
 
 	SetWidgetText(kSolarSystem_Btn_Reset,			"r");
 	SetWidgetText(kSolarSystem_Btn_AutoAdvTime,		"@");
-	SetWidgetText(kSolarSystem_Btn_DispAUscale,		"u");
 	SetWidgetText(kSolarSystem_Btn_DispAsteriods,	"a");
-
+	SetWidgetText(kSolarSystem_Btn_DispKuiperBelt,	"k");
 	SetWidgetText(kSolarSystem_Btn_DispOrbit,		"o");
+	SetWidgetText(kSolarSystem_Btn_DispAUscale,		"u");
 	SetWidgetText(kSolarSystem_Btn_DispCrossHairs,	"x");
 
 	SetWidgetType(kSolarSystem_UTCtime, 			kWidgetType_TextBox);
@@ -147,6 +148,7 @@ int		buttonBoxWidth;
 	SetWidgetHelpText(	kSolarSystem_Btn_DispAsteriods,		"Toggle Asteroids Display");
 	SetWidgetHelpText(	kSolarSystem_Btn_DispAUscale,		"Toggle Astronomical Unit Scale");
 	SetWidgetHelpText(	kSolarSystem_Btn_DispOrbit,			"Toggle Orbit Display");
+	SetWidgetHelpText(	kSolarSystem_Btn_DispKuiperBelt,	"Toggle Kuiper Belt objects");
 	SetWidgetHelpText(	kSolarSystem_Btn_DispCrossHairs,	"Toggle Cross Hair Display");
 	SetWidgetHelpText(	kSolarSystem_UTCtime,				"Time of display");
 	SetWidgetHelpText(	kSolarSystem_AsteroidMagLimit,		"Magnitude limit for asteroid display");
@@ -364,12 +366,16 @@ void	WindowTabSolarSystem::ProcessButtonClick(const int buttonIdx, const int fla
 			HandleKeyDown('a');
 			break;
 
-		case kSolarSystem_Btn_DispAUscale:
-			HandleKeyDown('u');
+		case kSolarSystem_Btn_DispKuiperBelt:
+			HandleKeyDown('k');
 			break;
 
 		case kSolarSystem_Btn_DispOrbit:
 			HandleKeyDown('o');
+			break;
+
+		case kSolarSystem_Btn_DispAUscale:
+			HandleKeyDown('u');
 			break;
 
 		case kSolarSystem_Btn_DispCrossHairs:
@@ -948,6 +954,8 @@ void	WindowTabSolarSystem::UpdateButtonStatus(void)
 	SetWidgetChecked(	kSolarSystem_Btn_DispAsteriods,		cDislayAsteriods);
 	SetWidgetChecked(	kSolarSystem_Btn_DispAUscale,		cDislayAUscale);
 	SetWidgetChecked(	kSolarSystem_Btn_DispOrbit,			cDislayOrbit);
+	SetWidgetChecked(	kSolarSystem_Btn_DispKuiperBelt,	cDislayKuiperBelt);
+
 	SetWidgetChecked(	kSolarSystem_Btn_DispCrossHairs,	cDislayCrossHairs);
 
 	SetWidgetNumber(	kSolarSystem_AsteroidMagLimit,		cAsteroidMagLimit, 2);

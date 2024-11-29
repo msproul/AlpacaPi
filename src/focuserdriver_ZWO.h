@@ -1,18 +1,18 @@
 //**************************************************************************
-//*	Name:			focuserdriver_sim.h
+//*	Name:			focuserdriver_ZWO.h
 //*
 //*****************************************************************************
 //*	Edit History
 //*****************************************************************************
 //*	<MLS>	=	Mark L Sproul
 //*****************************************************************************
-//*	Mar  3,	2023	<MLS> Created focuserdriver_sim.h
+//*	Jul 25,	2024	<MLS> Created focuserdriver_ZWO.h
 //**************************************************************************
-//#include	"focuserdriver_sim.h"
+//#include	"focuserdriver_ZWO.h"
 
 
-#ifndef _FOCUSER_SIMULATOR_H_
-#define	_FOCUSER_SIMULATOR_H_
+#ifndef _FOCUSER_ZWO_H_
+#define	_FOCUSER_ZWO_H_
 
 #ifndef _ALPACA_DRIVER_H_
 	#include	"alpacadriver.h"
@@ -21,19 +21,24 @@
 	#include	"focuserdriver.h"
 #endif
 
-int	CreateFocuserObjects_SIM(void);
+#ifndef EAF_FOCUSER_H
+	#include	"EAF_focuser.h"		//*	ZWO header file for EAF
+#endif
+
+
+int	CreateFocuserObjects_ZWO(void);
 
 
 //**************************************************************************************
-class FocuserDriverSIM: public FocuserDriver
+class FocuserDriverZWO: public FocuserDriver
 {
 	public:
 
 		//
 		// Construction
 		//
-						FocuserDriverSIM(void);
-		virtual			~FocuserDriverSIM(void);
+						FocuserDriverZWO(const int eaf_ID_num);
+		virtual			~FocuserDriverZWO(void);
 		virtual	int32_t	RunStateMachine(void);
 //
 		virtual	TYPE_ASCOM_STATUS	SetFocuserPosition(const int32_t newPosition, char *alpacaErrMsg);
@@ -43,18 +48,21 @@ class FocuserDriverSIM: public FocuserDriver
 //		virtual	TYPE_ASCOM_STATUS	HaltStepper(const int axisNumber);
 //
 //	protected:
-//		bool			OpenFocuserConnection(const char *usbPortPath);		//*	returns true if open succeeded.
+		bool			OpenFocuserConnection(void);		//*	returns true if open succeeded.
 //		void			SendCommand(const char *theCommand);
 //		int				ReadUntilChar(const int fd, char *readBuff, const int maxChars, const char terminator);
 //		bool			GetPosition(const int axisNumber, int32_t *valueToUpdate);
-//
+		void			ProcessEAFerror(const int eaf_ErrorCode, const char *functionName, const char *errorMssg);
 //
 //
 //		char			cLastCmdSent[16];
+		int				cEAF_ID_num;
+		EAF_INFO		cEAFInfo;
+		bool			cEAFconnectionIsOpen;
 
 
 };
 
 
 
-#endif	//	_FOCUSER_SIMULATOR_H_
+#endif	//	_FOCUSER_ZWO_H_

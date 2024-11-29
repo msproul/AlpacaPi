@@ -133,6 +133,8 @@ FocuserDriver::FocuserDriver(void)
 
 	cPrevFocuserPosition			=	-1;
 	cNewFocuserPosition				=	-1;
+	cLastTimeSecs_Temperature		=	0;
+	cLastTimeMilSecs_Position		=	0;
 
 	//*	all of the following is for support of Moonlite NiteCrawler
 	cIsNiteCrawler					=	false;

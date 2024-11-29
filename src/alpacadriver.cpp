@@ -419,9 +419,9 @@ int		iii;
 	cCommonProp.InterfaceVersion	=	1;
 
 	GetDeviceTypeFromEnum(argDeviceType, cAlpacaDeviceString);
-	CONSOLE_DEBUG_W_STR("cAlpacaDeviceString\t=", cAlpacaDeviceString);
+//	CONSOLE_DEBUG_W_STR("cAlpacaDeviceString\t=", cAlpacaDeviceString);
 	ToLowerStr(cAlpacaDeviceString);
-	CONSOLE_DEBUG_W_STR("cAlpacaDeviceString\t=", cAlpacaDeviceString);
+//	CONSOLE_DEBUG_W_STR("cAlpacaDeviceString\t=", cAlpacaDeviceString);
 
 	strcpy(cCommonProp.Name,		cAlpacaDeviceString);
 	sprintf(cCommonProp.DriverVersion, "%s Build %d", kVersionString, kBuildNumber);
@@ -541,7 +541,7 @@ int		iii;
 #ifdef _ENABLE_BANDWIDTH_LOGGING_
 	BandWidthStatsInit();
 #endif // _ENABLE_BANDWIDTH_LOGGING_
-	CONSOLE_DEBUG_W_BOOL("cSendJSONresponse\t=", cSendJSONresponse);
+//	CONSOLE_DEBUG_W_BOOL("cSendJSONresponse\t=", cSendJSONresponse);
 }
 
 //**************************************************************************************
@@ -4605,7 +4605,7 @@ char		*strPtr;
 int			sLen;
 int			iii;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	filePointer	=	fopen("hostname.txt", "r");
 	if (filePointer != NULL)
@@ -4896,16 +4896,16 @@ float	fitsVersion;
 		fitsRetCode	=	fits_get_version(&fitsVersion);
 		if (fitsRetCode != 0)
 		{
-			CONSOLE_DEBUG_W_NUM("fits_get_version returned:", fitsRetCode);
+//			CONSOLE_DEBUG_W_NUM("fits_get_version returned:", fitsRetCode);
 		}
-		CONSOLE_DEBUG_W_DBL("fitsVersion\t=", fitsVersion);
+//		CONSOLE_DEBUG_W_DBL("fitsVersion\t=", fitsVersion);
 	#ifdef CFITSIO_MICRO
 		sprintf(lineBuffer,	"%d.%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
 	#else
 		sprintf(lineBuffer,	"%d.%d", CFITSIO_MAJOR, CFITSIO_MINOR);
 	#endif
 	AddLibraryVersion("software", "cfitsio", lineBuffer);
-	CONSOLE_DEBUG_W_STR("cfitsio version\t=", lineBuffer);
+//	CONSOLE_DEBUG_W_STR("cfitsio version\t=", lineBuffer);
 #endif // _ENABLE_FITS_
 
 //----------------------------------------------------------
@@ -4917,7 +4917,7 @@ float	fitsVersion;
 	#else
 		AddLibraryVersion("software", "opencv", CV_VERSION);
 	#endif
-	CONSOLE_DEBUG_W_STR("opencv version (include)\t=", CV_VERSION);
+//	CONSOLE_DEBUG_W_STR("opencv version (include)\t=", CV_VERSION);
 #endif
 
 //----------------------------------------------------------
@@ -4925,7 +4925,7 @@ float	fitsVersion;
 	//*	jpeg lib version
 	sprintf(lineBuffer,	"%d", JPEG_LIB_VERSION);
 	AddLibraryVersion("software", "libjpeg", lineBuffer);
-	CONSOLE_DEBUG_W_STR("libjpeg version\t=", lineBuffer);
+//	CONSOLE_DEBUG_W_STR("libjpeg version\t=", lineBuffer);
 #endif
 
 	//*	check resoure limits
@@ -4989,7 +4989,7 @@ float	fitsVersion;
 
 #ifdef _ENABLE_IMU_
 int	imu_ReturnCode;
-	CONSOLE_DEBUG("Calling IMU_Init()");
+//	CONSOLE_DEBUG("Calling IMU_Init()");
 	imu_ReturnCode	=	IMU_Init();
 	if (imu_ReturnCode == 0)
 	{

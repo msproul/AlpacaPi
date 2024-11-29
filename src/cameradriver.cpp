@@ -218,6 +218,8 @@
 //*	Jun 26,	2024	<MLS> CONFORMU-camera/QHY-QHY174M: Found 1 error, 2 issues and 41 information messages.
 //*	Jun 28,	2024	<MLS> CONFORMU-camera/Simulator: Found 1 error, 2 issues and 41 information messages.
 //*	Jun 28,	2024	<MLS> Removed all "if (reqData != NULL)" from cameradriver.cpp
+//*	Jul  6,	2024	<EZT> Several fixes dealing with tranmitted data size of binary image data
+//*	Nov 22,	2024	<MLS> Reverted back to 8 bit RGB binary images, need 32 bit official simulator to fully test
 //*****************************************************************************
 //*	Jan  1,	2119	<TODO> ----------------------------------------
 //*	Jun 26,	2119	<TODO> Add support for sub frames
@@ -280,6 +282,7 @@
 #include	"alpacadriver.h"
 #include	"alpacadriver_helper.h"
 #include	"cameradriver.h"
+#include	"cameradriver_auxinfo.h"
 #include	"observatory_settings.h"
 
 
@@ -332,7 +335,6 @@
 #include	"NASA_moonphase.h"
 
 
-#define	kImageDataDir_Default		"imagedata"
 char	gImageDataDir[256]		=	kImageDataDir_Default;
 
 
@@ -392,6 +394,8 @@ int	cameraCnt;
 #ifdef _ENABLE_CAMERA_SIMULATOR_
 	cameraCnt	+=	CreateCameraObjects_Sim();
 #endif
+
+	AuxInfo_StartThread();
 	return(cameraCnt);
 }
 
@@ -433,7 +437,10 @@ int			returnCode;
 CameraDriver::CameraDriver(void)
 	:AlpacaDriver(kDeviceType_Camera)
 {
-int	mkdirErrCode;
+int			mkdirErrCode;
+struct stat	fileStatus;
+int			returnCode;
+char		myImageDataDir[]	=	"/media/pi/rpdata/imagedata";
 
 	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -443,7 +450,9 @@ int	mkdirErrCode;
 
 	//*	set all of the class data to known states
 
-	SetImageDataDirectory("/media/pi/rpdata/imagedata");
+	SetImageDataDirectory(myImageDataDir);
+
+	TemperatureLog_SetDescription("Camera Temperature");
 
 	//======================================================
 	//*	Start with the ASCOM properties
@@ -451,13 +460,12 @@ int	mkdirErrCode;
 	strcpy(cCommonProp.Description,	"Camera");
 	cCommonProp.InterfaceVersion	=	3;
 
-	cDriverCmdTablePtr	=	gCameraCmdTable;
-	TemperatureLog_SetDescription("Camera Temperature");
+	cDriverCmdTablePtr				=	gCameraCmdTable;
 
 
 	cUUID.part3						=	'CA';					//*	model number
 	cCameraProp.SensorType			=   kSensorType_Monochrome;
-	CONSOLE_DEBUG_W_STR("AlpacaDriver SensorType:", cCameraProp.SensorType);
+	CONSOLE_DEBUG_W_NUM("AlpacaDriver SensorType:", cCameraProp.SensorType);
 	cCameraProp.BinX				=	1;
 	cCameraProp.BinY				=	1;
 	cCameraProp.MaxbinX				=	1;
@@ -647,10 +655,10 @@ int	iii;
 	}
 #endif // _ENABLE_FITS_
 
-	mkdirErrCode	=	mkdir(kDefaultImageDataDir, 0744);
+	mkdirErrCode	=	mkdir(kImageDataDir_Default, 0744);
 	if (mkdirErrCode == 0)
 	{
-//		CONSOLE_DEBUG_W_STR("Image directory created:", kDefaultImageDataDir);
+//		CONSOLE_DEBUG_W_STR("Image directory created:", kImageDataDir_Default);
 	}
 	else if (errno == EEXIST)
 	{
@@ -4276,6 +4284,7 @@ int		pixelCntMax;
 			{
 				if (ccc < pixelCntMax)
 				{
+					//*	openCV uses BGR instead of RGB
 					//*	red data
 					binaryDataBuffer[ccc++]	=	(cCameraDataBuffer[pixelIndex + 2] & 0x00ff) << 24;
 
@@ -4454,8 +4463,10 @@ bool				xmit16BitAs32Bit	=	false;
 			//*	fix by EZT 7/6/2024
 //			if (reqData->cHTTPclientType == kHTTPclient_AlpacaPi)
 //			{
-				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;		//	Element type of the source image array
-				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;		//	Element type as sent over the network
+				binaryImageHdr.ImageElementType			=	kAlpacaImageData_Byte;	//	Element type of the source image array
+				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Byte;	//	Element type as sent over the network
+//*	<MLS> Nov 22, 2024
+//				binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;	//	Element type as sent over the network
 				bytesPerPixel							=	1;
 //			}
 //			else
@@ -4588,7 +4599,9 @@ bool				xmit16BitAs32Bit	=	false;
 					//}
 					//else
 					//{
-						returnedDataLen	=	BuildBinaryImage_RGB24_32bit((uint32_t *)binaryDataBuffer, imgDataOffset, bufferSize);
+					//+	binaryImageHdr.TransmissionElementType	=	kAlpacaImageData_Int32;	//	Element type as sent over the network
+					//+	returnedDataLen	=	BuildBinaryImage_RGB24_32bit((uint32_t *)binaryDataBuffer, imgDataOffset, bufferSize);
+						returnedDataLen	=	BuildBinaryImage_RGB24(binaryDataBuffer, imgDataOffset, bufferSize);
 					//}
 					break;
 

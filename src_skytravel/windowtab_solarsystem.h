@@ -26,6 +26,7 @@ enum
 	kSolarSystem_Btn_AutoAdvTime,
 	kSolarSystem_Btn_DispAsteriods,
 	kSolarSystem_Btn_DispAUscale,
+	kSolarSystem_Btn_DispKuiperBelt,
 	kSolarSystem_Btn_DispOrbit,
 	kSolarSystem_Btn_DispCrossHairs,
 	kSolarSystem_UTCtime,

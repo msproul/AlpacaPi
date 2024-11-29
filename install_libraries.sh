@@ -1,7 +1,8 @@
 ###############################################################################
 #	Driver library installation for AlpacaPi
 ###############################################################################
-###	Mar 18,	2021	<MLS> Adding full support for QHY installation
+#++	Mar 18,	2021	<MLS> Adding full support for QHY installation
+#++	Nov 28,	2024	<MLS> Added support for ZWO EAF focuser
 ###############################################################################
 function CheckFile
 {
@@ -57,6 +58,7 @@ MISSING_COUNT=0
 	CheckFile	"./"				"FLIR-SDK"			"Not required"
 	CheckFile	"./"				"QHY"				"Not required"
 	CheckFile	"./"				"toupcamsdk"		"Not required"
+	CheckFile	"./"				"ZWO_EAF_SDK"		"Not required"
 	echo "*********************************************"
 }
 
@@ -331,6 +333,49 @@ function InstallQHY()
 	fi
 }
 
+###############################################################################
+function InstallZWOEAF()
+{
+echo "***************************************************************"
+ZWO_EAF_DIR="ZWO_EAF_SDK"
+if [ -d $ZWO_EAF_DIR ]
+then
+	echo "ZWO EAF (Focuser) SDK folder found"
+	echo -n "Would you like to install ZWO EAF support [y/n]?"
+	read YESNO
+	if [ $YESNO == "y" ]
+	then
+
+		if  $ISX64
+		then
+			echo "Running on X64 platform"
+			ZWO_EAF_LIB_DIR=$ZWO_EAF_DIR/lib/x64
+		elif  $ISARM64
+		then
+			echo "Running on ARM64 platform"
+			ZWO_EAF_LIB_DIR=$ZWO_EAF_DIR/lib/armv8
+		elif  $ISARM32
+		then
+			echo "Running on ARM32 platform"
+			ZWO_EAF_LIB_DIR=$ZWO_EAF_DIR/lib/armv7
+		else
+			echo "Platform unkonwn"
+			exit
+		fi
+		echo "Platform is '$ZWO_EAF_LIB_DIR'"
+
+		if [ -d $ZWO_EAF_LIB_DIR ]
+		then
+			echo "Copying ZWO library files to LIB_DIR"
+			sudo cp -v $ZWO_EAF_LIB_DIR/libEAFFocuser.*   $LIB_DIR/
+		else
+			echo "Cant find ZWO EAF Focuser SDK: $ZWO_EAF_LIB_DIR"
+		fi
+	fi
+fi
+}
+
+
 clear
 echo "***************************************************************"
 
@@ -339,11 +384,13 @@ LIB_DIR="/usr/lib"
 Checksystem
 DeterminePlatform
 echo "Installing libraries into $LIB_DIR"
-
+#exit
 
 InstallATIK
 InstallToupTec
 InstallFlir
+InstallZWOEAF
+
 
 QHY_SDK_DIR="QHY"
 

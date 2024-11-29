@@ -126,6 +126,11 @@ int		bytesPerPixel;
 		}
 	#endif	//	_ENABLE_JPEGLIB_
 
+//		if (cSaveAsRAW)
+//		{
+//			//*	save the raw image
+//			SaveImageRaw();
+//		}
 
 	//*	we want FITS to be last so it can include info about other save data products
 	#ifdef _ENABLE_FITS_

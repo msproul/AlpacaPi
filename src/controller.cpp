@@ -510,7 +510,7 @@ char		myWindowName[128];
 	cHeight				=	ySize;
 	cUpdateWindow		=	true;
 	cLastAlpacaErrNum	=	kASCOM_Err_Success;
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	cBackGrndColor		=	CV_RGB(0,	0,	0);
 
@@ -520,7 +520,7 @@ char		myWindowName[128];
 #else
 	cOpenCV_Image		=	cvCreateImage(cvSize(cWidth, cHeight), IPL_DEPTH_8U, 3);
 #endif // _USE_OPENCV_CPP_
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	try
 	{
@@ -550,7 +550,7 @@ char		myWindowName[128];
 			cv::moveWindow(cWindowName, 1000, 1000);
 			cv::waitKey(10);
 		}
-		CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//		CONSOLE_DEBUG("Setting mouse call back routine!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		cv::setMouseCallback(	cWindowName,
 								LiveWindowMouseCallback,
 								(void *)this);
@@ -560,10 +560,7 @@ char		myWindowName[128];
 		CONSOLE_DEBUG("delete cOpenCV_matImage; had an exception");
 		CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
-
-
-
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	if (gFontsNeedInit)
 	{
@@ -640,28 +637,31 @@ int		iii;
 	CONSOLE_DEBUG_W_NUM("gControllerCnt\t=", gControllerCnt);
 #ifdef _USE_BACKGROUND_THREAD_
 	//*	we have to kill the background thread
+	if (cBackGroundThreadCreated)
+	{
 	int		threadCancelErr;
-		if (cBackGroundThreadCreated)
+	//	CONSOLE_DEBUG("Canceling background thread");
+		threadCancelErr	=	pthread_cancel(cBackgroundThreadID);
+		if (threadCancelErr == 0)
 		{
-//			CONSOLE_DEBUG("Canceling background thread");
-			threadCancelErr	=	pthread_cancel(cBackgroundThreadID);
-			if (threadCancelErr == 0)
-			{
-//				CONSOLE_DEBUG_W_STR("Thread canceled OK:\t", cWindowName);
-			}
-			else
-			{
-				CONSOLE_DEBUG_W_NUM("Thread canceled failed, errno\t=", errno);
-			}
+			CONSOLE_DEBUG_W_STR("Thread canceled OK:\t", cWindowName);
 		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("Thread canceled failed, errno\t=", errno);
+		}
+		usleep(500);
+	}
 #endif // _USE_BACKGROUND_THREAD_
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	//*	if we are the active window, make sure we dont get any more key presses
 	if (gCurrentActiveWindow == this)
 	{
 		gCurrentActiveWindow	=	NULL;
 	}
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 #if defined(_USE_OPENCV_CPP_) || (CV_MAJOR_VERSION >= 4)
 	if (cOpenCV_matImage != NULL)
 	{
@@ -681,6 +681,7 @@ int		iii;
 			CONSOLE_DEBUG_W_NUM("openCV error code\t=",	ex.code);
 		}
 	}
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 #if (CV_MAJOR_VERSION >= 4)
 	//---try------try------try------try------try------try---
@@ -688,12 +689,14 @@ int		iii;
 	{
 	std::string	myWindowName(cWindowName);
 
-//		CONSOLE_DEBUG_W_STR("try cv::destroyWindow", cWindowName);
-//		CONSOLE_DEBUG_W_STR("myWindowName", myWindowName.c_str());
+		CONSOLE_DEBUG_W_STR("try cv::destroyWindow", cWindowName);
+		CONSOLE_DEBUG_W_STR("myWindowName", myWindowName.c_str());
 //		cv::destroyWindow(cWindowName);
 		cv::destroyWindow(myWindowName);
-//		CONSOLE_DEBUG("Waiting");
+		CONSOLE_DEBUG("Waiting");
+		usleep(500);
 		cv::waitKey(200);
+		CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 	}
 	catch(cv::Exception& ex)
 	{
@@ -706,6 +709,7 @@ int		iii;
 		}
 	}
 	//---end------end------end------end------end------end---
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 #else	//	(CV_MAJOR_VERSION >= 4)
 	#warning "Compiling for openCV 3 or eariler"
 	//---try------try------try------try------try------try---
@@ -726,6 +730,7 @@ int		iii;
 	//---end------end------end------end------end------end---
 #endif	//	(CV_MAJOR_VERSION >= 4)
 
+	CONSOLE_DEBUG_W_STR(__FUNCTION__, cWindowName);
 
 #else
 	//*	release the image
@@ -1404,6 +1409,7 @@ void	Controller::ProcessTabClick(const int tabIdx)
 //	CONSOLE_DEBUG(__FUNCTION__);
 	if (tabIdx == 0)
 	{
+		SetRunFastBackgroundMode(false);
 		cKeepRunning	=	false;
 	}
 	else if (tabIdx != cCurrentTabNum)

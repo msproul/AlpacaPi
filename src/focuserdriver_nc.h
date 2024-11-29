@@ -58,8 +58,6 @@ class FocuserMoonLite: public FocuserDriver
 		void			ProcessPeriodicRequests(void);
 
 		int				cFileDesc;	//*	port file descriptor
-		uint32_t		cLastTimeSecs_Temperature;
-		uint32_t		cLastTimeMilSecs_Position;
 
 		char			cLastCmdSent[16];
 
