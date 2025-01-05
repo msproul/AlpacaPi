@@ -55,8 +55,15 @@ ATIK_ZIP_FILE="AtikCamerasSDK-129.zip"
 CFITS_TAR="cfitsio_latest.tar.gz"
 
 COPY="cp -p -v"
-DEV_DIR="dev-mark"
+DEV_DIR="."
+FITS_INSTALLED=false
+FITS_LOCATION="not-found"
 
+
+if [ -d "$HOME/dev-mark" ]
+then
+	DEV_DIR="dev-mark"
+fi
 
 ##################################################################
 checkfiles()
@@ -89,13 +96,13 @@ checkfiles()
 	#	exit
 	fi
 
-	if [ -f $ATIK_LIB_FILE ]
-	then
-		echo	"ATIK file present and accounted for"
-	else
-		echo	"Can't find $ATIK_LIB_FILE"
-	#	exit
-	fi
+#	if [ -f $ATIK_LIB_FILE ]
+#	then
+#		echo	"ATIK file present and accounted for"
+#	else
+#		echo	"Can't find $ATIK_LIB_FILE"
+#	#	exit
+#	fi
 	if [ -f $ATIK_RULES_FILE ]
 	then
 		echo	"ATIK rules file present and accounted for"
@@ -136,45 +143,71 @@ setupDirectories()
 
 }
 
+###########################################################
+function CheckForFITSIO
+{
+	FITS_INSTALLED=false
+	FITS_LOCATION="not-found"
+
+	if [ -f	"/usr/local/include/fitsio.h" ]
+	then
+		FITS_INSTALLED=true
+		FITS_LOCATION="/usr/local/include"
+	fi
+
+	if [ -f	"/usr/include/fitsio.h" ]
+	then
+		FITS_INSTALLED=true
+		FITS_LOCATION="/usr/include"
+	fi
+}
+
+
 ###############################################################################
 setupCfitsio()
 {
 	echo	"*******************************************************"
 	echo	"Checking to see if cfitsio is installed"
 	echo -n "Hit return to continue"
-#	read WAITINPUT
-
-
-
-	if [ -d $DEV_DIR/cfitsio/cfitsio-3.47 ]
+	read WAITINPUT
+	CheckForFITSIO
+	if [ $FITS_INSTALLED == true ]
 	then
-		echo "cfitsio already installed"
+		echo "FITS is already installed"
+		echo "Fits located at $FITS_LOCATION"
+		grep CFITSIO_VERSION $FITS_LOCATION/fitsio.h
 	else
-		cd
-		echo "looking for setup/$CFITS_TAR"
-		if [ -f setup/$CFITS_TAR ]
-		then
-			mkdir -p $DEV_DIR/cfitsio/
-			$COPY setup/$CFITS_TAR $DEV_DIR/cfitsio/
-			pwd
-			cd $DEV_DIR/cfitsio/
-			pwd
-			if [ -d cfitsio-3.47 ]
-			then
-				echo "cfitsio already untared, leaving it alone"
-			else
-				# it should be here
-				if [ -f $CFITS_TAR ]
-				then
-					echo "cfitsio tar file found, untaring....."
-					tar -xvf $CFITS_TAR
-				else
-					echo "For some unknown reason, the tar file is missing."
-				fi
-			fi
-		else
-			echo "did not find $CFITS_TAR"
-		fi
+		./install_fits.sh
+	fi
+#	if [ -d $DEV_DIR/cfitsio/cfitsio-3.47 ]
+#	then
+#		echo "cfitsio already installed"
+#	else
+#		cd
+#		echo "looking for setup/$CFITS_TAR"
+#		if [ -f setup/$CFITS_TAR ]
+#		then
+#			mkdir -p $DEV_DIR/cfitsio/
+#			$COPY setup/$CFITS_TAR $DEV_DIR/cfitsio/
+#			pwd
+#			cd $DEV_DIR/cfitsio/
+#			pwd
+#			if [ -d cfitsio-3.47 ]
+#			then
+#				echo "cfitsio already untared, leaving it alone"
+#			else
+#				# it should be here
+#				if [ -f $CFITS_TAR ]
+#				then
+#					echo "cfitsio tar file found, untaring....."
+#					tar -xvf $CFITS_TAR
+#				else
+#					echo "For some unknown reason, the tar file is missing."
+#				fi
+#			fi
+#		else
+#			echo "did not find $CFITS_TAR"
+#		fi
 
 #		if [ -d cfitsio-3.47 ]
 #		then
@@ -193,8 +226,7 @@ setupCfitsio()
 #		else
 #			echo "Run the separate cfitsio installer"
 #		fi
-
-	fi
+#	fi
 	echo	"------------------------------------------------------------------"
 }
 
@@ -204,13 +236,15 @@ setupASI()
 {
 	echo	"*******************************************************"
 	echo	"Setting up ASI library"
+	echo	"DEV_DIR      = $DEV_DIR"
 	echo -n "Hit return to continue"
 	read WAITINPUT
 
 	cd
 
 	#	install the stuff for alpaca
-	if [ -d $DEV_DIR/alpaca/ASI_lib/lib ]
+#	if [ -d $DEV_DIR/alpaca/ASI_lib/lib ]
+	if [ -d ASI_lib/lib ]
 	then
 		echo "ASI_lib appears to be installed"
 	else
@@ -218,7 +252,7 @@ setupASI()
 		echo -n "Hit return to continue"
 		read WAITINPUT
 
-		if [ -f setup/$ASI_TAR_FILE ]
+		if [ -f $ASI_TAR_FILE ]
 		then
 			echo "ASI Tar file already downloaded"
 		else
@@ -229,20 +263,23 @@ setupASI()
 		fi
 		if [ -f setup/$ASI_TAR_FILE ]
 		then
-			mkdir -p $DEV_DIR/
-			mkdir -p $DEV_DIR/alpaca
-			mkdir -p $DEV_DIR/alpaca/ASI_lib
+#			mkdir -p $DEV_DIR/
+#			mkdir -p $DEV_DIR/alpaca
+			mkdir -p ASI_lib
 
 
-			$COPY setup/$ASI_TAR_FILE $DEV_DIR/alpaca/ASI_lib/
-			cd
-			cd $DEV_DIR/alpaca/ASI_lib
-			tar xvf $ASI_TAR_FILE
+			$COPY $ASI_TAR_FILE ASI_lib/
+			cd ASI_lib
+			if [ -f $ASI_TAR_FILE ]
+			then
+				tar xvf $ASI_TAR_FILE
+			fi
+			cd ..
+			pwd
 		else
 			echo "Download failed"
 		fi
 	fi
-	cd
 	echo	"------------------------------------------------------------------"
 }
 
@@ -251,12 +288,17 @@ setupEFW()
 {
 	echo	"*******************************************************"
 	echo	"Checking ZWO filter wheel support"
+	echo	"DEV_DIR      = $DEV_DIR"
+	echo	"EFW_TAR_FILE = $EFW_TAR_FILE"
 	echo -n "Hit return to continue"
 	read WAITINPUT
 
-	cd
+	#cd
 
-	if [ -d $DEV_DIR/alpaca/EFW_linux_mac_SDK ]
+
+
+#	if [ -d $DEV_DIR/alpaca/EFW_linux_mac_SDK ]
+	if [ -d EFW_linux_mac_SDK ]
 	then
 		echo "EFW_linux_mac_SDK is installed"
 	else
@@ -265,22 +307,18 @@ setupEFW()
 			echo "$EFW_TAR_FILE is already downloaded"
 		else
 			echo "Downloading EFW_linux_mac_SDK"
-		#	wget https://astronomy-imaging-camera.com/software/$EFW_TAR_FILE
+			wget https://astronomy-imaging-camera.com/software/$EFW_TAR_FILE
 		fi
-		if [ -f setup/$EFW_TAR_FILE ]
+		if [ -f $EFW_TAR_FILE ]
 		then
-			mkdir -p $DEV_DIR
-			mkdir -p $DEV_DIR/alpaca
-
-			if [ -d $DEV_DIR/alpaca/$EFW_LIB_DIR ]
+			if [ -d $EFW_LIB_DIR ]
 			then
 				echo "$EFW_LIB_DIR exists"
 			else
 				echo "Creating EFW directory"
-				mkdir -p $DEV_DIR/alpaca/$EFW_LIB_DIR
-				$COPY setup/$EFW_TAR_FILE $DEV_DIR/alpaca/$EFW_LIB_DIR
-				cd
-				cd $DEV_DIR/alpaca/$EFW_LIB_DIR
+				mkdir -p $EFW_LIB_DIR
+				mv $EFW_TAR_FILE $EFW_LIB_DIR/
+				cd $EFW_LIB_DIR
 				pwd
 				echo "untaring EFW_linux_mac_SDK_V0"
 				tar xvf $EFW_TAR_FILE
@@ -301,7 +339,6 @@ setupEFW()
 		else
 			echo "Failed to download EFW_linux_mac_SDK_V0"
 		fi
-
 	fi
 	echo	"------------------------------------------------------------------"
 }
@@ -315,13 +352,13 @@ setupATIK()
 	echo -n "Hit return to continue"
 	read WAITINPUT
 
-	cd
 
-	if [ -d $DEV_DIR/alpaca/AtikCamerasSDK ]
+#	if [ -d $DEV_DIR/alpaca/AtikCamerasSDK ]
+	if [ -d AtikCamerasSDK ]
 	then
 		echo "AtikCamerasSDK lib appears to be installed"
 	else
-		if [ -f setup/$ATIK_ZIP_FILE ]
+		if [ -f $ATIK_ZIP_FILE ]
 		then
 			echo "Copying $ATIK_ZIP_FILE to $DEV_DIR"
 			$COPY setup/$ATIK_ZIP_FILE $DEV_DIR/alpaca

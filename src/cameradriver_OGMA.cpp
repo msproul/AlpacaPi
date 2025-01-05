@@ -105,6 +105,7 @@ char			driverVersionString[64];
 				kASCOM_Err_Success,
 				driverVersionString);
 	AddLibraryVersion("camera", "TOUP", driverVersionString);
+	AddSupportedDevice(kDeviceType_Camera, "OGMA", "all", driverVersionString);
 
 
 	ogmaCameraCnt	=	Ogmacam_EnumV2(ogmaCamList);

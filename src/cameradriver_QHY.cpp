@@ -182,7 +182,6 @@ uint32_t		subday;
 	return(qhyRetCode);
 }
 
-
 //**************************************************************************************
 int	CreateCameraObjects_QHY(void)
 {
@@ -195,12 +194,10 @@ char			rulesFileName[]	=	"85-qhyccd.rules";
 char			driverVersionString[64];
 bool			rulesFileOK;
 
-	CONSOLE_DEBUG(__FUNCTION__);
-
-	CONSOLE_DEBUG_W_LONG("TYPE_QHY_RawImgHeader\t=", sizeof(TYPE_QHY_RawImgHeader));
-	CONSOLE_DEBUG_W_LONG("TYPE_QHY_ImgHeader   \t=", sizeof(TYPE_QHY_ImgHeader));
-
-//	CONSOLE_ABORT(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
+//
+//	CONSOLE_DEBUG_W_LONG("TYPE_QHY_RawImgHeader\t=", sizeof(TYPE_QHY_RawImgHeader));
+//	CONSOLE_DEBUG_W_LONG("TYPE_QHY_ImgHeader   \t=", sizeof(TYPE_QHY_ImgHeader));
 
 	cameraCount	=	0;
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
@@ -231,6 +228,7 @@ bool			rulesFileOK;
 		if (qhyRetCode == QHYCCD_SUCCESS)
 		{
  			AddLibraryVersion("camera", "QHY", driverVersionString);
+			AddSupportedDevice(kDeviceType_Camera, "QHY", "all", driverVersionString);
 		}
 		LogEvent(	"camera",
 					"Library version (QHY)",
@@ -240,7 +238,7 @@ bool			rulesFileOK;
 
 		//*	see how many QHY cameras are attached
 		qhyCameraCnt	=	ScanQHYCCD();
-		CONSOLE_DEBUG_W_INT32("qhyCameraCnt\t\t=",	qhyCameraCnt);
+//		CONSOLE_DEBUG_W_INT32("qhyCameraCnt\t\t=",	qhyCameraCnt);
 		for (iii=0; iii < qhyCameraCnt; iii++)
 		{
 			qhyRetCode = GetQHYCCDId(iii, qhyIDstring);
@@ -262,8 +260,6 @@ bool			rulesFileOK;
 	}
 	return(cameraCount);
 }
-
-
 
 //**************************************************************************************
 CameraDriverQHY::CameraDriverQHY(const int deviceNum, const char *qhyIDstring)

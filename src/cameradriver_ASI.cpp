@@ -164,6 +164,8 @@ int		numCameras;
 				driverVersionString);
 	AddLibraryVersion("camera", "ZWO", driverVersionString);
 
+	AddSupportedDevice(kDeviceType_Camera, "ZWO", "all", driverVersionString);
+
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
 	if (rulesFileOK == false)
 	{

@@ -106,6 +106,7 @@ bool	deviceIsCamera;
 				driverVersionString);
 
 	AddLibraryVersion("camera", "ATIK", driverVersionString);
+	AddSupportedDevice(kDeviceType_Camera, "ATIK", "all", driverVersionString);
 
 	//*	check to make sure the rules file is present
 	//	/lib/udev/rules.d/99-atik.rules
@@ -121,7 +122,7 @@ bool	deviceIsCamera;
 	}
 
 	atikDeviceCount	=	ArtemisDeviceCount();
-	CONSOLE_DEBUG_W_NUM("atikDeviceCount\t=", atikDeviceCount);
+//	CONSOLE_DEBUG_W_NUM("atikDeviceCount\t=", atikDeviceCount);
 	for (devNum=0; devNum < atikDeviceCount; devNum++)
 	{
 		deviceIsCamera	=	ArtemisDeviceIsCamera(devNum);

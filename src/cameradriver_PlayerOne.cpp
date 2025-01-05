@@ -81,7 +81,7 @@ int		playerOneCameraCnt;
 char	rulesFileName[]	=	"99-player_one_astronomy.rules";
 char	driverVersionString[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(driverVersionString, POAGetSDKVersion());
 	CONSOLE_DEBUG_W_STR("PlayerOne Ver#", driverVersionString);
@@ -91,12 +91,13 @@ char	driverVersionString[64];
 				kASCOM_Err_Success,
 				driverVersionString);
 	AddLibraryVersion("camera", "PlayerOne", driverVersionString);
+	AddSupportedDevice(kDeviceType_Camera, "PlayerOne", "all", driverVersionString);
 
 	//*	check to make sure the rules file is present
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
 	if (rulesFileOK)
 	{
-		CONSOLE_DEBUG_W_STR("rules is present:", rulesFileName);
+//		CONSOLE_DEBUG_W_STR("rules is present:", rulesFileName);
 	}
 	else
 	{
@@ -109,7 +110,7 @@ char	driverVersionString[64];
 	}
 
 	playerOneCameraCnt	=	POAGetCameraCount();
-	CONSOLE_DEBUG_W_NUM("playerOneCameraCnt\t=", playerOneCameraCnt);
+//	CONSOLE_DEBUG_W_NUM("playerOneCameraCnt\t=", playerOneCameraCnt);
 
 	cameraCount	=	0;
 	for (iii=0; iii < playerOneCameraCnt; iii++)

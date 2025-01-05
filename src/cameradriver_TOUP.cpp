@@ -117,6 +117,12 @@ char			driverVersionString[64];
 				kASCOM_Err_Success,
 				driverVersionString);
 	AddLibraryVersion("camera", "TOUP", driverVersionString);
+	AddSupportedDevice(kDeviceType_Camera, "TOUP", "all", driverVersionString);
+	LogEvent(	"camera",
+				"Library version (TOUP)",
+				NULL,
+				kASCOM_Err_Success,
+				driverVersionString);
 
 
 	toupCameraCnt	=	Toupcam_EnumV2(toupCamList);

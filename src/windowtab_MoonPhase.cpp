@@ -105,9 +105,9 @@ char	textBuff[64];
 	SetWebHelpURLstring("moonphase.html");		//*	set the web help url string
 
 	//*	initialize both to the current time
-	validPhaseInfo	=	UpdateCurrentMoonPhase(&cCurrentMoonPhaseInfo);
+	validPhaseInfo			=	UpdateCurrentMoonPhase(&cCurrentMoonPhaseInfo);
 	cDisplayedMoonPhaseInfo	=	cCurrentMoonPhaseInfo;
-//	validPhaseInfo	=	UpdateCurrentMoonPhase(&cDisplayedMoonPhaseInfo);
+//	validPhaseInfo			=	UpdateCurrentMoonPhase(&cDisplayedMoonPhaseInfo);
 	if (validPhaseInfo == false)
 	{
 		CONSOLE_DEBUG("Failed to get current moon phase");

@@ -78,7 +78,7 @@ int	USB_InitTable(void)
 			RunUSBprofile();
 		}
 	}
-	CONSOLE_DEBUG_W_NUM("gUSBcount\t=", gUSBcount);
+//	CONSOLE_DEBUG_W_NUM("gUSBcount\t=", gUSBcount);
 
 	return(gUSBcount);
 }
@@ -88,7 +88,7 @@ void	USB_DumpTable(void)
 {
 int		iii;
 
-	CONSOLE_DEBUG_W_NUM("gUSBcount\t=", gUSBcount);
+//	CONSOLE_DEBUG_W_NUM("gUSBcount\t=", gUSBcount);
 	for (iii=0; iii<gUSBcount; iii++)
 	{
 		CONSOLE_DEBUG_W_STR(gUSBtable[iii].usbPath, gUSBtable[iii].usbIDstring);
@@ -108,7 +108,7 @@ struct dirent	*dir;
 bool			keepGoing;
 int				errorCode;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	memset(gUSBtable, 0, sizeof(gUSBtable));
 	usbDeviceCnt	=	0;
@@ -248,7 +248,7 @@ struct stat	fileStatus;
 char		usbQuerryName[]	=	"usbquerry.sh";
 char		usbIDfileName[]	=	"usb_id.txt";
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	returnCode	=	stat(usbQuerryName, &fileStatus);		//*	fstat - check for existence of file
 	if (returnCode == 0)
 	{
@@ -277,7 +277,7 @@ char		usbIDfileName[]	=	"usb_id.txt";
 		returnCode	=	stat(usbIDfileName, &fileStatus);		//*	fstat - check for existence of file
 		if (returnCode == 0)
 		{
-			CONSOLE_DEBUG_W_SIZE("fileStatus.st_size\t=", fileStatus.st_size);
+//			CONSOLE_DEBUG_W_SIZE("fileStatus.st_size\t=", fileStatus.st_size);
 			if (fileStatus.st_size > 10)
 			{
 				//------------------------------------------------
@@ -299,7 +299,7 @@ char		usbIDfileName[]	=	"usb_id.txt";
 						{
 							*eolPtr	=	0;
 						}
-						CONSOLE_DEBUG(lineBuff);
+//						CONSOLE_DEBUG(lineBuff);
 						if (strlen(lineBuff) > 10)
 						{
 							//*	make sure its a valid tty device
@@ -341,6 +341,6 @@ char		usbIDfileName[]	=	"usb_id.txt";
 					kASCOM_Err_Success,
 					"Missing file");
 	}
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 

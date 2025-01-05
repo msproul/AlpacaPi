@@ -153,6 +153,8 @@ int					iii;
 			new FocuserMoonLite(myMoonliteDesc.usbPortPath);
 		}
 	}
+	AddSupportedDevice(kDeviceType_Focuser, "Moonlite", "all", "n/a");
+
 	return(moonliteCnt);
 }
 

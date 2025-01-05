@@ -57,7 +57,6 @@
 
 
 //**************************************************************************************
-//*	this will get moved to the individual implentations later
 void	CreateFilterWheelObjects_QHY(void)
 {
 bool	validUSBpath;
@@ -84,6 +83,7 @@ int		validCnt;
 	{
 		CONSOLE_DEBUG("Failed to find USB devices");
 	}
+	AddSupportedDevice(kDeviceType_Filterwheel, "QHY", "all", "");
 }
 
 //**************************************************************************************

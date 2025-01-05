@@ -158,6 +158,7 @@ ICrCameraObjectInfo				*camera_info	=	NULL;
 
 #ifndef _INCLUDE_SONY_MAIN_
 	AddLibraryVersion("camera", "SONY", libraryVersionString);
+	AddSupportedDevice(kDeviceType_Camera, "SONY", "all", libraryVersionString);
 #endif // _INCLUDE_SONY_MAIN_
 	CONSOLE_DEBUG_W_STR("Sony SDK Version #\t=", libraryVersionString);
 

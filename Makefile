@@ -1082,14 +1082,27 @@ telegps	:										\
 #pragma mark make pmc8 explore scientific
 pmc8	:		DEFINEFLAGS		+=	-D_INCLUDE_MILLIS_
 pmc8	:		DEFINEFLAGS		+=	-D_USE_OPENCV_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
-pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_EXP_SCI_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_CALIBRATION_ALNITAK_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ASI_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ATIK_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_CAMERA_PLAYERONE_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FITS_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_QHY_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_QSI_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ATIK_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_PLAYERONE_
 pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_QHY_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FILTERWHEEL_ZWO_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_MOONLITE_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_FOCUSER_ZWO_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_ROTATOR_NITECRAWLER_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_
+pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_TELESCOPE_EXP_SCI_
 pmc8	:		INCLUDES		+=	-I./PlayerOne/include_camera
 pmc8	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 #pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_GLOBAL_GPS_
@@ -1103,8 +1116,10 @@ pmc8	:		INCLUDES		+=	-I./PlayerOne/include_filterwheel
 #pmc8	:		DEFINEFLAGS		+=	-D_ENABLE_NMEA_SENTANCE_TRACKING_
 pmc8	:											\
 					$(DRIVER_OBJECTS)				\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(FILTERWHEEL_DRIVER_OBJECTS)	\
+					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(GPS_OBJECTS)					\
 					$(EXPSCI_OBJECTS)				\
@@ -1115,8 +1130,10 @@ pmc8	:											\
 
 		$(LINK)  									\
 					$(DRIVER_OBJECTS)				\
+					$(CALIBRATION_DRIVER_OBJECTS)	\
 					$(CAMERA_DRIVER_OBJECTS)		\
 					$(FILTERWHEEL_DRIVER_OBJECTS)	\
+					$(FOCUSER_DRIVER_OBJECTS)		\
 					$(TELESCOPE_DRIVER_OBJECTS)		\
 					$(GPS_OBJECTS)					\
 					$(EXPSCI_OBJECTS)				\
@@ -1125,9 +1142,18 @@ pmc8	:											\
 					$(SOCKET_OBJECTS)				\
 					$(IMU_OBJECTS)					\
 					$(OPENCV_LINK)					\
+					$(ASI_CAMERA_OBJECTS)			\
+					$(ZWO_EFW_OBJECTS)				\
+					$(ZWO_EAF_LIB_DIR)libEAFFocuser.a	\
+					-L$(ATIK_LIB_DIR)/				\
 					-L$(PLAYERONE_LIB)				\
 					-lPlayerOnePW					\
 					-lPlayerOneCamera				\
+					-latikcameras					\
+					-lqsiapi						\
+					-lftd2xx						\
+					-ludev							\
+					-lusb-1.0						\
 					-lcfitsio						\
 					-lqhyccd						\
 					-lpthread						\

@@ -69,7 +69,7 @@ int		atikVersionNum;
 char	rulesFileName[]	=	"99-atik.rules";
 bool	deviceIsEFW;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	atikVersionNum	=	ArtemisAPIVersion();
 	sprintf(driverVersionString, "%d", atikVersionNum);
@@ -80,7 +80,8 @@ bool	deviceIsEFW;
 				driverVersionString);
 
 	AddLibraryVersion("camera", "ATIK", driverVersionString);
-	CONSOLE_DEBUG_W_STR("ATIK driver version:", driverVersionString);
+	AddSupportedDevice(kDeviceType_Filterwheel, "ATIK", "all", driverVersionString);
+//	CONSOLE_DEBUG_W_STR("ATIK driver version:", driverVersionString);
 
 	//*	check to make sure the rules file is present
 	//	/lib/udev/rules.d/99-atik.rules
@@ -96,7 +97,7 @@ bool	deviceIsEFW;
 	}
 
 	atikDeviceCount	=	ArtemisDeviceCount();
-	CONSOLE_DEBUG_W_NUM("atikDeviceCount\t=", atikDeviceCount);
+//	CONSOLE_DEBUG_W_NUM("atikDeviceCount\t=", atikDeviceCount);
 	atikDeviceCount	=	4;
 	for (devNum=0; devNum < atikDeviceCount; devNum++)
 	{
@@ -107,7 +108,6 @@ bool	deviceIsEFW;
 			CONSOLE_DEBUG_W_NUM("devNum\t=", devNum);
 			new FilterwheelATIK(devNum);
 		}
-
 	}
 }
 
@@ -120,7 +120,7 @@ bool	rulesFileOK;
 char	rulesFileName[]	=	"99-atik.rules";
 
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	cFilterWheelDevNum	=	argAtikDeviceNumber;
 	cNumberOfPositions	=	0;
 	cForceReadPosition	=	true;

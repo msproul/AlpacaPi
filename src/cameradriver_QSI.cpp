@@ -73,6 +73,7 @@
 int	CreateCameraObjects_QSI(void)
 {
 int				cameraCreatedCount;
+int				iii;
 unsigned int	qsi_Result;
 std::string		info	=	"";
 std::string		modelNumber("");
@@ -85,7 +86,7 @@ QSICamera		cQSIcam;
 bool			rulesFileOK;
 char			rulesFileName[]	=	"99-qsi.rules";
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	numCamerasFound		=	0;
 	cameraCreatedCount	=	0;
@@ -109,9 +110,10 @@ char			rulesFileName[]	=	"99-qsi.rules";
 	qsi_Result	=	cQSIcam.get_DriverInfo(info);
 	if (qsi_Result == QSI_OK)
 	{
-		CONSOLE_DEBUG(info.c_str());
+//		CONSOLE_DEBUG(info.c_str());
 
 		AddLibraryVersion("camera", "QSI", info.c_str());
+		AddSupportedDevice(kDeviceType_Camera, "QSI", "all", info.c_str());
 		LogEvent(	"camera",
 					"Library version (QSI)",
 					NULL,
@@ -129,19 +131,19 @@ char			rulesFileName[]	=	"99-qsi.rules";
 	{
 		CONSOLE_DEBUG_W_NUM("numCamerasFound\t=", numCamerasFound);
 
-//		if (numCamerasFound > 0)
-//		{
-//			for (iii=0; iii < numCamerasFound; iii++)
-//			{
-//				new CameraDriverQSI(iii, camSerial[iii]);
-//			}
-//		}
-//		else
+		if (numCamerasFound > 0)
 		{
-			//*	for debugging without a camera
-			new CameraDriverQSI(0, camSerial[0]);
-			cameraCreatedCount++;
+			for (iii=0; iii < numCamerasFound; iii++)
+			{
+				new CameraDriverQSI(iii, camSerial[iii]);
+			}
 		}
+//		else
+//		{
+//			//*	for debugging without a camera
+//			new CameraDriverQSI(0, camSerial[0]);
+//			cameraCreatedCount++;
+//		}
 	}
 	else
 	{

@@ -123,6 +123,7 @@ spinError		spinErr;
 					gSpinakerVerString);
 
 		AddLibraryVersion("camera", "FLIR", gSpinakerVerString);
+		AddSupportedDevice(kDeviceType_Camera, "FLIR", "all", gSpinakerVerString);
 		CONSOLE_DEBUG_W_STR("Spinnaker library version:", gSpinakerVerString);
 
 

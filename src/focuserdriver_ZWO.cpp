@@ -71,7 +71,7 @@ char	rulesFileName[]	=	"eaf.rules";
 bool	rulesFileOK;
 char	driverVersionString[64];
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	rulesFileOK	=	Check_udev_rulesFile(rulesFileName);
 	if (rulesFileOK == false)
 	{
@@ -89,9 +89,10 @@ char	driverVersionString[64];
 				kASCOM_Err_Success,
 				driverVersionString);
 	AddLibraryVersion("focuser", "ZWO-EAF", driverVersionString);
+	AddSupportedDevice(kDeviceType_Focuser, "ZWO", "all", driverVersionString);
 
 	eaf_count	=	EAFGetNum();
-	CONSOLE_DEBUG_W_NUM("eaf_count\t=", eaf_count);
+//	CONSOLE_DEBUG_W_NUM("eaf_count\t=", eaf_count);
 	for (iii=0; iii < eaf_count; iii++)
 	{
 		new FocuserDriverZWO(iii);
@@ -104,7 +105,7 @@ char	driverVersionString[64];
 FocuserDriverZWO::FocuserDriverZWO(const int eaf_ID_num)
 	:FocuserDriver()
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(cCommonProp.Name,		"AlpacaPi Focuser ZWO");
 	strcpy(cCommonProp.Description,	"AlpacaPi Focuser ZWO");
@@ -131,7 +132,7 @@ FocuserDriverZWO::FocuserDriverZWO(const int eaf_ID_num)
 //**************************************************************************************
 FocuserDriverZWO::~FocuserDriverZWO(void)
 {
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 }
 
 //*****************************************************************************
@@ -141,7 +142,7 @@ bool	FocuserDriverZWO::OpenFocuserConnection(void)
 int		eaf_RetCode;
 int		currentPos;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	eaf_RetCode	=	EAFGetID(cEAF_ID_num, &cEAFInfo.ID);
 	eaf_RetCode	=	EAFOpen(cEAFInfo.ID);
 	if (eaf_RetCode == EAF_SUCCESS)
@@ -149,15 +150,19 @@ int		currentPos;
 		cEAFconnectionIsOpen			=	true;
 		EAFGetProperty(cEAFInfo.ID, &cEAFInfo);
 
-		CONSOLE_DEBUG_W_NUM("cEAF_ID_num     \t=",	cEAF_ID_num);
-		CONSOLE_DEBUG_W_NUM("cEAFInfo.ID     \t=",	cEAFInfo.ID);
-		CONSOLE_DEBUG_W_NUM("cEAFInfo.MaxStep\t=",	cEAFInfo.MaxStep);
-		CONSOLE_DEBUG_W_STR("cEAFInfo.Name   \t=",	cEAFInfo.Name);
+//		CONSOLE_DEBUG_W_NUM("cEAF_ID_num     \t=",	cEAF_ID_num);
+//		CONSOLE_DEBUG_W_NUM("cEAFInfo.ID     \t=",	cEAFInfo.ID);
+//		CONSOLE_DEBUG_W_NUM("cEAFInfo.MaxStep\t=",	cEAFInfo.MaxStep);
+//		CONSOLE_DEBUG_W_STR("cEAFInfo.Name   \t=",	cEAFInfo.Name);
 		cFocuserProp.MaxStep			=	cEAFInfo.MaxStep;
 		eaf_RetCode	=	EAFGetPosition(cEAFInfo.ID, &currentPos);
 		if (eaf_RetCode == EAF_SUCCESS)
 		{
 			cFocuserProp.Position	=	currentPos;
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("EAFGetPosition() returned\t=",	eaf_RetCode);
 		}
 	}
 	else

@@ -197,6 +197,8 @@
 //*	Jul  1,	2024	<MLS> Added http headers for js and css files
 //*	Jul  1,	2024	<MLS> Added Get_Readall() to base class
 //*	Jul  1,	2024	<MLS> Added details command to be compatible with AlpacaHub <PDR>
+//*	Jan  4,	2025	<MLS> Started on supported devices table
+//*	Jan  4,	2025	<MLS> Added AddSupportedDevice() & DumpSupportedDeviceList()
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -371,6 +373,52 @@ static void	SendHtml_CompiledInfo(const int socketFD);
 
 
 //*****************************************************************************
+typedef struct	//	TYPE_SUPPORTED_DEV
+{
+	TYPE_DEVICETYPE	deviceType;
+	char			manufacturer[32];
+	char			model[64];
+	char			libraryVer[64];
+} TYPE_SUPPORTED_DEV;
+
+#define	kMaxSupportedDevices	24
+
+TYPE_SUPPORTED_DEV	gSupportedDevices[kMaxSupportedDevices];
+int					gSupportedDevCnt	=	0;
+
+
+//*****************************************************************************
+void	AddSupportedDevice(TYPE_DEVICETYPE argDeviceType, const char *manufacturer, const char *model, const char *libraryVer)
+{
+	if (gSupportedDevCnt < kMaxSupportedDevices)
+	{
+		gSupportedDevices[gSupportedDevCnt].deviceType	=			argDeviceType;
+		strcpy(gSupportedDevices[gSupportedDevCnt].manufacturer,	manufacturer);
+		strcpy(gSupportedDevices[gSupportedDevCnt].model,			model);
+		strcpy(gSupportedDevices[gSupportedDevCnt].libraryVer,		libraryVer);
+
+		gSupportedDevCnt++;
+	}
+}
+
+//*****************************************************************************
+void	DumpSupportedDeviceList(void)
+{
+int		iii;
+char	deviceTypeName[32];
+
+	for (iii=0; iii<gSupportedDevCnt; iii++)
+	{
+		GetAlpacaName(gSupportedDevices[iii].deviceType, deviceTypeName);
+		printf("%-20s\t",	deviceTypeName);
+		printf("%-20s\t",	gSupportedDevices[iii].manufacturer);
+		printf("%-10s\t",	gSupportedDevices[iii].model);
+		printf("%-20s\t",	gSupportedDevices[iii].libraryVer);
+		printf("\r\n");
+	}
+}
+
+//*****************************************************************************
 static void	InitDeviceList(void)
 {
 int		iii;
@@ -380,6 +428,13 @@ int		iii;
 		gAlpacaDeviceList[iii]	=	NULL;
 	}
 	gDeviceCnt	=	0;
+
+	for (iii=0; iii<kMaxSupportedDevices; iii++)
+	{
+		memset((void *)&gSupportedDevices[iii], 0, sizeof(TYPE_SUPPORTED_DEV));
+	}
+	gSupportedDevCnt	=	0;
+
 }
 
 //*****************************************************************************
@@ -568,6 +623,9 @@ int	iii;
 		}
 	}
 }
+
+
+
 
 //*****************************************************************************
 //*	returns delay time in micro-seconds
@@ -2075,12 +2133,23 @@ const char	gHtmlNightMode[]	=
 #pragma mark -
 
 //*****************************************************************************
+static char	gDeviceTableText[]	=
+{
+	"<TR><TD COLSPAN=3>"
+	"Any of the above devices are supported by this version.<BR>"
+	"AlpacaPi must be restarted after they are plugged in"
+	"</TD></TR>\r\n"
+};
+
+//*****************************************************************************
 static void	SendHtml_TopLevel(TYPE_GetPutRequestData *reqData)
 {
 char		lineBuffer[256];
 int			mySocketFD;
 struct stat	fileStatus;
 int			returnCode;
+int			iii;
+char		deviceTypeName[32];
 
 		mySocketFD	=	reqData->socket;
 
@@ -2131,6 +2200,33 @@ int			returnCode;
 		SocketWriteData(mySocketFD,	"</FONT>\r\n");
 
 		SocketWriteData(mySocketFD,	"<P>\r\n");
+
+		//------------------------------------------------------------------
+
+		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
+		SocketWriteData(mySocketFD,	"<H3>Supported devices</H3>\r\n");
+		SocketWriteData(mySocketFD,	"<BR>\r\n");
+		SocketWriteData(mySocketFD,	"<TABLE BORDER=2>\r\n");
+		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH>Device Type</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH>Manufacturer</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH>Software Version</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
+		for (iii=0; iii<gSupportedDevCnt; iii++)
+		{
+			GetAlpacaName(gSupportedDevices[iii].deviceType, deviceTypeName);
+			sprintf(lineBuffer, "\t\t<TR><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>\r\n",
+				deviceTypeName,
+				gSupportedDevices[iii].manufacturer,
+//				gSupportedDevices[iii].model,
+				gSupportedDevices[iii].libraryVer);
+			SocketWriteData(mySocketFD,	lineBuffer);
+		}
+		sprintf(lineBuffer, "\t\t<TR><TH COLSPAN=3>Total =%d</TH></TR>\r\n", gSupportedDevCnt);
+		SocketWriteData(mySocketFD,	lineBuffer);
+		SocketWriteData(mySocketFD,	gDeviceTableText);
+		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
+		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
 		sprintf(lineBuffer, "Your IP address is %s\r\n", reqData->clientIPaddr);
 		SocketWriteData(mySocketFD,	lineBuffer);
@@ -2211,7 +2307,6 @@ int		iii;
 	if (reqData != NULL)
 	{
 		mySocketFD	=	reqData->socket;
-
 		SocketWriteData(mySocketFD,	gHtmlHeader_html);
 
 		sprintf(lineBuffer, "<TITLE>%s</TITLE>\r\n", gWebTitle);
@@ -2304,7 +2399,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>CPU (nano-secs)</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
-		//------------------------------------------------------------------------
+		//------------------------------------------------------------------
 		//*	output the main device grid listing
 		for (iii=0; iii<gDeviceCnt; iii++)
 		{
@@ -2365,7 +2460,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</TABLE>\r\n");
 		SocketWriteData(mySocketFD,	"</CENTER>\r\n");
 
-		//-------------------------------------------------------------
+		//------------------------------------------------------------------
 		//*	output html showing watchdog status
 		SocketWriteData(mySocketFD,	"<P>\r\n");
 		SocketWriteData(mySocketFD,	"<CENTER>\r\n");
@@ -2413,7 +2508,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	gWatchDogHelpMsg);
 
 
-		//-------------------------------------------------------------
+		//------------------------------------------------------------------
 		//*	Output the html for each device
 		for (iii=0; iii<gDeviceCnt; iii++)
 		{
@@ -2434,6 +2529,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"<H3>Versions</H3>\r\n");
 		SocketWriteData(mySocketFD,	"<TABLE BORDER=1>\r\n");
 
+		//------------------------------------------------------------------
 		//*	this software
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>AlpacaDriver</TD>\r\n");
@@ -2448,6 +2544,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 
+		//------------------------------------------------------------------
 		//*	OS version
 		if (strlen(gOsReleaseString) > 0)
 		{
@@ -2458,6 +2555,7 @@ int		iii;
 			SocketWriteData(mySocketFD,	"</TR>\r\n");
 		}
 
+		//------------------------------------------------------------------
 		//*	cpu we are running on
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>cpu</TD>\r\n");
@@ -2465,6 +2563,7 @@ int		iii;
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 
+		//------------------------------------------------------------------
 		//*	gcc version
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>gcc</TD>\r\n");
@@ -2472,6 +2571,7 @@ int		iii;
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 
+		//------------------------------------------------------------------
 		//*	glib version
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>libc version</TD>\r\n");
@@ -2480,6 +2580,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 
 #if defined(_ENABLE_WIRING_PI_) && defined(__arm__) && defined(__WIRING_PI_H__)
+		//------------------------------------------------------------------
 		//*	wiringPi version
 		int		wiringPi_verMajor;
 		int		wiringPi_verMinor;
@@ -2499,22 +2600,21 @@ int		iii;
 
 
 #ifdef _ENABLE_FITS_
-
+		//------------------------------------------------------------------
 		//*	cfitsio version
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>FITS (cfitsio)</TD>\r\n");
 		#ifdef CFITSIO_MICRO
-			CONSOLE_DEBUG("CFITSIO_MICRO");
 			sprintf(lineBuffer,	"<TD>%d.%d.%d</TD>\r\n", CFITSIO_MAJOR, CFITSIO_MINOR, CFITSIO_MICRO);
 		#else
 			sprintf(lineBuffer,	"<TD>%d.%d</TD>\r\n", CFITSIO_MAJOR, CFITSIO_MINOR);
 		#endif
-			CONSOLE_DEBUG_W_STR("cfitsio version:", lineBuffer);
 			SocketWriteData(mySocketFD,	lineBuffer);
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 #endif // _ENABLE_FITS_
 
 #ifdef _USE_OPENCV_
+		//------------------------------------------------------------------
 		//*	openCV version
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>OpenCV</TD>\r\n");
@@ -2524,6 +2624,7 @@ int		iii;
 #endif
 
 #ifdef _ENABLE_JPEGLIB_
+		//------------------------------------------------------------------
 		//*	jpeg lib version
 		SocketWriteData(mySocketFD,	"<TR>\r\n");
 			SocketWriteData(mySocketFD,	"<TD>libjpeg</TD>\r\n");
@@ -2532,8 +2633,7 @@ int		iii;
 		SocketWriteData(mySocketFD,	"</TR>\r\n");
 #endif
 
-
-
+		//------------------------------------------------------------------
 		if ((sizeof(long) != 4) || (sizeof(int*) != 4))
 		{
 			SocketWriteData(mySocketFD,	"<TR>\r\n");
@@ -4834,8 +4934,8 @@ int				threadErr;
 uint32_t		delayTime_microSecs;
 uint32_t		delayTimeForThisTask;
 int				iii;
-int				ram_Megabytes;
-double			freeDiskSpace_Gigs;
+//int				ram_Megabytes;
+//double			freeDiskSpace_Gigs;
 int32_t			mainLoopCntr;
 uint64_t		startNanoSecs;
 uint64_t		endNanoSecs;
@@ -4864,7 +4964,7 @@ struct tm		*linuxTime;
 	sprintf(gFullVersionString,		"%s - %s build #%d", kApplicationName, kVersionString, kBuildNumber);
 	sprintf(gUserAgentAlpacaPiStr,	"User-Agent: AlpacaPi/%s-Build-%d\r\n", kVersionString,  kBuildNumber);
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	CONSOLE_DEBUG(gFullVersionString);
 
 //	CONSOLE_DEBUG_W_SIZE("sizeof(AlpacaDriver)\t=",	sizeof(AlpacaDriver));
@@ -4877,14 +4977,14 @@ struct tm		*linuxTime;
 	AddLibraryVersion("software", "gcc", __VERSION__);
 	AddLibraryVersion("software", "libc", gnu_get_libc_version());
 
-	ram_Megabytes	=	CPUstats_GetTotalRam();
-	CONSOLE_DEBUG_W_NUM("totalRam_Megabytes\t=", ram_Megabytes);
-
-	ram_Megabytes	=	CPUstats_GetFreeRam();
-	CONSOLE_DEBUG_W_NUM("freeRam_Megabytes\t=", ram_Megabytes);
-
-	freeDiskSpace_Gigs	=	CPUstats_GetFreeDiskSpace("/") / 1024.0;
-	CONSOLE_DEBUG_W_DBL("freeDiskSpace_Gigs\t=", freeDiskSpace_Gigs);
+//	ram_Megabytes	=	CPUstats_GetTotalRam();
+//	CONSOLE_DEBUG_W_NUM("totalRam_Megabytes\t=", ram_Megabytes);
+//
+//	ram_Megabytes	=	CPUstats_GetFreeRam();
+////	CONSOLE_DEBUG_W_NUM("freeRam_Megabytes\t=", ram_Megabytes);
+//
+//	freeDiskSpace_Gigs	=	CPUstats_GetFreeDiskSpace("/") / 1024.0;
+//	CONSOLE_DEBUG_W_DBL("freeDiskSpace_Gigs\t=", freeDiskSpace_Gigs);
 
 	GetMyHostName();
 
@@ -4913,7 +5013,7 @@ float	fitsVersion;
 	//*	openCV version
 	#if (CV_MAJOR_VERSION >= 4)
 		AddLibraryVersion("software", "opencv", cv::getVersionString().c_str());
-		CONSOLE_DEBUG_W_STR("opencv version (library)\t=", cv::getVersionString().c_str());
+//		CONSOLE_DEBUG_W_STR("opencv version (library)\t=", cv::getVersionString().c_str());
 	#else
 		AddLibraryVersion("software", "opencv", CV_VERSION);
 	#endif
@@ -5030,15 +5130,15 @@ int	imu_ReturnCode;
 	}
 #endif
 
-	DEBUG_TIMING("Timing step 2:");
+//	DEBUG_TIMING("Timing step 2:");
 	//--------------------------------------------------------
 	//*	create the various driver objects
 	CreateDriverObjects();
-	DEBUG_TIMING("Timing step 3:");
+//	DEBUG_TIMING("Timing step 3:");
 
 	//*********************************************************
 	StartDiscoveryListenThread(gAlpacaListenPort);
-	DEBUG_TIMING("Timing step 4:");
+//	DEBUG_TIMING("Timing step 4:");
 #ifdef _JETSON_
 	StartExtraListenThread(4520);
 #endif
@@ -5061,8 +5161,9 @@ int	imu_ReturnCode;
 		CONSOLE_DEBUG_W_NUM("threadErr=", threadErr);
 	}
 
-	DEBUG_TIMING("Timing step 5:");
+//	DEBUG_TIMING("Timing step 5:");
 
+//	DumpSupportedDeviceList();
 
 	//========================================================================================
 	CONSOLE_DEBUG("Starting main loop -----------------------------------------");
@@ -5565,7 +5666,7 @@ bool		rulesFileOK;
 }
 
 //**************************************************************************
-void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName)
+void	GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName)
 {
 	switch(deviceType)
 	{

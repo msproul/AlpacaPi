@@ -442,6 +442,7 @@ AlpacaDriver	*FindDeviceByType(const int deviceType, const int alpacaDevNum=-1);
 bool			GetCmdNameFromTable(const int cmdNumber, char *comandName, const TYPE_CmdEntry *cmdTable, char *getPut);
 void			LogToDisk(const int whichLogFile, TYPE_GetPutRequestData *reqData);
 void			GetAlpacaName(TYPE_DEVICETYPE deviceType, char *alpacaName);
+void			AddSupportedDevice(TYPE_DEVICETYPE argDeviceType, const char *manufacturer, const char *model, const char *libraryVer);
 
 
 

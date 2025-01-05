@@ -129,6 +129,7 @@ int		loopCnt;
 		}
 		loopCnt++;
 	}
+	AddSupportedDevice(kDeviceType_CoverCalibrator, "Alnitak", "all", "n/a");
 }
 
 

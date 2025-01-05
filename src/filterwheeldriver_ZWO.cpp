@@ -87,6 +87,7 @@ char		*efwVersionString;
 					kASCOM_Err_Success,
 					efwVersionString);
 		AddLibraryVersion("filterwheel", "ZWO", efwVersionString);
+		AddSupportedDevice(kDeviceType_Filterwheel, "ZWO", "all", efwVersionString);
 	}
 	//*	check to make sure the rules file is present
 	rulesFileOK	=	Check_udev_rulesFile(kEFW_rulesFile);

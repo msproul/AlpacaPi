@@ -438,8 +438,6 @@ CameraDriver::CameraDriver(void)
 	:AlpacaDriver(kDeviceType_Camera)
 {
 int			mkdirErrCode;
-struct stat	fileStatus;
-int			returnCode;
 char		myImageDataDir[]	=	"/media/pi/rpdata/imagedata";
 
 	CONSOLE_DEBUG(__FUNCTION__);

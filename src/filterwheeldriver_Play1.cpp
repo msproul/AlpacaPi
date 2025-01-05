@@ -75,6 +75,7 @@ char	rulesFileName[]	=	"99-player_one_astronomy.rules";
 				driverVersionString);
 
 	AddLibraryVersion("filterwheel", "PlayerOne", driverVersionString);
+	AddSupportedDevice(kDeviceType_Filterwheel, "PlayerOne", "all", driverVersionString);
 	CONSOLE_DEBUG_W_STR("PlayerOne driver version:", driverVersionString);
 
 	//*	check to make sure the rules file is present
