@@ -1,4 +1,6 @@
 //*****************************************************************************
+//*	Dec 25,	2024	<MLS> Added cOriginalImage
+//*****************************************************************************
 //#include	"controller_image.h"
 
 #ifndef _CONTROLLER_IMAGE_H_
@@ -58,6 +60,7 @@ typedef struct
 	char	Time_UTC[64];
 	char	Telescope[64];
 	char	Website[128];
+	char	CopyRight[128];
 
 } TYPE_ImageHeaderData;
 
@@ -106,6 +109,7 @@ class ControllerImage: public Controller
 				void	UpdateLiveWindowImage(	cv::Mat *newOpenCVImage, const char *imageFileName=NULL);
 				void	CopyImageToLiveImage(	cv::Mat *newOpenCVImage);
 
+				cv::Mat cOriginalImage;
 				cv::Mat *cDownLoadedImage;
 				cv::Mat *cDisplayedImage;
 				cv::Mat *cColorImage;

@@ -3,10 +3,12 @@
 //*
 //*
 //*	https://svs.gsfc.nasa.gov/gallery/moonphase/
-//*	https://svs.gsfc.nasa.gov/5187
+//*	https://svs.gsfc.nasa.gov/5187		2024 data
+//*	https://svs.gsfc.nasa.gov/5415/		2025 data
 //*	https://svs.gsfc.nasa.gov/help/#apis-dialamoon
 //*	https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005187/mooninfo_2024.txt
-//*
+//*	https://svs.gsfc.nasa.gov/vis/a000000/a005400/a005415/mooninfo_2025.txt
+
 //*		NASA Official: Mark SubbaRao	mark.u.subbarao@nasa.gov
 //*		SVS Contact: Alex Kekesi		alex.kekesi@nasa.gov
 //*		Site Curator: Ella Kaplan		ella.kaplan@nasa.gov
@@ -28,6 +30,8 @@
 //*	Apr  5,	2024	<MLS> Added NASA_StartMoonImageDownloadThread()
 //*	Apr  6,	2024	<MLS> Fixed moon image number bug (was off by 1)
 //*	May 11,	2024	<MLS> Added CalculateDeclinationAvg()
+//*	Dec 11,	2024	<MLS> Added NASA_DownloadOneMoonPhaseFile()
+//*	Dec 11,	2024	<MLS> Updated downloads for 2025
 //*****************************************************************************
 //    # https://skyandtelescope.org/astronomy-resources/native-american-full-moon-names/
 //    JAN = "wolf"
@@ -60,6 +64,8 @@
 
 #define _ENABLE_CONSOLE_DEBUG_
 #include	"ConsoleDebug.h"
+
+#include	"helper_functions.h"
 
 #include	"NASA_moonphase.h"
 
@@ -732,7 +738,7 @@ int		iii;
 double	decDelta;
 double	decDetlta_Min;
 double	decDetlta_Max;
-double	decDetlta_Avg;
+//double	decDetlta_Avg;
 double	decDeltaTotal;
 
 	decDetlta_Min	=	99.0;
@@ -752,7 +758,7 @@ double	decDeltaTotal;
 		}
 		decDeltaTotal	+=	decDelta;
 	}
-	decDetlta_Avg	=	decDeltaTotal / (gMoonPhaseCnt -1);
+//	decDetlta_Avg	=	decDeltaTotal / (gMoonPhaseCnt -1);
 //	CONSOLE_DEBUG_W_DBL("decDetlta_Min\t=",	decDetlta_Min);
 //	CONSOLE_DEBUG_W_DBL("decDetlta_Max\t=",	decDetlta_Max);
 //	CONSOLE_DEBUG_W_DBL("decDetlta_Avg\t=",	decDetlta_Avg);
@@ -762,23 +768,31 @@ double	decDeltaTotal;
 //*****************************************************************************
 int	NASA_ReadMoonPhaseData(void)
 {
-FILE			*filePointer;
-char			filePath[128]	=	"mooninfo_2024.txt";
-char			lineBuff[256];
-int				recordCount;
-int				ignoredCount;
-//TYPE_MoonPhase	moonPhaseInfo;
+FILE		*filePointer;
+char		fileName[128];
+char		filePath[128];
+char		lineBuff[256];
+int			recordCount;
+int			ignoredCount;
+int			currentYear;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
-	strcpy(filePath, kNASAmoonPhaseDir);
-	strcat(filePath, "mooninfo_2024.txt");
-
 	memset(gMoonPhaseInfo, 0, (sizeof(TYPE_MoonPhase) * kMoonPhaseRecCnt));
+	currentYear	=	GetCurrentYear();
+
+	sprintf(fileName, "mooninfo_%4d.txt", currentYear);
+	CONSOLE_DEBUG_W_NUM("currentYear\t=", currentYear);
+	CONSOLE_DEBUG_W_STR("fileName   \t=", fileName);
+//	CONSOLE_ABORT(__FUNCTION__);
+
+	strcpy(filePath, kNASAmoonPhaseDir);
+//	strcat(filePath, "mooninfo_2024.txt");
+	strcat(filePath, fileName);
 
 	recordCount		=	0;
 	ignoredCount	=	0;
-	filePointer	=	fopen(filePath, "r");
+	filePointer		=	fopen(filePath, "r");
 	if (filePointer != NULL)
 	{
 		while (fgets(lineBuff, 200, filePointer) && (recordCount < 9000))
@@ -801,6 +815,10 @@ int				ignoredCount;
 //		CalculatePhaseNames();
 		CalculatePhaseNamesWholeDay();
 		CalculateDeclinationAvg();
+	}
+	else
+	{
+		CONSOLE_DEBUG_W_STR("NASA Moon Phase info not found, looking for:", filePath);
 	}
 	return(gMoonPhaseCnt);
 }
@@ -1038,6 +1056,10 @@ bool		keepGoing;
 struct stat	fileStatus;
 int			returnCode;
 int			systemRetCode;
+//char		urlString[]	=	"https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005187/frames/730x730_1x1_30p/";
+
+char		urlString[]	=	"https://svs.gsfc.nasa.gov/vis/a000000/a005400/a005415/frames/730x730_1x1_30p/";	//*	north up
+//char		urlString[]	=	"https://svs.gsfc.nasa.gov/vis/a000000/a005400/a005416/frames/730x730_1x1_30p/";	//*	south up
 
 //	CONSOLE_DEBUG(__FUNCTION__);
 
@@ -1063,7 +1085,8 @@ int			systemRetCode;
 			//*	the file does not exist
 			strcpy(commandString, "cd NASA_MoonInfo/");
 			strcat(commandString, yearString);
-			strcat(commandString, "/;wget https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005187/frames/730x730_1x1_30p/");
+			strcat(commandString, "/;wget ");
+			strcat(commandString, urlString);
 			strcat(commandString, imageFileName);
 			strcat(commandString, " 2>/dev/null");
 //			printf("%s\r\n", commandString);
@@ -1077,6 +1100,7 @@ int			systemRetCode;
 			else
 			{
 				CONSOLE_DEBUG_W_NUM("ERROR system() returned", systemRetCode);
+				CONSOLE_DEBUG_W_STR("commandString was:", commandString);
 				keepGoing	=	false;
 			}
 			sleep(2);
@@ -1132,25 +1156,68 @@ int		threadErr;
 }
 
 //**************************************************************************************
-void	NASA_DownloadMoonPhaseData(void)
+static void	NASA_DownloadOneMoonPhaseFile(const char *moonPhaseURL)
 {
+
 int			systemRetCode;
 char		commandString[256];
+char		fileName[256];
+char		filePath[256];
+char		*slashPtr;
+struct stat	fileStatus;
+int			returnCode;
 
-	//*	check to make sure the directory is there
-	NASA_CheckDirectories(0);
-	strcpy(commandString, "cd NASA_MoonInfo/;wget https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005187/mooninfo_2024.txt");
-	strcat(commandString, " 2>/dev/null");
-	systemRetCode	=	system(commandString);
-	if (systemRetCode == 0)
+	slashPtr	=	strchr((char *)moonPhaseURL, '/');
+	while (slashPtr != NULL)
 	{
-		CONSOLE_DEBUG_W_STR("Downloaded ", commandString);
+		slashPtr++;
+		strcpy(fileName, slashPtr);
+		slashPtr	=	strchr(fileName, '/');
+//		CONSOLE_DEBUG(fileName);
+	}
+	strcpy(filePath, kNASAmoonPhaseDir);
+	strcat(filePath, fileName);
+	returnCode	=	stat(filePath, &fileStatus);		//*	fstat - check for existence of file
+	if (returnCode == 0)
+	{
+		//*	file already exists
+		CONSOLE_DEBUG_W_STR("File already exists:", filePath);
 	}
 	else
 	{
-		CONSOLE_DEBUG_W_NUM("ERROR system() returned", systemRetCode);
+
+	//	strcpy(commandString, "cd NASA_MoonInfo/;wget ");
+		strcpy(commandString, "cd ");
+		strcat(commandString, kNASAmoonPhaseDir);
+		strcat(commandString, ";wget ");
+		strcat(commandString, moonPhaseURL);
+		strcat(commandString, " 2>/dev/null");
+		CONSOLE_DEBUG_W_STR("commandString:", commandString);
+		systemRetCode	=	system(commandString);
+		if (systemRetCode == 0)
+		{
+			CONSOLE_DEBUG_W_STR("Downloaded ", commandString);
+		}
+		else
+		{
+			CONSOLE_DEBUG_W_NUM("ERROR system() returned", systemRetCode);
+			CONSOLE_DEBUG_W_STR("ERROR system() returned", strerror(systemRetCode));
+		}
 	}
+}
+
+//**************************************************************************************
+void	NASA_DownloadMoonPhaseData(void)
+{
+
+	//*	check to make sure the directory is there
+	NASA_CheckDirectories(0);
+	NASA_DownloadOneMoonPhaseFile("https://svs.gsfc.nasa.gov/vis/a000000/a005100/a005187/mooninfo_2024.txt");
+	NASA_DownloadOneMoonPhaseFile("https://svs.gsfc.nasa.gov/vis/a000000/a005400/a005415/mooninfo_2025.txt");
+
+
 	NASA_ReadMoonPhaseData();
+//	CONSOLE_ABORT(__FUNCTION__);
 }
 
 

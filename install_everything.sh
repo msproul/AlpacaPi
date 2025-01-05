@@ -205,7 +205,7 @@ setupASI()
 	echo	"*******************************************************"
 	echo	"Setting up ASI library"
 	echo -n "Hit return to continue"
-#	read WAITINPUT
+	read WAITINPUT
 
 	cd
 
@@ -216,7 +216,7 @@ setupASI()
 	else
 		echo "Installing ASI library"
 		echo -n "Hit return to continue"
-#		read WAITINPUT
+		read WAITINPUT
 
 		if [ -f setup/$ASI_TAR_FILE ]
 		then
@@ -225,7 +225,7 @@ setupASI()
 			echo	"Downloading ASI_linux_mac_SDK_V1 SDK"
 			echo -n "Hit return to continue"
 			read WAITINPUT
-		#	wget https://astronomy-imaging-camera.com/software/$ASI_TAR_FILE
+			wget https://astronomy-imaging-camera.com/software/$ASI_TAR_FILE
 		fi
 		if [ -f setup/$ASI_TAR_FILE ]
 		then

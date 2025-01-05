@@ -225,6 +225,13 @@ ControllerImage::~ControllerImage(void)
 		delete cDisplayedImage;
 		cDisplayedImage	=	NULL;
 	}
+
+//	if (cOriginalImage != NULL)
+//	{
+//		delete cOriginalImage;
+//		cOriginalImage	=	NULL;
+//	}
+
 #else
 	//--------------------------------------------
 	//*	free up the image memory
@@ -258,13 +265,14 @@ void	ControllerImage::InitClassVariables(void)
 	memset((void *)&cImageHeaderData, 0, sizeof(TYPE_ImageHeaderData));
 	memset((void *)&cFitsHeaderText, 0, (sizeof(TYPE_FitsHdrLine) * kMaxFitsHdrLines));
 
-	strcpy(cImageHeaderData.Location, "Shohola, PA");
+//	strcpy(cImageHeaderData.Location, "Shohola, PA");
 
 	cFitsHdrCnt				=	0;
 
 	cDownLoadedImage		=	NULL;
 	cDisplayedImage			=	NULL;
 	cColorImage				=	NULL;
+//	cOriginalImage			=	NULL;
 	cImageFromDisk			=	false;
 	cImageIsFITS			=	false;
 	cImageIsPDS				=	false;
@@ -678,7 +686,7 @@ double	reduceFactor;
 //int		newImgWidth;
 //int		newImgHeight;
 //int		newImgBytesPerPixel;
-//int		openCVerr;
+int		openCVerr;
 bool	validImg;
 
 	CONSOLE_DEBUG(__FUNCTION__);
@@ -702,6 +710,9 @@ bool	validImg;
 
 	if (newOpenCVImage != NULL)
 	{
+
+		cOriginalImage	=	newOpenCVImage->clone();
+//		openCVerr		=	cv::imwrite("cOriginalImage.jpg", cOriginalImage);
 		//*	ok, now its time to CREATE our own image, we are going to make it the same as the
 		//*	supplied image
 		//	https://docs.opencv.org/3.4/d3/d63/classcv_1_1Mat.html
@@ -1683,6 +1694,7 @@ int			iii;
 int			fitsKeyWordEnum;
 double		ccdTemperature;
 
+
 //	CONSOLE_DEBUG(__FUNCTION__);
 //	CONSOLE_DEBUG_W_STR(__FUNCTION__, imageFilePath);
 //	CONSOLE_DEBUG(imageFilePath);
@@ -1703,10 +1715,15 @@ double		ccdTemperature;
 			SaveFitsHeaderLine(card);
 
 			fitsKeyWordEnum	=	FITS_FindKeyWordEnum(card);
+//			CONSOLE_DEBUG(card);
+//			CONSOLE_DEBUG_W_NUM("fitsKeyWordEnum\t=", fitsKeyWordEnum);
+			if (fitsKeyWordEnum >= 0)
+			{
+				GetDataFromFitsLine(card, valueString);
+			}
 			switch(fitsKeyWordEnum)
 			{
 				case kFitsKeyword_ApertureDiam:
-					GetDataFromFitsLine(card, valueString);
 					cImageHeaderData.ApertureDiam	=	atof(valueString);
 //					CONSOLE_DEBUG_W_STR("kFitsKeyword_ApertureDiam   \t=", valueString);
 //					CONSOLE_DEBUG_W_DBL("cImageHeaderData.ApertureDiam\t=", cImageHeaderData.ApertureDiam);
@@ -1719,28 +1736,28 @@ double		ccdTemperature;
 					break;
 
 				case kFitsKeyword_Camera:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Camera, valueString);
 					break;
 
 				case kFitsKeyword_CCDTEMP:
-					GetDataFromFitsLine(card, valueString);
 					ccdTemperature	=	atof(valueString);
 					sprintf(statusString, "%3.1f deg C", ccdTemperature);
 					SetWidgetText(	kTab_Image, kImageDisplay_CameraTemp, statusString);
+					break;
+
+				case kFitsKeyword_CopyRight:
+					strcpy(cImageHeaderData.CopyRight, valueString);
 					break;
 
 				case kFitsKeyword_Date:
 					break;
 
 				case kFitsKeyword_EXPTIME:
-					GetDataFromFitsLine(card, valueString);
 					cImageHeaderData.Exposure_Secs	=	atof(valueString);
 					SetWidgetText(	kTab_Image, kImageDisplay_Exposure, valueString);
 					break;
 
 				case kFitsKeyword_Filter:
-					GetDataFromFitsLine(card, valueString);
 					SetWidgetText(	kTab_Image, kImageDisplay_Filter, valueString);
 					if (strcasecmp(valueString, "HA") == 0)
 					{
@@ -1761,58 +1778,47 @@ double		ccdTemperature;
 					break;
 
 				case kFitsKeyword_FRatio:
-					GetDataFromFitsLine(card, valueString);
 					cImageHeaderData.FocalRatio	=	atof(valueString);
 					break;
 
 				case kFitsKeyword_FocalLength:
-					GetDataFromFitsLine(card, valueString);
 					cImageHeaderData.FocalLength	=	atof(valueString);
 					break;
 
 				case kFitsKeyword_Gain:
-					GetDataFromFitsLine(card, valueString);
 					SetWidgetText(	kTab_Image, kImageDisplay_Gain, valueString);
 					break;
 
 				case kFitsKeyword_Location:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Location, valueString);
 					break;
 
 				case kFitsKeyword_MoonAge:
-					GetDataFromFitsLine(card, valueString);
 					cImageHeaderData.MoonAge	=	atof(valueString);
 					break;
 
 				case kFitsKeyword_MoonIllumination:
-					GetDataFromFitsLine(card, valueString);
 					cImageHeaderData.MoonIllumination	=	atof(valueString);
 					break;
 
 				case kFitsKeyword_MoonPhase:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.MoonPhase, valueString);
 					break;
 
 				case kFitsKeyword_Object:
-					GetDataFromFitsLine(card, valueString);
 					SetWidgetText(	kTab_Image, kImageDisplay_Object, valueString);
 					strcpy(cImageHeaderData.Object, valueString);
 					break;
 
 				case kFitsKeyword_Observer:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Observer, valueString);
 					break;
 
 				case kFitsKeyword_Observatory:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Observatory, valueString);
 					break;
 
 				case kFitsKeyword_Telescope:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Telescope, valueString);
 					//*	correct some screw ups in fits headers
 					if (strncasecmp(valueString, "Mt Wilson", 9) == 0)
@@ -1826,17 +1832,14 @@ double		ccdTemperature;
 					break;
 
 				case kFitsKeyword_TimeUTC:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Time_UTC, valueString);
 					break;
 
 				case kFitsKeyword_TimeLocal:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Time_Local, valueString);
 					break;
 
 				case kFitsKeyword_WebSite:
-					GetDataFromFitsLine(card, valueString);
 					strcpy(cImageHeaderData.Website, valueString);
 					break;
 
@@ -2237,11 +2240,27 @@ cv::Scalar	fontColor	=	CV_RGB(255,255,255);
 int			xxLoc1;
 int			yyLoc;
 char		signatureString[64];
+bool		validCopyRight;
+int			myCvfont;
 
-	if ((cImageIsPDS == false) && strlen(cImageHeaderData.Observer) > 0)
+	validCopyRight	=	false;
+	if (strlen(cImageHeaderData.CopyRight) > 0)
+	{
+		strcpy(signatureString, "(C) by ");
+		strcat(signatureString, cImageHeaderData.CopyRight);
+		validCopyRight	=	true;
+		myCvfont		=	cv::FONT_HERSHEY_SIMPLEX;
+	}
+	else if ((cImageIsPDS == false) && strlen(cImageHeaderData.Observer) > 0)
 	{
 		strcpy(signatureString, "(C) 2024 by ");
 		strcat(signatureString, cImageHeaderData.Observer);
+		validCopyRight	=	true;
+		myCvfont		=	cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
+	}
+	if (validCopyRight)
+	{
+
 		xxLoc1		=	75;
 		yyLoc		=	cDownLoadedImage->rows;
 
@@ -2252,7 +2271,7 @@ char		signatureString[64];
 		cv::putText(	*cDownLoadedImage,
 						signatureString,
 						textLoc,
-						cv::FONT_HERSHEY_SCRIPT_SIMPLEX,
+						myCvfont,		//	cv::FONT_HERSHEY_SCRIPT_SIMPLEX,
 						cFontScale,
 						fontColor,
 						cFontThickness

@@ -7,6 +7,7 @@
 //*	Edit History
 //*****************************************************************************
 //*	Mar 17,	2024	<MLS> Created fits_helper.cpp
+//*	Dec  2,	2024	<MLS> Added COPYRGHT to processed FITS keywords
 //*****************************************************************************
 
 #include	"alpacadriver_helper.h"
@@ -19,12 +20,13 @@ TYPE_LookupTable	gFitsLookUpTable[]	=
 	{	"APTDIA",		kFitsKeyword_ApertureDiam		},
 	{	"CAMERA",		kFitsKeyword_Camera				},
 	{	"CCD-TEMP",		kFitsKeyword_CCDTEMP			},
-	{	"Date",			kFitsKeyword_Date				},
+	{	"COPYRGHT",		kFitsKeyword_CopyRight			},
+	{	"DATE",			kFitsKeyword_Date				},
 	{	"EXPTIME",		kFitsKeyword_EXPTIME			},
 	{	"FILTER",		kFitsKeyword_Filter				},
 	{	"FOCALLEN",		kFitsKeyword_FocalLength		},
 	{	"FRATIO",		kFitsKeyword_FRatio				},
-	{	"Gain",			kFitsKeyword_Gain				},
+	{	"GAIN",			kFitsKeyword_Gain				},
 	{	"LOCATION",		kFitsKeyword_Location			},
 	{	"MOONAGE",		kFitsKeyword_MoonAge			},
 	{	"MOONILUM",		kFitsKeyword_MoonIllumination	},
@@ -34,7 +36,7 @@ TYPE_LookupTable	gFitsLookUpTable[]	=
 	{	"OBSERVAT",		kFitsKeyword_Observatory		},
 	{	"TELESCOP",		kFitsKeyword_Telescope			},
 	{	"DATE-OBS",		kFitsKeyword_TimeUTC			},
-	{	"TimeLocal",	kFitsKeyword_TimeLocal			},
+	{	"TIMELOCAL",	kFitsKeyword_TimeLocal			},
 	{	"WEBSITE",		kFitsKeyword_WebSite			},
 
 	{	"",				-1								}
@@ -45,7 +47,7 @@ TYPE_LookupTable	gFitsLookUpTable[]	=
 int	FITS_FindKeyWordEnum(const char *fitsKeyword)
 {
 int		fitsEnum;
-char	myKeyWord[12];
+char	myKeyWord[32];
 int		ccc;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
@@ -56,7 +58,7 @@ int		ccc;
 		ccc++;
 	}
 	myKeyWord[ccc]	=	0;
-	fitsEnum	=	LookupStringInTable(myKeyWord, gFitsLookUpTable);
+	fitsEnum		=	LookupStringInTable(myKeyWord, gFitsLookUpTable);
 	return(fitsEnum);
 }
 

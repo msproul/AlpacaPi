@@ -471,6 +471,7 @@ bool	downloadTaskIsRunning;
 
 	//*	check downloading status
 	downloadTaskIsRunning	=	NASA_GetLatestDownLoadImageName(lastImageDownloaded);
+//	CONSOLE_DEBUG_W_BOOL("downloadTaskIsRunning\t=", downloadTaskIsRunning);
 	if (downloadTaskIsRunning)
 	{
 		SetWidgetText(kMoonPhase_TotalImgCnt, lastImageDownloaded);
@@ -625,11 +626,11 @@ bool	updateFlag;
 			break;
 
 		case kMoonPhase_StartDownLoadBtn:
-			if (gMoonPhaseCnt < 8000)
-			{
-				NASA_DownloadMoonPhaseData();
-			}
-			NASA_StartMoonImageDownloadThread(2024);
+			CONSOLE_DEBUG_W_NUM("gMoonPhaseCnt\t=", gMoonPhaseCnt);
+			NASA_DownloadMoonPhaseData();
+//			NASA_StartMoonImageDownloadThread(2024);
+			NASA_StartMoonImageDownloadThread(2025);
+			SetRunFastBackgroundMode(true);
 			break;
 
 		default:

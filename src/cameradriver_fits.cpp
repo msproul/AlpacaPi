@@ -96,7 +96,7 @@
 //*	Sep 25,	2023	<MLS> Added FPGA version and Production date to FITS header
 //*	Mar 14,	2024	<MLS> Added Saturation pixel count to FITS header
 //*	Mar 16,	2024	<MLS> Added github link to FITS header
-//*	Mar 17,	2024	<MLS> Added FRATIO link to FITS header
+//*	Mar 17,	2024	<MLS> Added FRATIO link to FITS header (F ratio)
 //*	Mar 18,	2024	<MLS> Added READOUTM link to FITS header
 //*	Mar 22,	2024	<MLS> Fixed bug in FITS camera offset reporting, was string, now int
 //*	Mar 25,	2024	<MLS> Now using NASA Moon Phase info if available
@@ -105,6 +105,7 @@
 //*	Apr 18,	2024	<MLS> Added filter wheel serial number to fits output if it exists
 //*	Apr 22,	2024	<MLS> Added support for kImageType_MONO8 (8 bit image type)
 //*	Nov 18,	2024	<MLS> Added local path option for saving file in case specified path fails
+//*	Dec  2,	2024	<MLS> Added COPYRGHT to FITS header
 //*****************************************************************************
 //*	https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/cfitsio.html
 //*****************************************************************************
@@ -1738,6 +1739,10 @@ struct tm		myLocalTime;
 		fits_write_key(fitsFilePtr, TSTRING,	"OBSERVER",
 												gObseratorySettings.Observer,
 												NULL, &fitsStatus);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COPYRGHT",
+												gObseratorySettings.Observer,
+												NULL, &fitsStatus);
 	}
 
 	//*	format the time of exposure start
@@ -2342,6 +2347,10 @@ TYPE_MoonPhase	moonPhaseInfo;
 		fitsStatus	=	0;
 		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
 												(char *)"2024 Moon data: https://svs.gsfc.nasa.gov/5187",
+												NULL, &fitsStatus);
+		fitsStatus	=	0;
+		fits_write_key(fitsFilePtr, TSTRING,	"COMMENT",
+												(char *)"2025 Moon data: https://svs.gsfc.nasa.gov/5415/",
 												NULL, &fitsStatus);
 
 		fitsStatus	=	0;

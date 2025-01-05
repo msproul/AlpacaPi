@@ -10,6 +10,7 @@
 //*	<MLS>	=	Mark L Sproul msproul@skychariot.com
 //*****************************************************************************
 //*	Mar 17,	2021	<MLS> Created linuxerrors.c
+//*	Dec 11,	2024	<MLS> Added use of strerror()
 //*****************************************************************************
 
 #include	<errno.h>
@@ -168,7 +169,10 @@ void	GetLinuxErrorString(const int errNum, char *errorString)
 
 //define EHWPOISON	133	/* Memory page has hardware error */
 
-	default:			sprintf(errorString, "Error #%d not in table", errNum);	break;
+	default:
+		sprintf(errorString, "Error #%d not in table", errNum);
+		strcpy(errorString, strerror(errNum));
+		break;
 
 	}
 }

@@ -445,6 +445,8 @@ int					parseReturnCode;
 			{
 				CONSOLE_DEBUG_W_NUM("shutDownRetCode\t=", shutDownRetCode);
 				CONSOLE_DEBUG_W_NUM("errno\t=", errno);
+				CONSOLE_DEBUG(strerror(errno));
+
 			}
 //			CONSOLE_DEBUG(__FUNCTION__);
 		}

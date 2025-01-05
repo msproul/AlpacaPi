@@ -330,7 +330,7 @@ void	WindowTab::SetRunFastBackgroundMode(bool newRunFastMode)
 Controller	*myControllerObj;
 
 //	CONSOLE_DEBUG(__FUNCTION__);
-	CONSOLE_DEBUG_W_BOOL("newRunFastMode\t=", newRunFastMode);
+//	CONSOLE_DEBUG_W_BOOL("newRunFastMode\t=", newRunFastMode);
 
 	myControllerObj	=	(Controller *)cParentObjPtr;
 	if (myControllerObj != NULL)

@@ -21,6 +21,7 @@
 //*	Apr 12,	2024	<MLS> Added FormatTimeStringISO8601_tm()
 //*	May 17,	2024	<MLS> Added IsValidNumericString()
 //*	May 17,	2024	<MLS> Added IsValidTrueFalseString()
+//*	Dec 11,	2024	<MLS> Added GetCurrentYear()
 //*****************************************************************************
 
 #include	<math.h>
@@ -611,6 +612,28 @@ struct timeval	currentTime;
 
 	return(currentTime.tv_sec);
 }
+
+
+//**************************************************************************************
+int	GetCurrentYear(void)
+{
+time_t		currentTime;
+struct tm	*linuxTime;
+int			currentYear;
+
+	currentYear		=	1900;
+	currentTime		=	time(NULL);
+	if (currentTime != -1)
+	{
+		linuxTime		=	gmtime(&currentTime);
+		currentYear		=	(1900 + linuxTime->tm_year);
+	}
+	else
+	{
+	}
+	return(currentYear);
+}
+
 
 //*****************************************************************************
 void	DumpLinuxTimeStruct(struct tm *linuxTimeStruct, const char *callingFunction)

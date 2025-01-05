@@ -127,13 +127,13 @@
 //*	Jun  1,	2024	<MLS> MilkyWay is now outlined in white
 //*	Jun  9,	2024	<MLS> Added planet size drawing in PlotSkyObjects()
 //*	Jun 11,	2024	<MLS> Changed cAutoAdvanceTime to global, gAutoAdvanceTime
+//*	Dec  2,	2024	<MLS> Fixed bug: cTrack was not initialized
 //*****************************************************************************
 //*	TODO
 //*			star catalog lists
 //*
 //*	might be useful
 //*		http://www.astrosurf.com/jephem/astro/skymap/sm200coordinates_en.htm
-//*		https://github.com/dcf21/constellation-stick-figures
 //*****************************************************************************
 
 #ifndef _ENABLE_SKYTRAVEL_
@@ -417,6 +417,7 @@ int		startupWidgetIdx;
 	cCursor_decl			=	0;
 	cCsrx					=	0;
 	cCsry					=	0;
+	cTrack					=	false;
 	cMouseDragInProgress	=	false;
 
 	if (gObseratorySettings.ValidLatLon)

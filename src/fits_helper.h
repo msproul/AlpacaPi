@@ -11,6 +11,7 @@ enum
 	kFitsKeyword_ApertureDiam,
 	kFitsKeyword_Camera,
 	kFitsKeyword_CCDTEMP,
+	kFitsKeyword_CopyRight,
 	kFitsKeyword_Date,
 	kFitsKeyword_EXPTIME,
 	kFitsKeyword_Filter,

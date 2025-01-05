@@ -49,6 +49,7 @@ void		FormatTimeStringISO8601_tm(	struct tm *linuxTime,	char *timeString);
 void		FormatTimeString_TM(struct tm *timeStruct, char *timeString);
 int			GetMinutesSinceMidnight(void);
 time_t		GetSecondsSinceEpoch(void);
+int			GetCurrentYear(void);
 bool		IsValidNumericString(const char *theString);
 bool		IsValidTrueFalseString(const char *theString);
 bool		IsTrueFalseArgValid(const char *trueFalseString);
