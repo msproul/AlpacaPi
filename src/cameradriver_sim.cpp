@@ -51,7 +51,7 @@
 int	CreateCameraObjects_Sim(void)
 {
 
-	CONSOLE_DEBUG(__FUNCTION__);
+	AddSupportedDevice(kDeviceType_Camera, "AlpacaPi Simulator", "", "");
 
 	//*	for debugging without a camera
 	new CameraDriverSIM(0);

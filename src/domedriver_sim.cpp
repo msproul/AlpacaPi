@@ -55,6 +55,7 @@
 //*****************************************************************************
 void	CreateDomeObjectsSIM(void)
 {
+	AddSupportedDevice(kDeviceType_Dome, "AlpacaPi Simulator", "", "");
 	new DomeDriverSIM(0);
 }
 

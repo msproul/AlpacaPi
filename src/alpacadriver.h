@@ -383,6 +383,9 @@ class AlpacaDriver
 
 
 		//-------------------------------------------------------------------------
+		//*	this is for the java script support
+				bool					cDriverSupportsJavaScript;
+		//-------------------------------------------------------------------------
 		//*	this is for driver thread
 				void				RunThread(void);
 	protected:

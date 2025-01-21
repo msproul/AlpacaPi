@@ -274,6 +274,7 @@ int				setOptRetCode;
 		{
 			CONSOLE_DEBUG("Calling gSocketCallbackProcPtr");
 			gSocketCallbackProcPtr(sock, readBuffer, bytesRead);
+			memset(readBuffer, 0, kReadBuffLen);	//*	2025/01/20
 		}
 	} while (bytesRead > 0);
 

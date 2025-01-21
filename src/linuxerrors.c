@@ -170,7 +170,7 @@ void	GetLinuxErrorString(const int errNum, char *errorString)
 //define EHWPOISON	133	/* Memory page has hardware error */
 
 	default:
-		sprintf(errorString, "Error #%d not in table", errNum);
+//		sprintf(errorString, "Error #%d not in table", errNum);
 		strcpy(errorString, strerror(errNum));
 		break;
 

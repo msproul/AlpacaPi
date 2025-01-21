@@ -39,6 +39,7 @@
 void	CreateObsConditionObjects_SIM(void)
 {
 //	CONSOLE_DEBUG(__FUNCTION__);
+	AddSupportedDevice(kDeviceType_Observingconditions, "AlpacaPi Simulator", "", "");
 	new ObsConditionsDriverSIM(0);
 }
 

@@ -7,6 +7,8 @@
 ###	Apr  8,	2022	<MLS> Added libftd2xx installation
 ###	Apr  8,	2022	<MLS> Tested on Raspberry Pi 64 bit
 ###############################################################################
+#https://qsimaging.com/drivers-software/
+#https://downloads.atik-cameras.com/QSI_SDK_Linux-2024.09.05.77.tar.gz
 
 QSI_FOLDER="qsiapi-7.6.0"
 QSI_TAR_FILE="qsiapi-7.6.0.tar.gz"

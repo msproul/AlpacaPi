@@ -43,6 +43,7 @@
 //*****************************************************************************
 void	CreateCalibrationObjects_SIM(void)
 {
+	AddSupportedDevice(kDeviceType_CoverCalibrator, "AlpacaPi Simulator", "", "");
 	new CalibrationDriverSIM();
 }
 

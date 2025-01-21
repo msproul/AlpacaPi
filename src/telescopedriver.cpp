@@ -882,7 +882,6 @@ int					mySocket;
 	{
 		CONSOLE_DEBUG_W_NUM("alpacaErrCode\t=", alpacaErrCode);
 		CONSOLE_DEBUG_W_STR("deviceCommand\t=", reqData->deviceCommand);
-
 	}
 //	CONSOLE_DEBUG_W_NUM("Calling RecordCmdStats(), cmdEnumValue=", cmdEnumValue);
 	RecordCmdStats(cmdEnumValue, reqData->get_putIndicator, alpacaErrCode);
@@ -1470,6 +1469,7 @@ TYPE_ASCOM_STATUS	TelescopeDriver::Get_DoesRefraction(TYPE_GetPutRequestData	*re
 {
 TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 
+//	CONSOLE_DEBUG(__FUNCTION__);
 	if (cDriverSupports_Refraction)
 	{
 		JsonResponse_Add_Bool(	reqData->socket,
@@ -1483,6 +1483,7 @@ TYPE_ASCOM_STATUS		alpacaErrCode	=	kASCOM_Err_Success;
 	{
 		alpacaErrCode	=	kASCOM_Err_PropertyNotImplemented;
 		GENERATE_ALPACAPI_ERRMSG(alpacaErrMsg, "Driver does not support refraction");
+//		CONSOLE_DEBUG(alpacaErrMsg);
 	}
 	return(alpacaErrCode);
 }
@@ -3203,7 +3204,8 @@ int						axisNumber;
 double					newRate;
 bool					previousTrackingState;
 
-//	CONSOLE_DEBUG(__FUNCTION__);
+	CONSOLE_DEBUG("---------------------------------");
+	CONSOLE_DEBUG(__FUNCTION__);
 
 	alpacaErrMsg[0]	=	0;
 
@@ -3227,6 +3229,8 @@ bool					previousTrackingState;
 												kRequireCase,
 												kArgumentIsNumeric);
 
+		CONSOLE_DEBUG_W_BOOL("axisFound\t=",	axisFound);
+		CONSOLE_DEBUG_W_BOOL("rateFound\t=",	rateFound);
 		if (axisFound && rateFound)
 		{
 			if (IsValidNumericString(axisString))
@@ -3237,12 +3241,14 @@ bool					previousTrackingState;
 			{
 				axisNumber		=	-1;
 			}
-			CONSOLE_DEBUG_W_NUM("axisNumber\t=", axisNumber);
 			if ((axisNumber >= 0) && (axisNumber <= 2))
 			{
+				CONSOLE_DEBUG_W_NUM("axisNumber\t=", axisNumber);
+				CONSOLE_DEBUG_W_STR("rateString\t=", rateString);
 				if (IsValidNumericString(rateString))
 				{
 					newRate		=	AsciiToDouble(rateString);
+					CONSOLE_DEBUG_W_DBL("newRate\t=", newRate);
 					//*	May 15 2124	<TODO> Add support for multiple ranges
 					if ((fabs(newRate) >= cTelescopeProp.AxisRates[axisNumber].Minimum) &&
 						(fabs(newRate) <= cTelescopeProp.AxisRates[axisNumber].Maximum))

@@ -31,7 +31,7 @@
 //*	Apr  6,	2024	<MLS> Fixed moon image number bug (was off by 1)
 //*	May 11,	2024	<MLS> Added CalculateDeclinationAvg()
 //*	Dec 11,	2024	<MLS> Added NASA_DownloadOneMoonPhaseFile()
-//*	Dec 11,	2024	<MLS> Updated downloads for 2025
+//*	Dec 11,	2024	<MLS> Updated NASA Moon downloads for 2025
 //*****************************************************************************
 //    # https://skyandtelescope.org/astronomy-resources/native-american-full-moon-names/
 //    JAN = "wolf"
@@ -782,8 +782,8 @@ int			currentYear;
 	currentYear	=	GetCurrentYear();
 
 	sprintf(fileName, "mooninfo_%4d.txt", currentYear);
-	CONSOLE_DEBUG_W_NUM("currentYear\t=", currentYear);
-	CONSOLE_DEBUG_W_STR("fileName   \t=", fileName);
+//	CONSOLE_DEBUG_W_NUM("currentYear\t=", currentYear);
+//	CONSOLE_DEBUG_W_STR("fileName   \t=", fileName);
 //	CONSOLE_ABORT(__FUNCTION__);
 
 	strcpy(filePath, kNASAmoonPhaseDir);

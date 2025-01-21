@@ -63,6 +63,7 @@
 //**************************************************************************************
 void	CreateTelescopeObjects_Simulator(void)
 {
+	AddSupportedDevice(kDeviceType_Telescope, "AlpacaPi Simulator", "", "");
 	new TelescopeDriverSim();
 }
 

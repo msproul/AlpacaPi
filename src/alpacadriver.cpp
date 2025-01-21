@@ -197,8 +197,9 @@
 //*	Jul  1,	2024	<MLS> Added http headers for js and css files
 //*	Jul  1,	2024	<MLS> Added Get_Readall() to base class
 //*	Jul  1,	2024	<MLS> Added details command to be compatible with AlpacaHub <PDR>
-//*	Jan  4,	2025	<MLS> Started on supported devices table
+//*	Jan  4,	2025	<MLS> Added Supported Devices Table
 //*	Jan  4,	2025	<MLS> Added AddSupportedDevice() & DumpSupportedDeviceList()
+//*	Jan 10,	2025	<MLS> Added _ENABLE_CPU_NANOSECS_DISPLAY_
 //*****************************************************************************
 //*	to install code blocks 20
 //*	Step 1: sudo add-apt-repository ppa:codeblocks-devs/release
@@ -208,6 +209,8 @@
 //		 getrusage() - get resource usage
 //*****************************************************************************
 
+
+//#define _ENABLE_CPU_NANOSECS_DISPLAY_
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -536,7 +539,7 @@ int		iii;
 	//========================================
 	//*	Setup support
 	cDriverSupportsSetup		=	false;
-
+	cDriverSupportsJavaScript	=	false;
 
 	//========================================
 	//*	Temperature logging
@@ -2390,13 +2393,16 @@ int		iii;
 		//*	do the header row
 		SocketWriteData(mySocketFD,	"\t<TR>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Setup</TH>\r\n");
+		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Control</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Type</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Dev Num</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Device Name</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Description</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>Cmds / Errs</TH>\r\n");
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>CPU (ms)</TH>\r\n");
+	#ifdef _ENABLE_CPU_NANOSECS_DISPLAY_
 		SocketWriteData(mySocketFD,	"\t\t<TH><FONT COLOR=yellow>CPU (nano-secs)</TH>\r\n");
+	#endif
 		SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
 		//------------------------------------------------------------------
@@ -2423,6 +2429,16 @@ int		iii;
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
 				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
+				if (gAlpacaDeviceList[iii]->cDriverSupportsJavaScript)
+				{
+					sprintf(lineBuffer,	"<A HREF=/html/index.html target=%s>Control</A>",
+												gAlpacaDeviceList[iii]->cAlpacaDeviceString);
+					SocketWriteData(mySocketFD,	lineBuffer);
+				}
+
+				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
+
+				SocketWriteData(mySocketFD,	"\t\t<TD>\r\n");
 					SocketWriteData(mySocketFD,	gAlpacaDeviceList[iii]->cAlpacaName);
 				SocketWriteData(mySocketFD,	"\t\t</TD>\r\n");
 
@@ -2445,12 +2461,15 @@ int		iii;
 				//*	cpu usage, this may get moved to a different page later
 				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalMilliSeconds);
 				SocketWriteData(mySocketFD,	lineBuffer);
+		#ifdef _ENABLE_CPU_NANOSECS_DISPLAY_
 			#if (__LONG_LONG_WIDTH__ == 64)
 				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
 			#else
 				sprintf(lineBuffer, "<TD><CENTER>%lu</TD>\r\n", gAlpacaDeviceList[iii]->cTotalNanoSeconds);
 			#endif
 				SocketWriteData(mySocketFD,	lineBuffer);
+		#endif	//	_ENABLE_CPU_NANOSECS_DISPLAY_
+
 
 				SocketWriteData(mySocketFD,	"\t</TR>\r\n");
 
@@ -4470,17 +4489,6 @@ CONSOLE_DEBUG_W_STR("\r\n", htmlData);
 //	CONSOLE_DEBUG("Timing Start----------------------");
 //	SETUP_TIMING();
 
-//	if (strstr(htmlData, "favicon.ico") != NULL)
-//	{
-//		CONSOLE_DEBUG("favicon.ico request !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-//	}
-
-
-//	if (strncmp(htmlData, "GET /favicon.ico", 16) == 0)
-//	{
-//		//*	do nothing
-//	}
-//	else
 	if ((strncmp(htmlData, "GET", 3) == 0) || (strncmp(htmlData, "PUT", 3) == 0))
 	{
 //		CONSOLE_DEBUG("Calling ProcessGetPutRequest");

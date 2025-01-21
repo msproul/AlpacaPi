@@ -161,6 +161,9 @@ void	ObservatorySettings_Init(void)
 //	CONSOLE_DEBUG(__FUNCTION__);
 	memset(&gObseratorySettings, 0, sizeof(TYPE_OBSERVATORY_SETTINGS));
 
+	gObseratorySettings.Latitude_deg	=	-71.0;
+	gObseratorySettings.Longitude_deg	=	41.0;
+
 }
 
 //*****************************************************************************

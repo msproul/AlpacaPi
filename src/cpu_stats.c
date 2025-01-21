@@ -175,7 +175,7 @@ bool	stillNeedModelName;
 int		keyWordEnum;
 bool	vendorIDfound;
 
-	CONSOLE_DEBUG(__FUNCTION__);
+//	CONSOLE_DEBUG(__FUNCTION__);
 	//*	set the default value in case we fail to read /proc/cpuinfo
 	strcpy(gPlatformString,	"");
 	strcpy(gCpuInfoString,	"");
@@ -382,7 +382,7 @@ bool	vendorIDfound;
 	{
 		CONSOLE_DEBUG("failed to open /proc/cpuinfo");
 	}
-	CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
+//	CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 
 	//=======================================================================
 	filePointer	=	fopen("/sys/firmware/devicetree/base/model", "r");
@@ -395,7 +395,7 @@ bool	vendorIDfound;
 			if (strlen(lineBuff) > 5)
 			{
 				strcpy(gPlatformString, lineBuff);
-				CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
+//				CONSOLE_DEBUG_W_STR("gPlatformString\t=", gPlatformString);
 				if ((strlen(gHardwareString) == 0) && (strncasecmp(lineBuff, "NVIDIA", 6) == 0))
 				{
 					strcpy(gHardwareString, "jetson");

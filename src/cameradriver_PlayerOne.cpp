@@ -84,7 +84,7 @@ char	driverVersionString[64];
 //	CONSOLE_DEBUG(__FUNCTION__);
 
 	strcpy(driverVersionString, POAGetSDKVersion());
-	CONSOLE_DEBUG_W_STR("PlayerOne Ver#", driverVersionString);
+//	CONSOLE_DEBUG_W_STR("PlayerOne Ver#", driverVersionString);
 	LogEvent(	"camera",
 				"Library version (PlayerOne)",
 				NULL,

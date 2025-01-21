@@ -43,8 +43,11 @@
 //*	Jun 21,	2024	<MLS> Added Read_SensorTargetTemp() & Write_SensorTargetTemp() to QSI camera
 //*	Jun 28,	2024	<MLS> cCommonProp.Connected set to false if QSI_NOTCONNECTED error occurs
 //*	Jul  4,	2024	<MLS> Implemented Read_SensorTargetTemp() && Write_SensorTargetTemp()
+//*	Jan  5,	2025	<MLS> New version of QSI SDK available v2024.09.05.77
 //*****************************************************************************
-
+//	https://qsimaging.com/drivers-software/
+//	https://downloads.atik-cameras.com/QSI_SDK_Linux-2024.09.05.77.tar.gz
+//*****************************************************************************
 #if defined(_ENABLE_CAMERA_) && defined(_ENABLE_QSI_)
 
 

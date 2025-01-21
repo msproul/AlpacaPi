@@ -178,7 +178,7 @@ int		numCameras;
 
 
 	gASIcameraCount	=	ASIGetNumOfConnectedCameras();
-	CONSOLE_DEBUG_W_NUM("gASIcameraCount\t=", gASIcameraCount);
+//	CONSOLE_DEBUG_W_NUM("gASIcameraCount\t=", gASIcameraCount);
 	for (devNum=0; devNum < gASIcameraCount; devNum++)
 	{
 		new CameraDriverASI(devNum);

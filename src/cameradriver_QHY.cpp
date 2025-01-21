@@ -172,7 +172,7 @@ uint32_t		subday;
 	//	CONSOLE_DEBUG_W_INT32("day\t\t=",		day);
 	//	CONSOLE_DEBUG_W_INT32("subday\t\t=",	subday);
 
-		CONSOLE_DEBUG_W_STR("QHY Driver version\t=", driverVersionString);
+//		CONSOLE_DEBUG_W_STR("QHY Driver version\t=", driverVersionString);
 	}
 	else
 	{

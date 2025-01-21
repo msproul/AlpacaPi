@@ -50,6 +50,7 @@
 //*	this will get moved to the individual implentations later
 void	CreateFilterWheelObjects_SIM(void)
 {
+	AddSupportedDevice(kDeviceType_Filterwheel, "AlpacaPi Simulator", "", "");
 	new FilterwheelSIM(0);
 }
 

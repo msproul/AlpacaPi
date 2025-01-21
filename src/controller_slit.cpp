@@ -1051,7 +1051,8 @@ char				returnDataString[128];
 //	{
 //
 //	}
-	//------------------------
+	//------------------------------------------------------------
+	strcpy(returnDataString, "");
 	validData	=	AlpacaGetStringValue(	deviceAddress,
 											cDomeAlpacaPort,
 											cDomeAlpacaDevNum,
@@ -1072,7 +1073,8 @@ char				returnDataString[128];
 		SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeName,	"failed");
 		SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeName,	CV_RGB(255,	0,	0));
 	}
-	//------------------------
+	//------------------------------------------------------------
+	strcpy(returnDataString, "");
 	validData	=	AlpacaGetStringValue(	deviceAddress,
 											cDomeAlpacaPort,
 											cDomeAlpacaDevNum,
@@ -1081,7 +1083,7 @@ char				returnDataString[128];
 											NULL,
 											returnDataString,
 											&rtnValidData);
-	if (validData && returnDataString)
+	if (validData)
 	{
 		SetWidgetText(		kTab_DomeInfo, kSlitDome_DomeDescription,	returnDataString);
 		SetWidgetTextColor(	kTab_DomeInfo, kSlitDome_DomeDescription,	CV_RGB(0, 255, 0));

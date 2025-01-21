@@ -45,6 +45,7 @@
 //*****************************************************************************
 void	CreateSwitchObjects_SIM(void)
 {
+	AddSupportedDevice(kDeviceType_Switch, "AlpacaPi Simulator", "", "");
 	new SwitchDriverSIM();
 }
 

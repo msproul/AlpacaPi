@@ -42,6 +42,7 @@
 //**************************************************************************************
 void	CreateRotatorObjects_SIM(void)
 {
+	AddSupportedDevice(kDeviceType_Rotator, "AlpacaPi Simulator", "", "");
 	new	RotatorDriver_Sim(0);
 }
 
